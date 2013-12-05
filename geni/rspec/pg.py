@@ -5,11 +5,53 @@ import geni.rspec
 import geni.namespaces as GNS
 
 from lxml import etree as ET
+import uuid
 
 class NodeType(object):
   XEN = "emulab-xen"
   RAW = "raw"
   VM = "emulab-xen"
+
+
+class Command(object):
+  def __init__ (self, cmd, data):
+    self.cmd = cmd
+    self.data = data
+  
+  def resolve (self):
+    return self.cmd % self.data
+
+
+class Service(object):
+  def __init__ (self):
+    pass
+
+
+class Install(Service):
+  def __init__ (self, url, path):
+    super(Install, self).__init__()
+    self.url = url
+    self.path = path
+
+  def _write (self, element):
+    ins = ET.SubElement(element, "{%s}install" % (GNS.REQUEST.name))
+    ins.attrib["url"] = self.url
+    ins.attrib["install_path"] = self.path
+
+
+class Execute(Service):
+  def __init__ (self, shell, command):
+    super(Execute, self).__init__()
+    self.shell = shell
+    self.command = command
+
+  def _write (self, element):
+    exc = ET.SubElement(element, "{%s}execute" % (GNS.REQUEST.name))
+    exc.attrib["shell"] = self.shell
+    if isinstance(self.command, Command):
+      exc.attrib["command"] = self.command.resolve()
+    else:
+      exc.attrib["command"] = self.command
 
 
 class Address(object):
@@ -42,6 +84,10 @@ class Interface(object):
     self.node = node
     self.addresses = []
 
+  @property
+  def name (self):
+    return self.client_id
+
   def addAddress (self, address):
     if isinstance(address, Address):
       self.addresses.append(address)
@@ -56,8 +102,11 @@ class Interface(object):
 
 
 class Link(object):
-  def __init__ (self, name, ltype = ""):
-    self.client_id = name
+  def __init__ (self, name = None, ltype = ""):
+    if name is None:
+      self.client_id = str(uuid.uuid4())
+    else:
+      self.client_id = name
     self.interfaces = []
     self.type = ltype
     self.shared_vlan = None
@@ -70,6 +119,7 @@ class Link(object):
 
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
+    lnk.attrib["client_id"] = self.client_id
     for intf in self.interfaces:
       ir = ET.SubElement(lnk, "{%s}interface_ref" % (GNS.REQUEST.name))
       ir.attrib["client_id"] = intf.client_id
@@ -82,7 +132,7 @@ class Link(object):
 
 
 class LAN(Link):
-  def __init__ (self, name):
+  def __init__ (self, name = None):
     super(LAN, self).__init__(name, "lan")
 
 
@@ -93,6 +143,11 @@ class Node(object):
     self.disk_image = None
     self.type = ntype
     self.interfaces = []
+    self.services = []
+
+  @property
+  def name (self):
+    return self.client_id
 
   def _write (self, root):
     nd = ET.SubElement(root, "{%s}node" % (GNS.REQUEST.name))
@@ -110,10 +165,18 @@ class Node(object):
       for intf in self.interfaces:
         intf._write(nd)
 
+    if self.services:
+      svc = ET.SubElement(nd, "{%s}services" % (GNS.REQUEST.name))
+      for service in self.services:
+        service._write(svc)
+
   def addInterface (self, name):
     intf = Interface("%s:%s" % (self.client_id, name), self)
     self.interfaces.append(intf)
     return intf
+
+  def addService (self, svc):
+    self.services.append(svc)
 
 
 class RawPC(Node):
@@ -140,6 +203,7 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
     self.addNamespace(Namespaces.RS)
+    self.addNamespace(GNS.SVLAN)
 
   def addResource (self, rsrc):
     self.resources.append(rsrc)
