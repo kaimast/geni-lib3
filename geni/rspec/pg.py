@@ -195,6 +195,15 @@ class Namespaces(object):
   CLIENT = GNS.Namespace("client", "http://www.protogeni.net/resources/rspec/ext/client/1")
   RS = GNS.Namespace("rs", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
 
+
+class XMLContext(object):
+  def __init__ (self, rspec, root, cur_elem = None):
+    self.rspec = rspec
+    self.root = root
+    self.curelem = cur_elem
+
+class PGContext(XMLContext):
+
 class Request(geni.rspec.RSpec):
   def __init__ (self):
     super(Request, self).__init__("request")
@@ -212,6 +221,8 @@ class Request(geni.rspec.RSpec):
     f = open(path, "w+")
 
     rspec = self.getDOM()
+    ctx = Context(self, rspec)
+
     for resource in self.resources:
       resource._write(rspec)
 
