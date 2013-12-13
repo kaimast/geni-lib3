@@ -222,7 +222,7 @@ class Request(geni.rspec.RSpec):
     f = open(path, "w+")
 
     rspec = self.getDOM()
-    ctx = Context(self, rspec)
+#ctx = Context(self, rspec)
 
     for resource in self.resources:
       resource._write(rspec)
