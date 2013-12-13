@@ -203,6 +203,7 @@ class XMLContext(object):
     self.curelem = cur_elem
 
 class PGContext(XMLContext):
+  pass
 
 class Request(geni.rspec.RSpec):
   def __init__ (self):

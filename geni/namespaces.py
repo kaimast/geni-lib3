@@ -8,7 +8,7 @@ class Namespace(object):
 
 XSNS = Namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
 
-REQUEST = Namespace("request", "http://www.geni.net/resource/rspec/3", "http://www.geni.net/resources/rspec/3/request.xsd")
+REQUEST = Namespace("request", "http://www.geni.net/resources/rspec/3", "http://www.geni.net/resources/rspec/3/request.xsd")
 OFv3 = Namespace("openflow", "http://www.geni.net/resources/rspec/ext/openflow/3")
 OFv4 = Namespace("openflow", "http://www.geni.net/resources/rspec/ext/openflow/4")
 SVLAN = Namespace("sharedvlan", "http://www.geni.net/resources/rspec/ext/shared-vlan/1", "http://www.geni.net/resources/rspec/ext/shared-vlan/1/request.xsd")
