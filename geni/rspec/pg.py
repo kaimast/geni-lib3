@@ -102,14 +102,21 @@ class Interface(object):
 
 
 class Link(object):
+  LNKID = 0
+
   def __init__ (self, name = None, ltype = ""):
     if name is None:
-      self.client_id = str(uuid.uuid4())
+      self.client_id = Link.newLinkID()
     else:
       self.client_id = name
     self.interfaces = []
     self.type = ltype
     self.shared_vlan = None
+
+  @classmethod
+  def newLinkID (cls):
+    Link.LNKID += 1
+    return "link-%d" % (Link.LNKID)
 
   def addInterface (self, intf):
     self.interfaces.append(intf)
