@@ -83,6 +83,7 @@ class Interface(object):
     self.client_id = name
     self.node = node
     self.addresses = []
+    self.component_id = None
 
   @property
   def name (self):
@@ -97,6 +98,8 @@ class Interface(object):
   def _write (self, element):
     intf = ET.SubElement(element, "{%s}interface" % (GNS.REQUEST.name))
     intf.attrib["client_id"] = self.client_id
+    if self.component_id:
+      intf.attrib["component_id"] = self.component_id
     for addr in self.addresses:
       addr._write(intf)
 
