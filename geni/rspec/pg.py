@@ -84,6 +84,7 @@ class Interface(object):
     self.node = node
     self.addresses = []
     self.component_id = None
+    self.bandwidth = None
 
   @property
   def name (self):
@@ -139,6 +140,14 @@ class Link(object):
     if self.shared_vlan:
       sv = ET.SubElement(lnk, "{%s}link_shared_vlan" % (GNS.SVLAN.name))
       sv.attrib["name"] = self.shared_vlan
+    for intf in self.interfaces:
+      if intf.bandwidth:
+        for other in self.interfaces:
+          if intf is not other:
+            prop = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
+            prop.attrib["source_id"] = other.name
+            prop.attrib["dest_id"] = intf.name
+            prop.attrib["capacity"] = str(intf.bandwidth)
 
 
 class LAN(Link):
@@ -154,6 +163,7 @@ class Node(object):
     self.type = ntype
     self.interfaces = []
     self.services = []
+    self.routable_control_ip = False
 
   @property
   def name (self):
@@ -178,7 +188,10 @@ class Node(object):
     if self.services:
       svc = ET.SubElement(nd, "{%s}services" % (GNS.REQUEST.name))
       for service in self.services:
-        service._write(svc)
+        service._write(svce)
+
+    if self.routable_control_ip:
+      rc = ET.SubElement(nd, "{%s}routable_control_ip")
 
   def addInterface (self, name):
     intf = Interface("%s:%s" % (self.client_id, name), self)
@@ -198,12 +211,17 @@ class XenVM(Node):
   def __init__ (self, name, exclusive = False):
     super(XenVM, self).__init__(name, NodeType.XEN, exclusive)
 
+class VZContainer(Node):
+  def __init__ (self, name, exclusive = False):
+    super(VZContainer, self).__init__(name, "emulab-openvz", exclusive)
+
 VM = XenVM
 
 
 class Namespaces(object):
   CLIENT = GNS.Namespace("client", "http://www.protogeni.net/resources/rspec/ext/client/1")
   RS = GNS.Namespace("rs", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
+  EMULAB = GNS.Namespace("emulab", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
 
 
 class XMLContext(object):
@@ -212,8 +230,10 @@ class XMLContext(object):
     self.root = root
     self.curelem = cur_elem
 
+
 class PGContext(XMLContext):
   pass
+
 
 class Request(geni.rspec.RSpec):
   def __init__ (self):
@@ -224,6 +244,7 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.CLIENT)
     self.addNamespace(Namespaces.RS)
     self.addNamespace(GNS.SVLAN)
+    self.addNamespace(Namespaces.EMULAB)
 
   def addResource (self, rsrc):
     self.resources.append(rsrc)
