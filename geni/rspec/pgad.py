@@ -39,9 +39,13 @@ class AdNode(object):
 
     fds = elem.xpath('e:fd', namespaces = _XPNS)
     for fd in fds:
-      if fd.get("name") == 'pcshared':
+      name = fd.get("name")
+      if name == 'pcshared':
         node.shared = True
-        break
+      elif name == 'cpu':
+        node.cpu = fd.get("weight")
+      elif name == 'ram':
+        node.ram = fd.get("ram")
 
     return node
 
