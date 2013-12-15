@@ -156,7 +156,7 @@ class LAN(Link):
 
 
 class Node(object):
-  def __init__ (self, name, ntype, exclusive = False):
+  def __init__ (self, name, ntype, component_id = None, exclusive = False):
     self.client_id = name
     self.exclusive = exclusive
     self.disk_image = None
@@ -164,6 +164,7 @@ class Node(object):
     self.interfaces = []
     self.services = []
     self.routable_control_ip = False
+    self.component_id = component_id
 
   @property
   def name (self):
@@ -173,6 +174,8 @@ class Node(object):
     nd = ET.SubElement(root, "{%s}node" % (GNS.REQUEST.name))
     nd.attrib["client_id"] = self.client_id
     nd.attrib["exclusive"] = str(self.exclusive).lower()
+    if self.component_id:
+      nd.attrib["component_id"] = self.component_id
     
     st = ET.SubElement(nd, "{%s}sliver_type" % (GNS.REQUEST.name))
     st.attrib["name"] = self.type
@@ -193,6 +196,8 @@ class Node(object):
     if self.routable_control_ip:
       rc = ET.SubElement(nd, "{%s}routable_control_ip")
 
+    return nd
+
   def addInterface (self, name):
     intf = Interface("%s:%s" % (self.client_id, name), self)
     self.interfaces.append(intf)
@@ -203,13 +208,13 @@ class Node(object):
 
 
 class RawPC(Node):
-  def __init__ (self, name):
-    super(RawPC, self).__init__(name, NodeType.RAW, True)
+  def __init__ (self, name, component_id = None):
+    super(RawPC, self).__init__(name, NodeType.RAW, component_id = component_id, exclusive = True)
 
 
 class XenVM(Node):
-  def __init__ (self, name, exclusive = False):
-    super(XenVM, self).__init__(name, NodeType.XEN, exclusive)
+  def __init__ (self, name, component_id = None, exclusive = False):
+    super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
 
 class VZContainer(Node):
   def __init__ (self, name, exclusive = False):

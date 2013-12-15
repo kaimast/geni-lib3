@@ -12,4 +12,5 @@ REQUEST = Namespace("request", "http://www.geni.net/resources/rspec/3", "http://
 OFv3 = Namespace("openflow", "http://www.geni.net/resources/rspec/ext/openflow/3")
 OFv4 = Namespace("openflow", "http://www.geni.net/resources/rspec/ext/openflow/4")
 SVLAN = Namespace("sharedvlan", "http://www.geni.net/resources/rspec/ext/shared-vlan/1", "http://www.geni.net/resources/rspec/ext/shared-vlan/1/request.xsd")
+OPSTATE = Namespace("opstate", "http://www.geni.net/resources/rspec/ext/opstate/1", "http://http://www.geni.net/resources/rspec/ext/opstate/1/ad.xsd")
 
