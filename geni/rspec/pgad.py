@@ -45,7 +45,7 @@ class AdNode(object):
       elif name == 'cpu':
         node.cpu = fd.get("weight")
       elif name == 'ram':
-        node.ram = fd.get("ram")
+        node.ram = fd.get("weight")
 
     return node
 
