@@ -7,6 +7,24 @@ from geni.rspec.pg import Namespaces as PGNS
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 
+class AdInterface(object):
+  def __init__ (self):
+    self.name = None
+    self.component_id = None
+    self.role = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    intf = AdInterface()
+    intf.component_id = elem.get("component_id")
+    intf.role = elem.get("role")
+    
+    eie = elem.xpath('e:interface', namespaces = _XPNS)
+    intf.name = eie[0].get("name")
+
+    return intf
+
+
 class AdNode(object):
   def __init__ (self):
     self.component_id = None
@@ -16,6 +34,7 @@ class AdNode(object):
     self.hardware_types = set()
     self.sliver_types = set()
     self.shared = False
+    self.interfaces = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -46,6 +65,9 @@ class AdNode(object):
         node.cpu = fd.get("weight")
       elif name == 'ram':
         node.ram = fd.get("weight")
+
+    for intf in elem.xpath('g:interface'):
+      node.interfaces.append(AdInterface._fromdom(intf))
 
     return node
 

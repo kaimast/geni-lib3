@@ -216,6 +216,7 @@ class XenVM(Node):
   def __init__ (self, name, component_id = None, exclusive = False):
     super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
 
+
 class VZContainer(Node):
   def __init__ (self, name, exclusive = False):
     super(VZContainer, self).__init__(name, "emulab-openvz", exclusive)
