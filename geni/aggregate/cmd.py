@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-from geni.gcf import oscript
+from ..gcf import oscript
 
 def listresources (am, slice = None):
   text, res = oscript.call(["-a", am, "listresources"])

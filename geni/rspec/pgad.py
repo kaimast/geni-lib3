@@ -4,24 +4,25 @@ from lxml import etree as ET
 
 import geni.namespaces as GNS
 from geni.rspec.pg import Namespaces as PGNS
+from geni.rspec import pg
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 
-class AdInterface(object):
-  def __init__ (self):
-    self.name = None
+class AdInterface(pg.Interface):
+  def __init__ (self, name):
+    super(AdInterface, self).__init__(self, name, None)
     self.component_id = None
     self.role = None
 
   @classmethod
   def _fromdom (cls, elem):
-    intf = AdInterface()
-    intf.component_id = elem.get("component_id")
-    intf.role = elem.get("role")
-    
     eie = elem.xpath('e:interface', namespaces = _XPNS)
     intf.name = eie[0].get("name")
 
+    intf = AdInterface(name)
+    intf.component_id = elem.get("component_id")
+    intf.role = elem.get("role")
+    
     return intf
 
 
@@ -66,7 +67,7 @@ class AdNode(object):
       elif name == 'ram':
         node.ram = fd.get("weight")
 
-    for intf in elem.xpath('g:interface'):
+    for intf in elem.xpath('g:interface', namespaces = _XPNS):
       node.interfaces.append(AdInterface._fromdom(intf))
 
     return node
