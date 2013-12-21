@@ -35,3 +35,22 @@ class AM(object):
 
 APIRegistry = _Registry()
 FrameworkRegistry = _Registry()
+
+class AMAPIv2(object):
+  def _getDefaultArgs (self, context, url):
+    return ["-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
+
+  def listresources (self, context, url, slice):
+    arglist = self._getDefaultArgs(context, url)
+
+    if slice:
+      arglist.extend(["--slicecredfile", context.slicecred_path, "listresources", slice])
+    else:
+      arglist.append("listresources")
+
+    text,res = oscript.call(arglist)
+    if res.values()[0]["code"]["geni_code"] == 0:
+      rspec = res.values()[0]["value"]
+      return rspec
+
+
