@@ -5,9 +5,9 @@ from __future__ import absolute_import
 import inspect
 import sys
 
-from . import AM
+from .core import AM
 
-class PGAM(AM):
+class IGCompute(AM):
   def __init__ (self, name, url):
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg")
 
