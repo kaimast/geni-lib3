@@ -29,7 +29,7 @@ class AM(object):
   @property
   def framework (self):
     if not self._framework:
-      self._framework = FrameworkRegistry.get(self._frameworkstr)
+      self._framework = FrameworkRegistry.get(self._frameworkstr)()
     return self._framework
 
 
