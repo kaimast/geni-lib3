@@ -31,6 +31,7 @@ class Framework(object):
     nullf = open("/dev/null")
     # We really don't want shell=True here, but there are pty problems with openssl otherwise
     ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
+    # TODO: Test the size afterwards to make sure the password was right, or parse stderr?
     self._key = path
 
   @property
@@ -40,12 +41,28 @@ class Framework(object):
   @cert.setter
   def cert (self, val):
     self._cert = val
-    
+
+  def parseAdvertisement (self, xml_data):
+    pass
+
+  def parseManifest (self, xml_data):
+    pass
+
 
 class ProtoGENI(Framework):
   def __init__ (self, name = "pg"):
     super(ProtoGENI, self).__init__(name)
     self._type = "pgch"
+
+  def parseAdvertisement (self, data):
+    from geni.rspec import pgad
+    ad = pgad.Advertisement(xml=data)
+    return ad
+
+  def parseManifest (self, data):
+    from geni.rspec import pgmanifest
+    manifest = pgmanifest.Manifest(xml = data)
+    return manifest
 
 
 class Emulab(ProtoGENI):
@@ -77,3 +94,4 @@ class Portal(ProtoGENI):
 
 
 FrameworkRegistry.register("portal", Portal)
+FrameworkRegistry.register("pg", ProtoGENI)

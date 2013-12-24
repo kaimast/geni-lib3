@@ -1,5 +1,6 @@
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
+from ..gcf import oscript
 from .core import APIRegistry
 
 class AMAPIv2(object):
@@ -9,7 +10,7 @@ class AMAPIv2(object):
   def listresources (self, context, url, sname):
     arglist = self._getDefaultArgs(context, url)
 
-    if slice:
+    if sname:
       arglist.extend(["--slicecredfile", context.slicecred_paths[sname], "listresources", sname])
     else:
       arglist.append("listresources")

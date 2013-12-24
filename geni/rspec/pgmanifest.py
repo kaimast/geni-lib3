@@ -21,8 +21,11 @@ class ManifestLink(Link):
 
 
 class Manifest(object):
-  def __init__ (self, path):
-    self._root = ET.parse(open(path))   
+  def __init__ (self, path = None, xml = None):
+    if path:
+      self._root = ET.parse(open(path))
+    elif xml:
+      self._root = ET.fromstring(xml)
 
   @property
   def links (self):
