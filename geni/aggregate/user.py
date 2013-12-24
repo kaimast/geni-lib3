@@ -4,16 +4,16 @@ class User(object):
   def __init__ (self):
     self.name = None
     self.urn = None
-    self.keys = []
+    self._keys = []
 
   def getConfig (self):
     l = []
     l.append("[%s]" % (self.name))
     l.append("urn = %s" % (self.urn))
-    l.append("keys = %s" % (",".join(keys)))
+    l.append("keys = %s" % (",".join(self._keys)))
     return l
 
   def addKey (self, path):
-    self.keys.append(path)
+    self._keys.append(path)
 
 

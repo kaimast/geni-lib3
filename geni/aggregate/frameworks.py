@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import tempfile
+import subprocess
 
 from .core import FrameworkRegistry
 
@@ -15,6 +16,30 @@ class Framework(object):
     self._sa = None
     self._cert = None
     self._key = None
+
+  @property
+  def key (self):
+    return self._key
+
+  @key.setter
+  def key (self, val):
+    # TODO: Test if the path in val really exists
+    # TODO:  We need global tempfile accounting so we can clean up on terminate
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    path = tf.name
+    tf.close()
+    nullf = open("/dev/null")
+    # We really don't want shell=True here, but there are pty problems with openssl otherwise
+    ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
+    self._key = path
+
+  @property
+  def cert (self):
+    return self._cert
+
+  @cert.setter
+  def cert (self, val):
+    self._cert = val
     
 
 class ProtoGENI(Framework):
@@ -37,24 +62,7 @@ class Portal(ProtoGENI):
     self._authority = "ch.geni.net"
     self._ch = "https://ch.geni.net:8443/"
     self._sa = "https://ch.geni.net:8443/"
-    self.cert = None
-    self._key = None
 
-  @property
-  def key (self):
-    return self._key
-
-  @key.setter
-  def key (self, val):
-    # TODO:  We need global tempfile accounting so we can clean up on terminate
-    tf = tempfile.NamedTemporaryFile(delete=False)
-    path = tf.name
-    tf.close()
-    nullf = open("/dev/null")
-
-    # We really don't want shell=True here, but there are pty problems with openssl otherwise
-    ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
-    self._key = path
 
   def getConfig (self):
     l = []
