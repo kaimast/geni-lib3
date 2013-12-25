@@ -1,5 +1,7 @@
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
+from __future__ import absolute_import
+
 from ..gcf import oscript
 from .core import APIRegistry
 
@@ -22,6 +24,14 @@ class AMAPIv2(object):
       rspec = res.values()[0]["value"]
       return rspec
 
-APIRegistry.register("amapiv2", AMAPIv2())
+  def createsliver (self, context, url, sname, rspec):
+    arglist = self._getDefaultArgs(context, url)
 
+  def sliverstatus (self, context, url, sname):
+    arglist = self._getDefaultArgs(context, url)
+
+  def deletesliver (self, context, url, sname):
+    arglist = self._getDefaultArgs(context, url)
+
+APIRegistry.register("amapiv2", AMAPIv2())
 

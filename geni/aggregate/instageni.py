@@ -21,6 +21,8 @@ class IGCompute(AM):
 
 GPO = IGCompute("ig-gpo", "https://boss.instageni.gpolab.bbn.com:12369/protogeni/xmlrpc/am/2.0")
 Kentucky = IGCompute("ig-kentucky", "https://boss.lan.sdn.uky.edu:12369/protogeni/xmlrpc/am/2.0")
+Kettering = IGCompute("ig-kettering", "https://geni.kettering.edu:12369/protogeni/xmlrpc/am/2.0")
+Northwestern = IGCompute("ig-northwestern", "https://instageni.northwestern.edu:12369/protogeni/xmlrpc/am/2.0")
 Utah = IGCompute("ig-utah", "https://boss.utah.geniracks.net:12369/protogeni/xmlrpc/am/2.0")
 UtahDDC = IGCompute("ig-utahddc", "https://boss.utahddc.geniracks.net:12369/protogeni/xmlrpc/am/2.0")
 
