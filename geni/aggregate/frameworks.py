@@ -6,6 +6,8 @@ import tempfile
 import subprocess
 
 from .core import FrameworkRegistry
+from ..exceptions import AbstractImplementationError
+
 
 class Framework(object):
   def __init__ (self, name = None):
@@ -43,10 +45,10 @@ class Framework(object):
     self._cert = val
 
   def parseAdvertisement (self, xml_data):
-    pass
+    raise AbstractImplementationError
 
   def parseManifest (self, xml_data):
-    pass
+    raise AbstractImplementationError
 
 
 class ProtoGENI(Framework):

@@ -1,4 +1,4 @@
-# Copyright (c) 2013  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -17,6 +17,9 @@ class IGCompute(AM):
       return self.framework.parseAdvertisement(rspec_data)
     else:
       return self.framework.parseManifest(rspec_data)
+
+  def sliverstatus (self, context, sname):
+    status = self.api.sliverstatus(context, self.url, sname)
 
 
 GPO = IGCompute("ig-gpo", "https://boss.instageni.gpolab.bbn.com:12369/protogeni/xmlrpc/am/2.0")
