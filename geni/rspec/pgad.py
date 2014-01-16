@@ -10,16 +10,15 @@ _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 
 class AdInterface(pg.Interface):
   def __init__ (self, name):
-    super(AdInterface, self).__init__(self, name, None)
+    super(AdInterface, self).__init__(name, None)
     self.component_id = None
     self.role = None
 
   @classmethod
   def _fromdom (cls, elem):
     eie = elem.xpath('e:interface', namespaces = _XPNS)
-    intf.name = eie[0].get("name")
+    intf = AdInterface(eie[0].get("name"))
 
-    intf = AdInterface(name)
     intf.component_id = elem.get("component_id")
     intf.role = elem.get("role")
     
@@ -88,8 +87,11 @@ class AdSharedVLAN(object):
 
 
 class Advertisement(object):
-  def __init__ (self, path):
-    self._root = ET.parse(open(path))
+  def __init__ (self, path = None, xml = None):
+    if path:
+      self._root = ET.parse(open(path))
+    elif xml:
+      self._root = ET.fromstring(xml)
 
   @property
   def nodes (self):
