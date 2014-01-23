@@ -22,6 +22,11 @@ class IGCompute(AM):
     status = self.api.sliverstatus(context, self.url, sname)
 
 
+class IGOpenflow(AM):
+  def __init__ (self, name, url):
+    super(IGOpenflow, self).__init__(name, url, "amapiv2", "foam")
+
+
 Clemson = IGCompute("ig-clemson", "https://instageni.clemson.edu:12369/protogeni/xmlrpc/am/2.0")
 GATech = IGCompute("ig-gatech", "https://instageni.rnoc.gatech.edu:12369/protogeni/xmlrpc/am/2.0")
 GPO = IGCompute("ig-gpo", "https://boss.instageni.gpolab.bbn.com:12369/protogeni/xmlrpc/am/2.0")

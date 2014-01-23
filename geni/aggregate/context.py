@@ -38,6 +38,7 @@ class Context(object):
     self.project = None
     self._usercred_path = None
     self._slicecred_paths = {}
+    self.debug = False
 
   def _getSliceCred (self, sname):
     if not self._slicecred_paths.has_key(sname):
@@ -61,6 +62,8 @@ class Context(object):
 
   @property
   def usercred_path (self):
+    # TODO: Need to handle getting new usercred if cached one is expired
+    # TODO: Need to invalidate usercred path if control framework is changed
     if self._usercred_path is None:
       if self._default_user:
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)

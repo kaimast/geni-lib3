@@ -15,6 +15,8 @@ class _Registry(object):
 
 class AM(object):
   def __init__ (self, name, url, api, framework):
+    # TODO: This isn't really a framework, it's the AM Type so we know
+    # how to parse command output
     self.url = url
     self.name = name
     self._apistr = api
