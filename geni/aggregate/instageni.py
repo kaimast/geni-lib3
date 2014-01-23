@@ -22,10 +22,12 @@ class IGCompute(AM):
     status = self.api.sliverstatus(context, self.url, sname)
 
 
+Clemson = IGCompute("ig-clemson", "https://instageni.clemson.edu:12369/protogeni/xmlrpc/am/2.0")
 GATech = IGCompute("ig-gatech", "https://instageni.rnoc.gatech.edu:12369/protogeni/xmlrpc/am/2.0")
 GPO = IGCompute("ig-gpo", "https://boss.instageni.gpolab.bbn.com:12369/protogeni/xmlrpc/am/2.0")
 Kentucky = IGCompute("ig-kentucky", "https://boss.lan.sdn.uky.edu:12369/protogeni/xmlrpc/am/2.0")
 Kettering = IGCompute("ig-kettering", "https://geni.kettering.edu:12369/protogeni/xmlrpc/am/2.0")
+MAX = IGCompute("ig-max", "https://instageni.maxgigapop.net:12369/protogeni/xmlrpc/am/2.0")
 Northwestern = IGCompute("ig-northwestern", "https://instageni.northwestern.edu:12369/protogeni/xmlrpc/am/2.0")
 NYSERNet = IGCompute("ig-nysernet", "https://instageni.nysernet.org:12369/protogeni/xmlrpc/am/2.0")
 Utah = IGCompute("ig-utah", "https://boss.utah.geniracks.net:12369/protogeni/xmlrpc/am/2.0")
