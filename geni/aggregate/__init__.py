@@ -3,3 +3,5 @@
 from . import apis
 from . import frameworks
 from . import amtypes
+
+from .core import APIRegistry, AMTypeRegistry, FrameworkRegistry

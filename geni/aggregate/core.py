@@ -19,7 +19,7 @@ class AM(object):
     self.name = name
     self._apistr = api
     self._api = None
-    self._typestr = framework
+    self._typestr = amtype
     self._type = None
 
   @property
@@ -31,7 +31,7 @@ class AM(object):
   @property
   def amtype (self):
     if not self._type:
-      self._type = AMTypeRegistry.get(self._typestr)()
+      self._type = AMTypeRegistry.get(self._typestr)
     return self._type
 
 
