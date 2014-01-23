@@ -1,7 +1,13 @@
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
+from __future__ import absolute_import
+
 import tempfile
+import os
+import os.path
+
 from . import cmd
+from ..exceptions import NoUserError
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -22,7 +28,10 @@ class SlicecredProxy(object):
 
 
 class Context(object):
+  DEFAULT_DIR = os.path.expanduser("~/.bssw/geni")
+
   def __init__ (self):
+    self._data_dir = None
     self._default_user = None
     self._users = set()
     self.cf = None
@@ -30,18 +39,44 @@ class Context(object):
     self._usercred_path = None
     self._slicecred_paths = {}
 
+  def _getSliceCred (self, sname):
+    if not self._slicecred_paths.has_key(sname):
+      cfg = self.cfg_path
+      cred = cmd.getslicecred(cfg, sname)
+
+  @property
+  def datadir (self):
+    if self._data_dir is None:
+      if not os.path.exists(Context.DEFAULT_DIR):
+        os.makedirs(Context.DEFAULT_DIR)
+      self._data_dir = Context.DEFAULT_DIR
+    return self._data_dir
+
+  @datadir.setter
+  def datadir (self, val):
+    nval = os.path.expanduser(os.path.normpath(val))
+    if not os.path.exists(nval):
+      os.makedirs(nval)
+    self._data_dir = nval
+
   @property
   def usercred_path (self):
     if self._usercred_path is None:
-      cfg = self.cfg_path
-      cred = cmd.getusercred(cfg)
+      if self._default_user:
+        ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
+        if os.path.exists(ucpath):
+          self._usercred_path = ucpath
+        else:
+          cfg = self.cfg_path
+          cred = cmd.getusercred(cfg)
 
-      # TODO: We probably want to store this one in a more static place that we can find across processes
-      tf = tempfile.NamedTemporaryFile(delete=False)
-      tf.write(cred)
-      path = tf.name
-      tf.close()
-      self._usercred_path = path
+          f = open(ucpath, "w+")
+          f.write(cred)
+          path = f.name
+          f.close()
+          self._usercred_path = ucpath
+      else:
+        raise NoUserError()
 
     return self._usercred_path
 
