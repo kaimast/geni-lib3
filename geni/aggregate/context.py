@@ -3,6 +3,24 @@
 import tempfile
 from . import cmd
 
+class SlicecredProxy(object):
+  def __init__ (self, context):
+    self._context = context
+
+  def __getitem__ (self, name):
+    return self._context._getSliceCred(name)
+
+  def iteritems (self):
+    return self._context._slicecred_paths.iteritems()
+
+  def iterkeys (self):
+    return self._context._slicecred_paths.iterkeys()
+
+  def __iter__ (self):
+    for x in self._context._slicecred_paths:
+      yield x
+
+
 class Context(object):
   def __init__ (self):
     self._default_user = None
@@ -57,3 +75,8 @@ class Context(object):
     self._users.add(user)
     if default:
       self._default_user = user
+
+  @property
+  def slicecreds (self):
+    return SlicecredProxy(self)
+

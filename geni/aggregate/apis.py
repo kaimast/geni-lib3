@@ -15,7 +15,7 @@ class AMAPIv2(object):
     arglist = self._getDefaultArgs(context, url)
 
     if sname:
-      arglist.extend(["--slicecredfile", context.slicecred_paths[sname], "listresources", sname])
+      arglist.extend(["--slicecredfile", context.slicecreds[sname], "listresources", sname])
     else:
       arglist.append("listresources")
 
@@ -32,6 +32,8 @@ class AMAPIv2(object):
 
   def deletesliver (self, context, url, sname):
     arglist = self._getDefaultArgs(context, url)
+    arglist.extend(["--slicecredfile", context.slicecreds[sname], "deletesliver", sname])
+
 
 APIRegistry.register("amapiv2", AMAPIv2())
 

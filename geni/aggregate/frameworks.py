@@ -70,6 +70,7 @@ class ProtoGENI(Framework):
 class Emulab(ProtoGENI):
   def __init__ (self):
     super(Emulab, self).__init__("emulab")
+    self._type = "pgch"
     self._ch = "https://www.emulab.net:443/protogeni/xmlrpc/ch"
     self._ca = "https://www.emulab.net:443/protogeni/xmlrpc/sa"
 
