@@ -14,9 +14,9 @@ class IGCompute(AM):
   def listresources (self, context, slice = None):
     rspec_data = self.api.listresources(context, self.url, slice)
     if slice is None:
-      return self.framework.parseAdvertisement(rspec_data)
+      return self.type.parseAdvertisement(rspec_data)
     else:
-      return self.framework.parseManifest(rspec_data)
+      return self.type.parseManifest(rspec_data)
 
   def sliverstatus (self, context, sname):
     status = self.api.sliverstatus(context, self.url, sname)

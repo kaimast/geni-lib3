@@ -6,7 +6,6 @@ import tempfile
 import subprocess
 
 from .core import FrameworkRegistry
-from ..exceptions import AbstractImplementationError
 
 
 class Framework(object):
@@ -44,27 +43,11 @@ class Framework(object):
   def cert (self, val):
     self._cert = val
 
-  def parseAdvertisement (self, xml_data):
-    raise AbstractImplementationError
-
-  def parseManifest (self, xml_data):
-    raise AbstractImplementationError
-
 
 class ProtoGENI(Framework):
   def __init__ (self, name = "pg"):
     super(ProtoGENI, self).__init__(name)
     self._type = "pgch"
-
-  def parseAdvertisement (self, data):
-    from geni.rspec import pgad
-    ad = pgad.Advertisement(xml=data)
-    return ad
-
-  def parseManifest (self, data):
-    from geni.rspec import pgmanifest
-    manifest = pgmanifest.Manifest(xml = data)
-    return manifest
 
 
 class Emulab(ProtoGENI):

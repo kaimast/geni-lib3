@@ -14,15 +14,13 @@ class _Registry(object):
 
 
 class AM(object):
-  def __init__ (self, name, url, api, framework):
-    # TODO: This isn't really a framework, it's the AM Type so we know
-    # how to parse command output
+  def __init__ (self, name, url, api, amtype):
     self.url = url
     self.name = name
     self._apistr = api
     self._api = None
-    self._frameworkstr = framework
-    self._framework = None
+    self._typestr = framework
+    self._type = None
 
   @property
   def api (self):
@@ -31,11 +29,12 @@ class AM(object):
     return self._api
 
   @property
-  def framework (self):
-    if not self._framework:
-      self._framework = FrameworkRegistry.get(self._frameworkstr)()
-    return self._framework
+  def amtype (self):
+    if not self._type:
+      self._type = AMTypeRegistry.get(self._typestr)()
+    return self._type
 
 
 APIRegistry = _Registry()
+AMTypeRegistry = _Registry()
 FrameworkRegistry = _Registry()

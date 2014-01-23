@@ -1,4 +1,5 @@
 # Copyright (c) 2013-2014  Barnstormer Softworks
 
-from .apis import *
-from .frameworks import *
+from . import apis
+from . import frameworks
+from . import amtypes
