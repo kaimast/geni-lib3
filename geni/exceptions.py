@@ -7,3 +7,10 @@ class AbstractImplementationError(Exception):
 class NoUserError(Exception):
   def __str__ (self):
     return "No framework user specified"
+
+class SliceCredError(Exception):
+  def __init__ (self, text):
+    self.text = text
+
+  def __str__ (self):
+    return text

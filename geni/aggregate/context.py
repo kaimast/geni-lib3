@@ -7,7 +7,7 @@ import os
 import os.path
 
 from . import cmd
-from ..exceptions import NoUserError
+from ..exceptions import NoUserError, SliceCredError
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -41,9 +41,19 @@ class Context(object):
     self.debug = False
 
   def _getSliceCred (self, sname):
+    # TODO: Figure out if a slice cred is expired and get it again
     if not self._slicecred_paths.has_key(sname):
       cfg = self.cfg_path
-      cred = cmd.getslicecred(cfg, sname)
+      scpath = "%s/%s-%s-scred.xml" % (self.datadir, self._default_user.name, sname)
+      if not os.path.exists(scpath):
+        (text, cred) = cmd.getslicecred(self, sname)
+        if not cred:
+          raise SliceCredError(text)
+        f = open(scpath, "w+")
+        f.write(cred)
+        f.close()
+      self._slicecred_paths[sname] = scpath
+    return self._slicecred_paths[sname]
 
   @property
   def datadir (self):
@@ -88,8 +98,9 @@ class Context(object):
     l = []
     l.append("[omni]")
     if self.cf: l.append("default_cf = %s" % (self.cf.name))
-    if self.project: l.append("project = %s" % (self.project))
+    if self.project: l.append("default_project = %s" % (self.project))
     if self._users: l.append("users = %s" % (", ".join([u.name for u in self._users])))
+    l.append("")
 
     l.extend(self.cf.getConfig())
     l.append("")
