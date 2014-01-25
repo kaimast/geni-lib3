@@ -33,9 +33,9 @@ class AMAPIv2(object):
 
   def renewsliver (self, context, url, sname, date):
     arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", str(date)])
+    arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
     text, res = oscript.call(arglist)
-    return arglist
+    return text,res
 
   def deletesliver (self, context, url, sname):
     arglist = self._getDefaultArgs(context, url)

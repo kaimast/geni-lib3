@@ -22,8 +22,8 @@ class IGCompute(AM):
     status = self.api.sliverstatus(context, self.url, sname)
 
   def renewsliver (self, context, sname, date):
-    res = self.api.renewsliver(context, self.url, sname, date)
-    return res
+    text,res = self.api.renewsliver(context, self.url, sname, date)
+    return text,res
 
 
 class IGOpenflow(AM):
