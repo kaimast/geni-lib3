@@ -4,6 +4,8 @@ from __future__ import absolute_import
 
 import inspect
 import sys
+import tempfile
+import os
 
 from .core import AM
 
@@ -30,7 +32,12 @@ class IGCompute(AM):
     self.api.deletesliver(context, self.url, sname)
 
   def createsliver (self, context, sname, rspec):
-    res = self.api.createesliver(context, self.url, sname, rspec)
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    path = tf.name
+    tf.close()
+    rspec.write(path)
+    res = self.api.createsliver(context, self.url, sname, path)
+    os.remove(path)
     return self.amtype.parseManifest(res)
 
 
