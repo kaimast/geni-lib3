@@ -31,7 +31,6 @@ class AMAPIv2(object):
     else:
       arglist.append("listresources")
 
-    print arglist
     text,res = oscript.call(arglist)
     if res.values()[0]["code"]["geni_code"] == 0:
       rspec = res.values()[0]["value"]
