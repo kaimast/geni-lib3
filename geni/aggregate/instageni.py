@@ -20,10 +20,18 @@ class IGCompute(AM):
 
   def sliverstatus (self, context, sname):
     status = self.api.sliverstatus(context, self.url, sname)
+    return status
 
   def renewsliver (self, context, sname, date):
     text,res = self.api.renewsliver(context, self.url, sname, date)
     return text,res
+
+  def deletesliver (self, context, sname):
+    self.api.deletesliver(context, self.url, sname)
+
+  def createsliver (self, context, sname, rspec):
+    res = self.api.createesliver(context, self.url, sname, rspec)
+    return self.amtype.parseManifest(res)
 
 
 class IGOpenflow(AM):
