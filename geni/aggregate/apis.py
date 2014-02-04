@@ -59,7 +59,7 @@ class AMAPIv2(object):
     text, res = oscript.call(arglist)
     if res[1]:
       raise RenewSliverError(text)
-    return
+    return (text, res)
 
   def deletesliver (self, context, url, sname):
     arglist = self._getDefaultArgs(context, url)
