@@ -58,7 +58,7 @@ class AMAPIv2(object):
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
     text, res = oscript.call(arglist)
     if res[1]:
-      raise RenewSliverError(test)
+      raise RenewSliverError(text)
     return
 
   def deletesliver (self, context, url, sname):
