@@ -20,9 +20,9 @@ class RenewSliverError(AMError): pass
 class AMAPIv2(object):
   def _getDefaultArgs (self, context, url):
     if context.debug:
-      return ["--debug", "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
+      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
     else:
-      return ["--warn", "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
+      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
 
   def listresources (self, context, url, sname):
     arglist = self._getDefaultArgs(context, url)

@@ -32,6 +32,7 @@ class Context(object):
 
   def __init__ (self):
     self._data_dir = None
+    self._nick_cache_path = None
     self._default_user = None
     self._users = set()
     self.cf = None
@@ -54,6 +55,13 @@ class Context(object):
         f.close()
       self._slicecred_paths[sname] = scpath
     return self._slicecred_paths[sname]
+
+  @property
+  def nickCache (self):
+    if self._nick_cache_path is None:
+      cachepath = os.path.normpath("%s/nickcache.json" % (self.datadir))
+      self._nick_cache_path = cachepath
+    return self._nick_cache_path
 
   @property
   def datadir (self):
