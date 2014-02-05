@@ -2,29 +2,45 @@
 
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
-from multiprocessing import Process
+import multiprocessing as MP
 from argparse import ArgumentParser
+import time
 
 import example_config
 import geni.aggregate.instageni as IG
 
 context = example_config.buildContext()
 
-def query_aggregate (context, site):
+def query_aggregate (context, site, q = None):
   try:
     ad = site.listresources(context)
     total = [node for node in ad.nodes if node.exclusive and "raw-pc" in node.sliver_types]
     avail = [node.component_id for node in ad.nodes if node.available and node.exclusive and "raw-pc" in node.sliver_types]
-    print "[%s] (%d/%d)" % (site.name, len(avail), len(total))
+    out = "[%s] (%d/%d)" % (site.name, len(avail), len(total))
 #    print "[%s] %s" % (site.name, ", ".join(avail))
   except Exception:
-    print "[%s] OFFLINE" % (site.name)
+    out = "[%s] OFFLINE" % (site.name)
+  if q:
+    q.put(out)
+  else:
+    print out
   
 
 def do_parallel ():
+  q = MP.Queue()
   for idx,site in enumerate(IG.aggregates()):
-    p = Process(target=query_aggregate, args=(context, site))
+    p = MP.Process(target=query_aggregate, args=(context, site, q))
     p.start()
+
+  while MP.active_children():
+    time.sleep(1)
+
+  l = []
+  while not q.empty():
+    l.append(q.get())
+
+  for idx,txt in enumerate(l):
+    print "%02d %s" % (idx+1, txt)
 
 
 def do_serial ():
