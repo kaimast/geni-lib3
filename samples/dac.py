@@ -2,9 +2,16 @@
 
 import geni.rspec.pg as PG
 import geni.aggregate.instageni as IG
+import geni.aggregate.apis
+
 import nbastin
 
 context = nbastin.buildContext()
+
+try:
+  IG.UtahDDC.deletesliver(context, "xen-test2")
+except geni.aggregate.apis.AMError, e:
+  pass
 
 r = PG.Request()
 
@@ -19,8 +26,9 @@ r.addResource(vm2)
 lnk = PG.Link()
 lnk.addInterface(intf1)
 lnk.addInterface(intf2)
+lnk.bandwidth = 1000000
 
 r.addResource(lnk)
 
-manifest = IG.GPO.createsliver(context, "xen-test2", r)
+manifest = IG.UtahDDC.createsliver(context, "xen-test2", r)
 print manifest.text

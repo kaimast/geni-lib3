@@ -1,10 +1,12 @@
 # Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
+
 import geni.rspec
 import geni.namespaces as GNS
 
 from lxml import etree as ET
+import itertools
 import uuid
 
 class NodeType(object):
@@ -107,6 +109,7 @@ class Interface(object):
 
 class Link(object):
   LNKID = 0
+  DEFAULT_BW = 100000
 
   def __init__ (self, name = None, ltype = ""):
     if name is None:
@@ -116,6 +119,9 @@ class Link(object):
     self.interfaces = []
     self.type = ltype
     self.shared_vlan = None
+
+    # If you try to set bandwidth higher than a gigabit, PG probably won't like you
+    self.bandwidth = Link.DEFAULT_BW
 
   @classmethod
   def newLinkID (cls):
@@ -140,6 +146,14 @@ class Link(object):
     if self.shared_vlan:
       sv = ET.SubElement(lnk, "{%s}link_shared_vlan" % (GNS.SVLAN.name))
       sv.attrib["name"] = self.shared_vlan
+
+    if self.bandwidth != Link.DEFAULT_BW:
+      for (src,dst) in itertools.permutations(self.interfaces):
+        bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
+        bw.attrib["capacity"] = "%d" % (self.bandwidth)
+        bw.attrib["source_id"] = src.client_id
+        bw.attrib["dest_id"] = dst.client_id
+
     for intf in self.interfaces:
       if intf.bandwidth:
         for other in self.interfaces:

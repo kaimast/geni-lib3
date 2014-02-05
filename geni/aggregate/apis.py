@@ -55,6 +55,7 @@ class AMAPIv2(object):
 
   def renewsliver (self, context, url, sname, date):
     arglist = self._getDefaultArgs(context, url)
+    print arglist
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
     text, res = oscript.call(arglist)
     if res[1]:
