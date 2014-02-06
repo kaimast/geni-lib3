@@ -102,3 +102,7 @@ class Advertisement(object):
   def shared_vlans (self):
     for vlan in self._root.xpath('/g:rspec/s:rspec_shared_vlan/s:available', namespaces = _XPNS):
       yield AdSharedVLAN._fromdom(vlan)
+
+  @property
+  def text (self):
+    return ET.tostring(self._root, pretty_print=True)
