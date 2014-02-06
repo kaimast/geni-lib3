@@ -69,6 +69,10 @@ class AMAPIv2(object):
     if res[1]:
       raise DeleteSliverError(text)
 
+  def getversion (self, context, url):
+    arglist = self._getDefaultArgs(context, url)
+    arglist.extend("getversion")
+
 
 APIRegistry.register("amapiv2", AMAPIv2())
 
