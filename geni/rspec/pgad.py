@@ -8,11 +8,22 @@ from geni.rspec import pg
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 
+
+class Location(object):
+  def __init__ (self):
+    self.latitude = None
+    self.longitude = None
+
+  def __repr__ (self):
+    return "<Location: %f, %f>" % (self.latitude, self.longitude)
+
+
 class AdInterface(pg.Interface):
   def __init__ (self, name):
     super(AdInterface, self).__init__(name, None)
     self.component_id = None
     self.role = None
+    self.addresses = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -21,7 +32,7 @@ class AdInterface(pg.Interface):
 
     intf.component_id = elem.get("component_id")
     intf.role = elem.get("role")
-    
+
     return intf
 
 
@@ -35,6 +46,7 @@ class AdNode(object):
     self.sliver_types = set()
     self.shared = False
     self.interfaces = []
+    self.location = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -68,6 +80,13 @@ class AdNode(object):
 
     for intf in elem.xpath('g:interface', namespaces = _XPNS):
       node.interfaces.append(AdInterface._fromdom(intf))
+
+    locelem = elem.xpath('g:location', namespaces = _XPNS)
+    if locelem:
+      loc = Location()
+      loc.latitude = float(locelem[0].get("latitude"))
+      loc.longitude = float(locelem[0].get("longitude"))
+      node.location = loc
 
     return node
 
