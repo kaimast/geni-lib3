@@ -31,3 +31,7 @@ class Manifest(object):
   def links (self):
     for link in self._root.findall("{%s}link" % (GNS.REQUEST.name)):
       yield ManifestLink._fromdom(link)
+
+  @property
+  def text (self):
+    return ET.tostring(self._root, pretty_print=True)
