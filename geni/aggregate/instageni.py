@@ -10,7 +10,9 @@ import os
 from .core import AM
 
 class IGCompute(AM):
-  def __init__ (self, name, url):
+  def __init__ (self, name, host, url = None):
+    if url is None:
+      url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg")
 
   def listresources (self, context, slice = None):
@@ -46,20 +48,29 @@ class IGOpenflow(AM):
     super(IGOpenflow, self).__init__(name, url, "amapiv2", "foam")
 
 
-Clemson = IGCompute("ig-clemson", "https://instageni.clemson.edu:12369/protogeni/xmlrpc/am/2.0")
-GATech = IGCompute("ig-gatech", "https://instageni.rnoc.gatech.edu:12369/protogeni/xmlrpc/am/2.0")
-GPO = IGCompute("ig-gpo", "https://boss.instageni.gpolab.bbn.com:12369/protogeni/xmlrpc/am/2.0")
-Illinois = IGCompute("ig-illinois", "https://instageni.illinois.edu:12369/protogeni/xmlrpc/am/2.0")
-Kentucky = IGCompute("ig-kentucky", "https://boss.lan.sdn.uky.edu:12369/protogeni/xmlrpc/am/2.0")
-Kettering = IGCompute("ig-kettering", "https://geni.kettering.edu:12369/protogeni/xmlrpc/am/2.0")
-MAX = IGCompute("ig-max", "https://instageni.maxgigapop.net:12369/protogeni/xmlrpc/am/2.0")
-Missouri = IGCompute("ig-missouri", "https://instageni.rnet.missouri.edu:12369/protogeni/xmlrpc/am/2.0")
-Northwestern = IGCompute("ig-northwestern", "https://instageni.northwestern.edu:12369/protogeni/xmlrpc/am/2.0")
-NYSERNet = IGCompute("ig-nysernet", "https://instageni.nysernet.org:12369/protogeni/xmlrpc/am/2.0")
-NYU = IGCompute("ig-nyu", "https://genirack.nyu.edu:12369/protogeni/xmlrpc/am/2.0")
-Utah = IGCompute("ig-utah", "https://boss.utah.geniracks.net:12369/protogeni/xmlrpc/am/2.0")
-UtahDDC = IGCompute("ig-utahddc", "https://boss.utahddc.geniracks.net:12369/protogeni/xmlrpc/am/2.0")
-Wisconsin = IGCompute("ig-wisconsin", "https://instageni.wisc.edu:12369/protogeni/xmlrpc/am/2.0")
+Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu")
+Clemson = IGCompute("ig-clemson", "instageni.clemson.edu")
+GATech = IGCompute("ig-gatech", "instageni.rnoc.gatech.edu")
+GPO = IGCompute("ig-gpo", "boss.instageni.gpolab.bbn.com")
+Illinois = IGCompute("ig-illinois", "instageni.illinois.edu")
+Kansas = IGCompute("ig-kansas", "instageni.ku.gpeni.net")
+Kentucky = IGCompute("ig-kentucky", "boss.lan.sdn.uky.edu")
+Kettering = IGCompute("ig-kettering", "geni.kettering.edu")
+LSU = IGCompute("ig-lsu", "instageni.lsu.edu")
+MAX = IGCompute("ig-max", "instageni.maxgigapop.net")
+Missouri = IGCompute("ig-missouri", "instageni.rnet.missouri.edu")
+MOXI = IGCompute("ig-moxi", "instageni.iu.edi")
+Northwestern = IGCompute("ig-northwestern", "instageni.northwestern.edu")
+NPS = IGCompute("ig-nps", "instageni.nps.edu")
+NYSERNet = IGCompute("ig-nysernet", "instageni.nysernet.org")
+NYU = IGCompute("ig-nyu", "genirack.nyu.edu")
+Princeton = IGCompute("ig-princeton", "instageni.cs.princeton.edu")
+Rutgers = IGCompute("ig-rutgers", "instageni.rutgers.edu")
+SOX = IGCompute("ig-sox", "instageni.sox.net")
+Stanford = IGCompute("ig-stanford", "instageni.stanford.edu")
+Utah = IGCompute("ig-utah", "boss.utah.geniracks.net")
+UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net")
+Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu")
 
 def aggregates ():
   module = sys.modules[__name__]
