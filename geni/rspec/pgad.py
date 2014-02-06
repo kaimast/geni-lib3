@@ -42,7 +42,7 @@ class AdNode(object):
     self.name = None
     self.exclusive = True
     self.available = False
-    self.hardware_types = set()
+    self.hardware_types = {}
     self.sliver_types = set()
     self.shared = False
     self.interfaces = []
@@ -66,7 +66,8 @@ class AdNode(object):
 
     htypes = elem.xpath('g:hardware_type', namespaces = _XPNS)
     for htype in htypes:
-      node.hardware_types.add(htype.get("name"))
+      nts = htype.xpath('e:node_type', namespaces = _XPNS)
+      node.hardware_types[htype.get("name")] = nts[0].get("type_slots")
 
     fds = elem.xpath('e:fd', namespaces = _XPNS)
     for fd in fds:
