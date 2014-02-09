@@ -14,6 +14,7 @@ class AMError(Exception):
 class DeleteSliverError(AMError): pass
 class CreateSliverError(AMError): pass
 class SliverStatusError(AMError): pass
+class RenewSliverError(AMError): pass
 
 
 class AMAPIv2(object):
@@ -56,7 +57,9 @@ class AMAPIv2(object):
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
     text, res = oscript.call(arglist)
-    return text,res
+    if res[1]:
+      raise RenewSliverError(test)
+    return
 
   def deletesliver (self, context, url, sname):
     arglist = self._getDefaultArgs(context, url)
