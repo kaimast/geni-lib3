@@ -227,7 +227,7 @@ class Node(Resource):
         service._write(svce)
 
     if self.routable_control_ip:
-      rc = ET.SubElement(nd, "{%s}routable_control_ip")
+      rc = ET.SubElement(nd, "{%s}routable_control_ip" % (Namespaces.EMULAB.name))
 
     return nd
 
@@ -248,6 +248,18 @@ class RawPC(Node):
 class XenVM(Node):
   def __init__ (self, name, component_id = None, exclusive = False):
     super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
+    self.cores = 1
+    self.ram = 256
+    self.disk = 8
+
+  def _write (self, root):
+    nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    xen = ET.SubElement(st, "{%s}xen" % (Namespaces.EMULAB.name))
+    xen.attrib["cores"] = str(self.cores)
+    xen.attrib["ram"] = str(self.ram)
+    xen.attrib["disk"] = str(self.disk)
+    return nd
 
 
 class VZContainer(Node):

@@ -7,7 +7,7 @@ import geni.aggregate.instageni
 import geni.rspec.pg as PG
 
 context = nbastin.buildContext()
-am = geni.aggregate.instageni.GPO
+am = geni.aggregate.instageni.UtahDDC
 
 #am.deletesliver(context, "vts-stage")
 ad = am.listresources(context)
@@ -20,7 +20,7 @@ for vlan in ad.shared_vlans:
 r = PG.Request()
 
 node = PG.RawPC("vts")
-node.disk_image = "urn:publicid:IDN+instageni.gpolab.bbn.com+image+emulab-ops:UBUNTU12-64-STD"
+node.disk_image = "https://www.instageni.maxgigapop.net/image_metadata.php?uuid=3219aad0-ac89-11e3-b767-000000000000"
 
 intfs = []
 for idx in xrange(1,4):
@@ -41,6 +41,6 @@ for (intf, vlan) in pairs:
 
 r.addResource(node)
 
-mfest = am.createsliver(context, "vts-stage-2", r)
+mfest = am.createsliver(context, "vts-stage", r)
 print mfest.text
 print mfest
