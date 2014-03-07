@@ -17,3 +17,9 @@ class IGOF(AM):
     else:
       return self.amtype.parseManifest(rspec_data)
 
+
+def aggregates ():
+  module = sys.modules[__name__]
+  for name,obj in inspect.getmembers(module):
+    if isinstance(obj, AM):
+      yield obj

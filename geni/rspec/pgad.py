@@ -5,6 +5,7 @@ from lxml import etree as ET
 import geni.namespaces as GNS
 from geni.rspec.pg import Namespaces as PGNS
 from geni.rspec import pg
+from geni.model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 
@@ -115,13 +116,11 @@ class Advertisement(object):
 
   @property
   def nodes (self):
-    for node in self._root.findall("{%s}node" % (GNS.REQUEST.name)):
-      yield AdNode._fromdom(node)
+    return XPathXRange(self._root.findall("{%s}node" % (GNS.REQUEST.name)), AdNode)
 
   @property
   def shared_vlans (self):
-    for vlan in self._root.xpath('/g:rspec/s:rspec_shared_vlan/s:available', namespaces = _XPNS):
-      yield AdSharedVLAN._fromdom(vlan)
+    return XPathXRange(self._root.xpath('/g:rspec/s:rspec_shared_vlan/s:available', namespaces=_XPNS), AdSharedVLAN)
 
   @property
   def text (self):

@@ -1,5 +1,8 @@
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
+import multiprocessing as MP
+import time
+
 from geni.aggregate.apis import AMError
 
 def checkavailrawpc(context, am):
@@ -28,4 +31,28 @@ def getManifests (context, am, slices):
       continue
 
   return d
+
+def _mp_get_advertisement (context, site, q):
+  try:
+    ad = site.listresources(context)
+    q.put((site.name, ad))
+  except:
+    q.put((site.name, None))
     
+
+def getAdvertisements (context, ams):
+  q = MP.Queue()
+  for site in ams:
+    p = MP.Process(target=_mp_get_advertisement, args=(context, site, q))
+    p.start()
+
+  while MP.active_children():
+    time.sleep(0.5)
+
+  d = {}
+  while not q.empty():
+    (site,ad) = q.get()
+    d[site] = ad
+
+  return d
+

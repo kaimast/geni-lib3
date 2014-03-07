@@ -46,14 +46,14 @@ class Context(object):
     if not self._slicecred_paths.has_key(sname):
       cfg = self.cfg_path
       scpath = "%s/%s-%s-scred.xml" % (self.datadir, self._default_user.name, sname)
-      if not os.path.exists(scpath):
-        (text, cred) = cmd.getslicecred(self, sname)
-        if not cred:
-          raise SliceCredError(text)
-        f = open(scpath, "w+")
-        f.write(cred)
-        f.close()
       self._slicecred_paths[sname] = scpath
+    if not os.path.exists(scpath):
+      (text, cred) = cmd.getslicecred(self, sname)
+      if not cred:
+        raise SliceCredError(text)
+      f = open(scpath, "w+")
+      f.write(cred)
+      f.close()
     return self._slicecred_paths[sname]
 
   @property

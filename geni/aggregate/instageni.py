@@ -43,13 +43,9 @@ class IGCompute(AM):
     return self.amtype.parseManifest(res)
 
 
-class IGOpenflow(AM):
-  def __init__ (self, name, url):
-    super(IGOpenflow, self).__init__(name, url, "amapiv2", "foam")
-
-
 Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu")
 Clemson = IGCompute("ig-clemson", "instageni.clemson.edu")
+Dublin = IGCompute("ig-ohmetrodc", "instageni.metrodatacenter.com")
 GATech = IGCompute("ig-gatech", "instageni.rnoc.gatech.edu")
 GPO = IGCompute("ig-gpo", "boss.instageni.gpolab.bbn.com")
 Illinois = IGCompute("ig-illinois", "instageni.illinois.edu")

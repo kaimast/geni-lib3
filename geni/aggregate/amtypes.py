@@ -35,6 +35,7 @@ class ProtoGENI(AMType):
     manifest = pgmanifest.Manifest(xml = data)
     return manifest
 
+
 class FOAM(AMType):
   def __init__ (self, name="foam"):
     super(FOAM, self).__init__(name)
