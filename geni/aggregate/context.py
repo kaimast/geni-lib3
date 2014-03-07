@@ -43,9 +43,9 @@ class Context(object):
 
   def _getSliceCred (self, sname):
     # TODO: Figure out if a slice cred is expired and get it again
+    scpath = "%s/%s-%s-scred.xml" % (self.datadir, self._default_user.name, sname)
     if not self._slicecred_paths.has_key(sname):
       cfg = self.cfg_path
-      scpath = "%s/%s-%s-scred.xml" % (self.datadir, self._default_user.name, sname)
       self._slicecred_paths[sname] = scpath
     if not os.path.exists(scpath):
       (text, cred) = cmd.getslicecred(self, sname)
