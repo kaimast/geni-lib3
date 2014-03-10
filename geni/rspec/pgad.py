@@ -1,4 +1,6 @@
-# Copyright (c) 2013  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
+
+from __future__ import absolute_import
 
 from lxml import etree as ET
 
@@ -17,6 +19,13 @@ class Location(object):
 
   def __repr__ (self):
     return "<Location: %f, %f>" % (self.latitude, self.longitude)
+
+  @classmethod
+  def _fromdom (self, elem):
+    l = Location()
+    l.latitude = float(elem.get("latitude"))
+    l.longitude = float(elem.get("longitude"))
+    return l
 
 
 class AdInterface(pg.Interface):
@@ -85,10 +94,7 @@ class AdNode(object):
 
     locelem = elem.xpath('g:location', namespaces = _XPNS)
     if locelem:
-      loc = Location()
-      loc.latitude = float(locelem[0].get("latitude"))
-      loc.longitude = float(locelem[0].get("longitude"))
-      node.location = loc
+      node.location = Location._fromdom(locelem[0])
 
     return node
 

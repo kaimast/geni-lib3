@@ -43,7 +43,7 @@ class FOAM(AMType):
   def parseAdvertisement (self, data):
     from geni.rspec import ofad
     ad = ofad.Advertisement(xml=data)
-    return data
+    return ad
 
   def parseManifest (self, data):
     from geni.rspec import ofmanifest
