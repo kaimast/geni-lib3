@@ -15,7 +15,6 @@ def query_aggregate (context, site, q):
     for node in ad.nodes:
       if not node.exclusive:
         try:
-          item = "[%s] %s/100" % (node.component_id, node.hardware_types["pcvm"])
           if "emulab-xen" in node.sliver_types:
             res.append((node.component_id, node.hardware_types["pcvm"], "Xen"))
           else:
@@ -40,14 +39,11 @@ def do_parallel ():
   while not q.empty():
     l.append(q.get())
 
-  xen_avail = 0
-  xen_total = 0
-  vz_avail = 0
-  vz_total = 0
+  xen_avail = xen_total = 0
+  vz_avail = vz_total = 0
 
   for idx,pair in enumerate(l):
-    site_vz = 0
-    site_xen = 0
+    site_vz = site_xen = 0
     entries = []
 
     (site_name, res) = pair
