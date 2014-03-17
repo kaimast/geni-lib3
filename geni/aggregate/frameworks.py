@@ -6,6 +6,7 @@ import tempfile
 import subprocess
 
 from .core import FrameworkRegistry
+from ..gcf import oscript
 
 
 class Framework(object):
@@ -42,6 +43,12 @@ class Framework(object):
   @cert.setter
   def cert (self, val):
     self._cert = val
+
+  def createslice (self, context, name):
+    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "createslice"]
+    args.append(name)
+    (txt, res) = oscript.call(args)
+    return res
 
 
 class ProtoGENI(Framework):
