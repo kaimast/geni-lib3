@@ -21,6 +21,17 @@ class AMType(object):
     return
 
 
+class ExoGENI(AMType):
+  def __init__ (self, name="exogeni"):
+    super(ExoGENI, self).__init__ (name)
+
+  def parseAdvertisement (self, data):
+    return data
+
+  def parseManifest (self, data):
+    return data
+
+
 class ProtoGENI(AMType):
   def __init__ (self, name="pg"):
     super(ProtoGENI, self).__init__(name)
@@ -53,3 +64,4 @@ class FOAM(AMType):
 
 AMTypeRegistry.register("foam", FOAM())
 AMTypeRegistry.register("pg", ProtoGENI())
+AMTypeRegistry.register("exogeni", ExoGENI())

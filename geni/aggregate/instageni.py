@@ -15,33 +15,6 @@ class IGCompute(AM):
       url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg")
 
-  def listresources (self, context, slice = None):
-    rspec_data = self.api.listresources(context, self.url, slice)
-    if slice is None:
-      return self.amtype.parseAdvertisement(rspec_data)
-    else:
-      return self.amtype.parseManifest(rspec_data)
-
-  def sliverstatus (self, context, sname):
-    status = self.api.sliverstatus(context, self.url, sname)
-    return status
-
-  def renewsliver (self, context, sname, date):
-    text,res = self.api.renewsliver(context, self.url, sname, date)
-    return text,res
-
-  def deletesliver (self, context, sname):
-    self.api.deletesliver(context, self.url, sname)
-
-  def createsliver (self, context, sname, rspec):
-    tf = tempfile.NamedTemporaryFile(delete=False)
-    path = tf.name
-    tf.close()
-    rspec.write(path)
-    res = self.api.createsliver(context, self.url, sname, path)
-    os.remove(path)
-    return self.amtype.parseManifest(res)
-
 
 Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu")
 Clemson = IGCompute("ig-clemson", "instageni.clemson.edu")
