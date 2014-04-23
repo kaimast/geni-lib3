@@ -16,6 +16,7 @@ class IGCompute(AM):
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg")
 
 
+CaseWestern = IGCompute("ig-cwru", "boss.geni.case.edu")
 Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu")
 Clemson = IGCompute("ig-clemson", "instageni.clemson.edu")
 Dublin = IGCompute("ig-ohmetrodc", "instageni.metrodatacenter.com")

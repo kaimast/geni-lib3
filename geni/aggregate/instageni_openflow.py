@@ -21,6 +21,7 @@ class IGOF(AM):
       return self.amtype.parseManifest(rspec_data)
 
 
+CaseWestern = IGOF("ig-of-cwru", "foam.geni.case.edu")
 Cornell = IGOF("ig-of-cornell", "foam.geni.it.cornell.edu")
 Clemson = IGOF("ig-of-clemson", "foam.instageni.clemson.edu")
 Dublin = IGOF("ig-ohmetrodc", "foam.instageni.metrodatacenter.com")
