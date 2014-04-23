@@ -186,6 +186,14 @@ class LAN(Link):
   def __init__ (self, name = None):
     super(LAN, self).__init__(name, "lan")
 
+class L3GRE(Link):
+  def __init__ (self, name = None):
+    super(L3GRE, self).__init__(name, "gre-tunnel")
+
+class L2GRE(Link):
+  def __init__ (self, name = None):
+    super(L2GRE, self).__init__(name, "egre-tunnel")
+
 
 class Node(Resource):
   def __init__ (self, name, ntype, component_id = None, exclusive = False):
