@@ -176,8 +176,8 @@ class Request(geni.rspec.RSpec):
 #############
 
 def connectInternalCircuit (dp1, dp2):
-  sp = VTS.InternalCircuit(None)
-  dp = VTS.InternalCircuit(None)
+  sp = InternalCircuit(None)
+  dp = InternalCircuit(None)
   dp1.attachPort(sp)
   dp2.attachPort(dp)
   sp.target = dp.clientid
