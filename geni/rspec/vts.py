@@ -170,3 +170,15 @@ class Request(geni.rspec.RSpec):
 
     f.write(ET.tostring(rspec, pretty_print=True))
     f.close()
+
+#############
+# Utilities #
+#############
+
+def connectInternalCircuit (dp1, dp2):
+  sp = VTS.InternalCircuit(None)
+  dp = VTS.InternalCircuit(None)
+  dp1.attachPort(sp)
+  dp2.attachPort(dp)
+  sp.target = dp.clientid
+  dp.target = sp.clientid

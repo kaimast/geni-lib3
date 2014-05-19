@@ -14,12 +14,7 @@ for dp in dps:
 # Build the switch mesh
 pairs = itertools.combinations(dps, 2)
 for src,dst in pairs:
-  sp = VTS.InternalCircuit(None)
-  dp = VTS.InternalCircuit(None)
-  src.attachPort(sp)
-  dst.attachPort(dp)
-  sp.target = dp.clientid
-  dp.target = sp.clientid
+  VTS.connectInternalCircuit(src, dst)
 
 # Add two host circuits
 dps[0].attachPort(VTS.PGCircuit())
