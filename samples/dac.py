@@ -6,13 +6,13 @@ import geni.aggregate.apis
 
 import nbastin
 
-context = nbastin.buildContext()
-context.debug = True
+#context = nbastin.buildContext()
+#context.debug = True
 
-try:
-  IG.GPO.deletesliver(context, "xen-test2")
-except geni.aggregate.apis.AMError, e:
-  pass
+#try:
+#  IG.GPO.deletesliver(context, "xen-test2")
+#except geni.aggregate.apis.AMError, e:
+#  pass
 
 r = PG.Request()
 
@@ -32,5 +32,7 @@ lnk.disableMACLearning()
 
 r.addResource(lnk)
 
-manifest = IG.GPO.createsliver(context, "xen-test2", r)
-print manifest.text
+r.write("dac.xml")
+
+#manifest = IG.GPO.createsliver(context, "xen-test2", r)
+#print manifest.text

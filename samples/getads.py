@@ -18,7 +18,7 @@ def get_advertisement (context, site):
     f.write(ad.text)
     f.close()
     print "[%s] Done" % (site.name)
-  except:
+  except Exception, e:
     print "[%s] OFFLINE" % (site.name)
   
 
