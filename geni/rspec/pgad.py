@@ -113,12 +113,36 @@ class AdSharedVLAN(object):
     return svlan
 
 
+class RoutableAddresses(object):
+  def __init__ (self):
+    self.available = 0
+    self.configured = 0
+
+
 class Advertisement(object):
   def __init__ (self, path = None, xml = None):
     if path:
       self._root = ET.parse(open(path))
     elif xml:
       self._root = ET.fromstring(xml)
+    self._routable_addresses = None
+
+  def _parse_routable (self):
+    try:
+      elem = self._root.xpath('/g:rspec/e:rspec_routable_addresses', namespaces=_XPNS)[0]
+      ra = RoutableAddresses()
+      ra.available = int(elem.get("available"))
+      ra.configured = int(elem.get("configured"))
+      self._routable_addresses = ra
+    except Exception, e:
+      pass
+    
+
+  @property
+  def routable_addresses (self):
+    if not self._routable_addresses:
+      self._parse_routable()
+    return self._routable_addresses
 
   @property
   def nodes (self):
