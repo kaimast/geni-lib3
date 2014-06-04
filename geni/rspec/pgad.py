@@ -118,6 +118,10 @@ class RoutableAddresses(object):
     self.available = 0
     self.configured = 0
 
+  @property
+  def capacity (self):
+    return self.configured
+
 
 class Advertisement(object):
   def __init__ (self, path = None, xml = None):
@@ -137,7 +141,6 @@ class Advertisement(object):
     except Exception, e:
       pass
     
-
   @property
   def routable_addresses (self):
     if not self._routable_addresses:
