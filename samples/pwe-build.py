@@ -1,10 +1,14 @@
 import geni.rspec.pg as PG
 import geni.rspec.pgad
+import geni.aggregate.instageni as IG
+import nbastin
 
 DISK_IMAGE = "urn:publicid:IDN+instageni.gpolab.bbn.com+image+emulab-ops:UBUNTU12-64-STD"
 
+context = nbastin.buildContext()
+
 xenshared = []
-ad = geni.rspec.pgad.Advertisement("rspec-utahddc-geniracks-net.xml")
+ad = IG.UtahDDC.listresources(context)
 for node in ad.nodes:
   if node.available and node.shared:
     if "emulab-xen" in node.sliver_types:

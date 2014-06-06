@@ -13,13 +13,6 @@ class IGOF(AM):
       url = "https://%s:3626/foam/gapi/2" % (host)
     super(IGOF, self).__init__(name, url, "amapiv2", "foam")
 
-  def listresources (self, context, slice = None):
-    rspec_data = self.api.listresources(context, self.url, slice)
-    if slice is None:
-      return self.amtype.parseAdvertisement(rspec_data)
-    else:
-      return self.amtype.parseManifest(rspec_data)
-
 
 CaseWestern = IGOF("ig-of-cwru", "foam.geni.case.edu")
 Cornell = IGOF("ig-of-cornell", "foam.geni.it.cornell.edu")

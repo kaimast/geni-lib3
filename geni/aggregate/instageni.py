@@ -4,8 +4,6 @@ from __future__ import absolute_import
 
 import inspect
 import sys
-import tempfile
-import os
 
 from .core import AM
 

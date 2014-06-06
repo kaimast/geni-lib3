@@ -1,4 +1,4 @@
-# Copyright (c) 2013  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -31,15 +31,24 @@ class ManifestNode(object):
       self.port = None
       self.username = None
 
+  class Interface(object):
+    def __init__ (self):
+      self.client_id = None
+      self.mac_address = None
+      self.sliver_id = None
+      self.address_info = None
+
   def __init__ (self):
     super(ManifestNode, self).__init__()
     self.logins = []
+    self.interfaces = []
     self.name = None
 
   @classmethod
   def _fromdom (cls, elem):
     n = ManifestNode()
     n.name = elem.get("client_id")
+
     logins = elem.xpath('g:services/g:login', namespaces = _XPNS)
     for lelem in logins:
       l = ManifestNode.Login()
@@ -48,6 +57,18 @@ class ManifestNode(object):
       l.port = int(lelem.get("port"))
       l.username = lelem.get("username")
       n.logins.append(l)
+
+    interfaces = elem.xpath('g:interface', namespaces = _XPNS)
+    for ielem in interfaces:
+      i = ManifestNode.Interface()
+      i.client_id = ielem.get("client_id")
+      i.sliver_id = ielem.get("sliver_id")
+      i.mac_address = ielem.get("mac_address")
+      try:
+        ipelem = ielem.xpath('g:ip', namespaces = _XPNS)[0]
+        self.address_info = (ipelem.get("address"), ipelem.get("netmask"))
+      n.interfaces.append(i)
+
     return n
 
 
