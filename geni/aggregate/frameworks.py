@@ -4,12 +4,19 @@ from __future__ import absolute_import
 
 import tempfile
 import subprocess
+import os.path
 
 from .core import FrameworkRegistry
 from ..gcf import oscript
 
 
 class Framework(object):
+  class KeyPathError(Exception):
+    def __init__ (self, path):
+      self.path = path
+    def __str__ (self):
+      return "Path %s does not contain a key" % (self.path)
+
   def __init__ (self, name = None):
     self.name = name
     self._type = None
@@ -25,8 +32,9 @@ class Framework(object):
 
   @key.setter
   def key (self, val):
-    # TODO: Test if the path in val really exists
     # TODO:  We need global tempfile accounting so we can clean up on terminate
+    if not os.path.exists(val):
+      raise Framework.KeyPathError(val)
     tf = tempfile.NamedTemporaryFile(delete=False)
     path = tf.name
     tf.close()

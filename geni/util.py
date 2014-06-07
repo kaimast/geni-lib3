@@ -22,15 +22,31 @@ def printlogininfo(context, am, slice):
       print "[%s] %s:%d" % (login.username, login.hostname, login.port)
   
 
-def getManifests (context, am, slices):
+def _mp_get_manifest (context, site, slc, q):
+  try:
+    print "Getting manifest for %s at %s" % (slc, site)
+    mf = site.listresources(context, slc)
+    q.put((site.name, slc, mf))
+  except:
+    q.put((site.name, slc, None))
+
+def getManifests (context, ams, slices):
+  q = MP.Queue()
+  for site in ams:
+    for slc in slices:
+      p = MP.Process(target=_mp_get_manifest, args=(context, site, slc, q))
+      p.start()
+
+  while MP.active_children():
+    time.sleep(0.5)
+
   d = {}
-  for slice in slices:
-    try:
-      d[slice] = am.listresources(context, slice)
-    except AMError:
-      continue
+  while not q.empty():
+    (site,slc,mf) = q.get()
+    d.setdefault(slc, {})[site] = mf
 
   return d
+
 
 def _mp_get_advertisement (context, site, q):
   try:
@@ -38,7 +54,6 @@ def _mp_get_advertisement (context, site, q):
     q.put((site.name, ad))
   except:
     q.put((site.name, None))
-    
 
 def getAdvertisements (context, ams):
   q = MP.Queue()
