@@ -2,8 +2,11 @@
 
 import multiprocessing as MP
 import time
+import os
+import traceback as tb
+import tempfile
 
-from geni.aggregate.apis import AMError
+from geni.aggregate.apis import AMError, ListResourcesError
 
 def checkavailrawpc(context, am):
   avail = []
@@ -22,15 +25,28 @@ def printlogininfo(context, am, slice):
       print "[%s] %s:%d" % (login.username, login.hostname, login.port)
   
 
+# You can't put very much information in a queue before you hang your OS
+# trying to write to the pipe, so we only write the paths and then load
+# them again on the backside
 def _mp_get_manifest (context, site, slc, q):
   try:
-    print "Getting manifest for %s at %s" % (slc, site)
     mf = site.listresources(context, slc)
-    q.put((site.name, slc, mf))
-  except:
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    tf.write(mf.text)
+    path = tf.name
+    tf.close()
+    q.put((site.name, slc, path))
+  except ListResourcesError:
+    q.put((site.name, slc, None))
+  except Exception, e:
+    tb.print_exc()
     q.put((site.name, slc, None))
 
 def getManifests (context, ams, slices):
+  sitemap = {}
+  for am in ams:
+    sitemap[am.name] = am
+
   q = MP.Queue()
   for site in ams:
     for slc in slices:
@@ -42,8 +58,13 @@ def getManifests (context, ams, slices):
 
   d = {}
   while not q.empty():
-    (site,slc,mf) = q.get()
-    d.setdefault(slc, {})[site] = mf
+    (site,slc,mpath) = q.get()
+
+    if mpath:
+      am = sitemap[site]
+      data = open(mpath).read()
+      mf = am.amtype.parseManifest(data)
+      d.setdefault(slc, {})[site] = mf
 
   return d
 

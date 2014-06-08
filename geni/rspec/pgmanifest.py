@@ -2,7 +2,10 @@
 
 from __future__ import absolute_import
 
+import os
+
 from lxml import etree as ET
+
 from geni.rspec.pg import Link
 import geni.namespaces as GNS
 from geni.rspec.pg import Namespaces as PGNS
@@ -66,7 +69,9 @@ class ManifestNode(object):
       i.mac_address = ielem.get("mac_address")
       try:
         ipelem = ielem.xpath('g:ip', namespaces = _XPNS)[0]
-        self.address_info = (ipelem.get("address"), ipelem.get("netmask"))
+        i.address_info = (ipelem.get("address"), ipelem.get("netmask"))
+      except Exception, e:
+        pass
       n.interfaces.append(i)
 
     return n
@@ -75,20 +80,29 @@ class ManifestNode(object):
 class Manifest(object):
   def __init__ (self, path = None, xml = None):
     if path:
-      self._root = ET.parse(open(path))
+      self._xml = open(path, "r").read()
     elif xml:
-      self._root = ET.fromstring(xml)
+      self._xml = xml
+    self._root = ET.fromstring(self._xml)
+    self._pid = os.getpid()
+
+  @property
+  def root (self):
+    if os.getpid() != self._pid:
+      self._root = ET.fromstring(self._xml)
+      self._pid = os.getpid()
+    return self._root
 
   @property
   def links (self):
-    for link in self._root.findall("{%s}link" % (GNS.REQUEST.name)):
+    for link in self.root.findall("{%s}link" % (GNS.REQUEST.name)):
       yield ManifestLink._fromdom(link)
 
   @property
   def nodes (self):
-    for node in self._root.findall("{%s}node" % (GNS.REQUEST.name)):
+    for node in self.root.findall("{%s}node" % (GNS.REQUEST.name)):
       yield ManifestNode._fromdom(node)
 
   @property
   def text (self):
-    return ET.tostring(self._root, pretty_print=True)
+    return ET.tostring(self.root, pretty_print=True)

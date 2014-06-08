@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import abc
+import os
 
 from .core import AMTypeRegistry
 
