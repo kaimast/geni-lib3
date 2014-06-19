@@ -45,7 +45,7 @@ class OVSImage(DatapathImage):
 
 
 class OVSOpenFlowImage(OVSImage):
-  def __init__ (self, controller):
+  def __init__ (self, controller, ofver = "1.0"):
     super(OVSOpenFlowImage, self).__init__("bss:ovs-201-of")
     self.controller = controller
 
@@ -110,6 +110,7 @@ class Port(object):
 
   def _write (self, element):
     p = ET.SubElement(element, "{%s}port" % (Namespaces.VTS.name))
+    p.attrib["client_id"] = self.clientid
     return p
 
 
