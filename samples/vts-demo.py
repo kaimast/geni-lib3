@@ -23,12 +23,12 @@ for dp in dps:
   vtsr.addResource(dp)
 
 # Build the switch mesh
-#pairs = itertools.combinations(dps, 2)
-#for src,dst in pairs:
-#  VTS.connectInternalCircuit(src, dst)
+pairs = itertools.combinations(dps, 2)
+for src,dst in pairs:
+  VTS.connectInternalCircuit(src, dst)
 
-VTS.connectInternalCircuit(dps[0], dps[1])
-VTS.connectInternalCircuit(dps[0], dps[2])
+#VTS.connectInternalCircuit(dps[0], dps[1])
+#VTS.connectInternalCircuit(dps[0], dps[2])
 #
 # Add two host circuits
 #dps[0].attachPort(VTS.PGCircuit())
