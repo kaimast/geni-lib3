@@ -63,6 +63,23 @@ class FOAM(AMType):
     return manifest
 
 
+class VTS(AMType):
+  def __init__ (self, name="vts"):
+    super(VTS, self).__init__(name)
+
+  def parseAdvertisement (self, data):
+    from geni.rspec import vtsad
+    ad = vtsad.Advertisement(xml=data)
+    return ad
+
+  def parseManifest (self, data):
+    from geni.rspec import vtsmanifest
+    manifest = vtsmanifest.Manifest(xml = data)
+    return manifest
+
+
+
 AMTypeRegistry.register("foam", FOAM())
 AMTypeRegistry.register("pg", ProtoGENI())
 AMTypeRegistry.register("exogeni", ExoGENI())
+AMTypeRegistry.register("vts", VTS())

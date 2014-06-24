@@ -3,11 +3,11 @@ import geni.rspec.vts as VTS
 
 r = VTS.Request()
 
-image = VTS.OVSOpenFlowImage("tcp:192.0.2.1:6633")
-image.sflow = VTS.SFlow("192.0.2.1")
+image = VTS.OVSOpenFlowImage("tcp:54.88.120.184:6633")
+#image.sflow = VTS.SFlow("192.0.2.1")
 
 # Create all the empty datapaths and add them to the Request
-dps = [VTS.Datapath(image, "dp%d" % (x)) for x in xrange(0,4)]
+dps = [VTS.Datapath(image, "dp%d" % (x)) for x in xrange(0,6)]
 for dp in dps:
   r.addResource(dp)
 

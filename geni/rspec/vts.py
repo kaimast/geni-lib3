@@ -48,11 +48,16 @@ class OVSOpenFlowImage(OVSImage):
   def __init__ (self, controller, ofver = "1.0"):
     super(OVSOpenFlowImage, self).__init__("bss:ovs-201-of")
     self.controller = controller
+    self.ofver = ofver
 
   def _write (self, element):
     i = super(OVSOpenFlowImage, self)._write(element)
     c = ET.SubElement(i, "{%s}controller" % (Namespaces.SDN.name))
     c.attrib["url"] = self.controller
+
+    v = ET.SubElement(i, "{%s}openflow-version" % (Namespaces.VTS.name))
+    v.attrib["value"] = self.ofver
+
     return i
 
 class OVSL2Image(OVSImage):
