@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -34,6 +34,7 @@ import datetime
 import dateutil.parser
 import logging
 import os
+import string
 import uuid
 import xml.dom.minidom as minidom
 import xmlrpclib
@@ -42,9 +43,10 @@ import zlib
 from .resource import Resource
 from .aggregate import Aggregate
 from .fakevm import FakeVM
-from .. import geni
-from ..geni.util.urn_util import publicid_to_urn
-from ..geni.SecureXMLRPCServer import SecureXMLRPCServer
+from ... import geni
+from ..util.urn_util import publicid_to_urn, URN
+from ..util.tz_util import tzd
+from ..SecureXMLRPCServer import SecureXMLRPCServer
 
 
 # See sfa/trust/rights.py
@@ -174,7 +176,8 @@ class ReferenceAggregateManager(object):
             self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                     credentials,
                                                     None,
-                                                    privileges)
+                                                    privileges,
+                                                    options)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))
 
@@ -265,7 +268,8 @@ class ReferenceAggregateManager(object):
             creds = self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                             credentials,
                                                             slice_urn,
-                                                            privileges)
+                                                            privileges,
+                                                            options)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))
 
@@ -356,7 +360,8 @@ class ReferenceAggregateManager(object):
             self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                     credentials,
                                                     slice_urn,
-                                                    privileges)
+                                                    privileges,
+                                                    options)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))
 
@@ -397,7 +402,8 @@ class ReferenceAggregateManager(object):
             self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                     credentials,
                                                     slice_urn,
-                                                    privileges)
+                                                    privileges,
+                                                    options)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))
 
@@ -405,16 +411,34 @@ class ReferenceAggregateManager(object):
             theSlice = self._slices[slice_urn]
             # Now calculate the status of the sliver
             res_status = list()
-            resources = self._agg.catalog(slice_urn)
-            for res in resources:
-                self.logger.debug('Resource = %s', str(res))
-                # Gather the status of all the resources
-                # in the sliver. This could be actually
-                # communicating with the resources, or simply
-                # reporting the state of initialized, started, stopped, ...
-                res_status.append(dict(geni_urn=self.resource_urn(res),
-                                       geni_status=res.status,
-                                       geni_error=''))
+            resources = list()
+
+            sliceurn = URN(urn=slice_urn)
+            sliceauth = sliceurn.getAuthority()
+            slicename = sliceurn.getName()
+            slivername = sliceauth + slicename # FIXME: really
+            # this should have a timestamp of when reserved to be unique over time
+
+            # Translate any slivername illegal punctation
+            other = '-.:/'
+            table = string.maketrans(other, '-' * len(other))
+            slivername = slivername.translate(table)
+
+            for cid, sliver_uuid in theSlice.resources.items():
+                resource = None
+                sliver_urn = None
+                for res in self._agg.resources:
+                    if res.id == sliver_uuid:
+                        self.logger.debug('Resource = %s', str(res))
+                        resources.append(res)
+                        sliver_urn = res.sliver_urn(self._urn_authority, slivername) 
+                        # Gather the status of all the resources
+                        # in the sliver. This could be actually
+                        # communicating with the resources, or simply
+                        # reporting the state of initialized, started, stopped, ...
+                        res_status.append(dict(geni_urn=sliver_urn,
+                                               geni_status=res.status,
+                                               geni_error=''))
             self.logger.info("Calculated and returning slice %s status", slice_urn)
             result = dict(geni_urn=slice_urn,
                           geni_status=theSlice.status(resources),
@@ -439,7 +463,8 @@ class ReferenceAggregateManager(object):
             creds = self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                             credentials,
                                                             slice_urn,
-                                                            privileges)
+                                                            privileges,
+                                                            options)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))
 
@@ -453,30 +478,28 @@ class ReferenceAggregateManager(object):
                 self.logger.info("Sliver %s not renewed because it is shutdown",
                                  slice_urn)
                 return self.errorResult(11, "Unavailable: Slice %s is unavailable." % (slice_urn))
-            requested = dateutil.parser.parse(str(expiration_time))
+            requested = dateutil.parser.parse(str(expiration_time), tzinfos=tzd)
             # Per the AM API, the input time should be TZ-aware
             # But since the slice cred may not (per ISO8601), convert
             # it to naiveUTC for comparison
             requested = self._naiveUTC(requested)
-            maxexp = datetime.datetime.min
-            for cred in creds:
-                credexp = self._naiveUTC(cred.expiration)
-                if credexp > maxexp:
-                    maxexp = credexp
-                maxexp = credexp
-                if credexp >= requested:
-                    sliver.expiration = requested
-                    self.logger.info("Sliver %r now expires on %r", slice_urn, expiration_time)
-                    return self.successResult(True)
-                else:
-                    self.logger.debug("Valid cred %r expires at %r before %r", cred, credexp, requested)
 
-            # Fell through then no credential expires at or after
-            # newly requested expiration time
-            self.logger.info("Can't renew sliver %r until %r because none of %d credential(s) valid until then (latest expires at %r)", slice_urn, expiration_time, len(creds), maxexp)
-            # FIXME: raise an exception so the client knows what
-            # really went wrong?
-            return self.errorResult(19, "Out of range: Expiration %s is out of range (past last credential expiration of %s)." % (expiration_time, maxexp))
+            # Find the minimum allowable expiration based on credential expiration and policy
+            min_expiration = self.min_expire(creds, self.max_lease)
+
+            # if requested > min_expiration, 
+            # If alap, set to min of requested and min_expiration
+            # Otherwise error
+            if requested > min_expiration:
+                if 'geni_extend_alap' in options and options['geni_extend_alap']:
+                    self.logger.info("Got geni_extend_alap: revising slice %s renew request from %s to %s", slice_urn, requested, min_expiration)
+                    requested = min_expiration
+                else:
+                    self.logger.info("Cannot renew %r: %s past maxlease %s", slice_urn, expiration_time, self.max_lease)
+                    return self.errorResult(19, "Out of range: Expiration %s is out of range (AM policy limits renewals to %s)." % (expiration_time, self.max_lease))
+                    
+            sliver.expiration = requested
+            return self.successResult(True, requested)
 
         else:
             return self._no_such_slice(slice_urn)
@@ -490,7 +513,8 @@ class ReferenceAggregateManager(object):
             self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                     credentials,
                                                     slice_urn,
-                                                    privileges)
+                                                    privileges,
+                                                    options)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))
 
@@ -504,13 +528,13 @@ class ReferenceAggregateManager(object):
             self.logger.info("Shutdown: No such slice: %s.", slice_urn)
             return self._no_such_slice(slice_urn)
 
-    def successResult(self, value):
+    def successResult(self, value, output=""):
         code_dict = dict(geni_code=0,
                          am_type="gcf2",
                          am_code=0)
         return dict(code=code_dict,
                     value=value,
-                    output="")
+                    output=output)
 
     def _no_such_slice(self, slice_urn):
         return self.errorResult(12, 'Search Failed: no slice "%s" found' % (slice_urn))
@@ -537,7 +561,7 @@ class ReferenceAggregateManager(object):
         return dt
 
     def advert_resource(self, resource):
-        tmpl = '''  <node component_manager_id="%s"
+        tmpl = '''<node component_manager_id="%s"
         component_name="%s"
         component_id="%s"
         exclusive="%s">
@@ -547,7 +571,7 @@ class ReferenceAggregateManager(object):
         resource_id = str(resource.id)
         resource_exclusive = str(False).lower()
         resource_available = str(resource.available).lower()
-        resource_urn = self.resource_urn(resource)
+        resource_urn = resource.urn(self._urn_authority)
         return tmpl % (self._my_urn,
                        resource_id,
                        resource_urn,
@@ -559,38 +583,70 @@ class ReferenceAggregateManager(object):
 <rspec xmlns="http://www.geni.net/resources/rspec/3"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.geni.net/resources/rspec/3 http://www.geni.net/resources/rspec/3/ad.xsd"
-       type="advertisement">'''
+       type="advertisement">\n'''
         return header
 
     def advert_footer(self):
-        return '</rspec>'
+        return '</rspec>\n'
 
     def manifest_header(self):
         header = '''<?xml version="1.0" encoding="UTF-8"?>
 <rspec xmlns="http://www.geni.net/resources/rspec/3"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.geni.net/resources/rspec/3 http://www.geni.net/resources/rspec/3/manifest.xsd"
-       type="manifest">'''
+       type="manifest">\n'''
         return header
 
     def manifest_slice(self, slice_urn):
-        tmpl = '<node client_id="%s"/>'
+        sliceurn = URN(urn=slice_urn)
+        sliceauth = sliceurn.getAuthority()
+        slicename = sliceurn.getName()
+        slivername = sliceauth + slicename # FIXME: really
+        # this should have a timestamp of when reserved to be unique over time
+
+        # Translate any slivername illegal punctation
+        other = '-.:/'
+        table = string.maketrans(other, '-' * len(other))
+        slivername = slivername.translate(table)
+
+        tmpl = '''  <node client_id="%s"
+        component_id="%s"
+        component_manager_id="%s"
+        sliver_id="%s"/>\n'''
         result = ""
-        for cid in self._slices[slice_urn].resources.keys():
-            result = result + tmpl % (cid)
+        for cid, res_uuid in self._slices[slice_urn].resources.items():
+            resource = None
+            sliver_urn = None
+            for res in self._agg.resources:
+                if res.id == res_uuid:
+                    sliver_urn = res.sliver_urn(self._urn_authority, slivername) 
+                    resource_urn = res.urn(self._urn_authority)
+            result = result + tmpl % (cid, resource_urn, self._my_urn, sliver_urn)
         return result
 
     def manifest_footer(self):
-        return '</rspec>'
+        return '</rspec>\n'
 
     def manifest_rspec(self, slice_urn):
-        return self.manifest_header() + self.manifest_slice(slice_urn) + self.manifest_footer()
+        return self.manifest_header() + \
+            self.manifest_slice(slice_urn) + \
+            self.manifest_footer()
 
-    def resource_urn(self, resource):
-        urn = publicid_to_urn("%s %s %s" % (self._urn_authority,
-                                            str(resource.type),
-                                            str(resource.id)))
-        return urn
+    def min_expire(self, creds, max_duration=None, requested=None):
+        """Compute the expiration time from the supplied credentials,
+        a max duration, and an optional requested duration. The shortest
+        time amongst all of these is the resulting expiration.
+        """
+        now = datetime.datetime.utcnow()
+        expires = [self._naiveUTC(c.expiration) for c in creds]
+        if max_duration:
+            expires.append(now + max_duration)
+        if requested:
+            requested = self._naiveUTC(dateutil.parser.parse(str(requested), tzinfos=tzd))
+            # Ignore requested time in the past.
+            if requested > now:
+                expires.append(self._naiveUTC(requested))
+        return min(expires)
 
 
 class AggregateManager(object):

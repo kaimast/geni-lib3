@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2010-2013 Raytheon BBN Technologies
+# Copyright (c) 2010-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -57,6 +57,8 @@ class URN(object):
                 raise ValueError("Invalid URN %s" % urn)
         
             spl = urn.split('+')
+            if len(spl) < 4:
+                raise ValueError("Invalid URN %s" % urn)
             self.authority = urn_to_string_format(spl[1])
             self.type = urn_to_string_format(spl[2])
             self.name = urn_to_string_format('+'.join(spl[3:]))
@@ -139,10 +141,13 @@ def nameFromURN(instr):
 # Note that this is not sufficient but it is necessary
 def is_valid_urn_string(instr):
     '''Could this string be part of a URN'''
-    if instr is None or not isinstance(instr, str):
+    if instr is None or not (isinstance(instr, str) or
+                             isinstance(instr, unicode)):
         return False
     #No whitespace
     # no # or ? or /
+    if isinstance(instr, unicode):
+        instr = instr.encode('utf8')
     if re.search("[\s|\?\/\#]", instr) is None:
         return True
     return False
@@ -150,9 +155,12 @@ def is_valid_urn_string(instr):
 # Note that this is not sufficient but it is necessary
 def is_valid_urn(inurn):
     ''' Check that this string is a valid URN'''
-    # FIXME: This should pull out the type and do the type specific
+    # FIXME: This could pull out the type and do the type specific
     # checks that are currently below
-    return is_valid_urn_string(inurn) and inurn.startswith(publicid_urn_prefix)
+    # FIXME: This should check for non empty authority and name pieces
+    return is_valid_urn_string(inurn) and \
+        inurn.startswith(publicid_urn_prefix) and \
+        len(inurn.split('+')) > 3
 
 def is_valid_urn_bytype(inurn, urntype, logger=None):
     if not is_valid_urn(inurn):
@@ -164,6 +172,10 @@ def is_valid_urn_bytype(inurn, urntype, logger=None):
     if not urnObj.getType().lower() == urntype:
         if logger:
             logger.warn("URN %s not of right type: %s, not %s", inurn, urnObj.getType().lower(), urntype)
+        return False
+    if len(urnObj.getAuthority()) == 0:
+        if logger:
+            logger.warn("URN %s has empty authority", inurn)
         return False
     name = urnObj.getName()
     if urntype == 'slice':
@@ -178,9 +190,10 @@ def is_valid_urn_bytype(inurn, urntype, logger=None):
             return False
     elif urntype == 'sliver':
         # May use only alphanumeric characters plus hyphen
-        if not re.match("^[-a-zA-Z0-9]+$", name):
+        # Note that EG uses a ':' as well.
+        if not re.match("^[-a-zA-Z0-9_\.]+$", name):
             if logger:
-                logger.warn("Sliver names may only be alphanumeric plus hyphen: %s", name)
+                logger.warn("Sliver names may only be alphanumeric plus hyphen, underscore, or period: %s", name)
             return False
     elif urntype == 'user':
         # Usernames should begin with a letter and be alphanumeric or underscores; no hyphen or '.': ('^[a-zA-Z][\w]{0,7}$').
@@ -193,6 +206,10 @@ def is_valid_urn_bytype(inurn, urntype, logger=None):
             if logger:
                 logger.warn("User names may only be alphanumeric plus underscore, beginning with a letter: %s", name)
             return False
+    elif len(name) == 0:
+        if logger:
+            logger.warn("Empty name in URN %s", inurn)
+        return False
     return True
 
 def urn_to_publicid(urn):

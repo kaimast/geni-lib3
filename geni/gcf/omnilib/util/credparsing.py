@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -26,17 +26,24 @@
    Utilities to parse credentials
 """
 
+from __future__ import absolute_import
+
 import datetime
 import dateutil.parser
 import logging
 import traceback
 import xml.dom.minidom as md
 
+from ...sfa.trust.credential import Credential
+from ...sfa.trust.abac_credential import ABACCredential
+from ...sfa.trust.credential_factory import CredentialFactory
+from ...geni.util.tz_util import tzd
+
 # FIXME: Doesn't distinguish v2 vs v3 yet
 def is_valid_v3(logger, credString):
     '''Is the given credential a valid geni_sfa style v3 credential?'''
     if not logger:
-        logger = logging.getLogger("omnilib.credparsing")
+        logger = logging.getLogger("omni.credparsing")
 
     if not credString:
         logger.warn("None credString - not geni_sfa v3")
@@ -68,8 +75,12 @@ def is_valid_v3(logger, credString):
     if not "Signature" in credString:
         logger.warn("No Signature in cred: %s", credString)
         return False
+    if not "target_urn" in credString:
+        logger.warn("No target_urn in cred: %s", credString)
+        return False
 
     try:
+        # Note this is relatively memory intensive
         doc = md.parseString(credString)
         signed_cred = doc.getElementsByTagName("signed-credential")
 
@@ -89,6 +100,37 @@ def is_valid_v3(logger, credString):
     except Exception, exc:
         logger.warn("Exception parsing cred to get target_urn: %s", exc)
         return False
+
+    return True
+
+# Determine if cred is geni_sfa or geni_abac based on type
+# return cred_type and cred_version
+# Currently we only recognize two types: SFA (version 3) and ABAC (version 1)
+def get_cred_type(cred):
+    is_abac = False
+    is_sfa = False
+    try:
+        doc = md.parseString(cred)
+        type_elts = doc.getElementsByTagName('type')
+        if len(type_elts) == 1 and type_elts[0].childNodes[0].nodeValue.strip() == 'abac':
+            is_abac = True
+        elif len(type_elts) == 1 and type_elts[0].childNodes[0].nodeValue.strip() == 'privilege':
+            is_sfa = True
+    except Exception, e:
+        level = logging.INFO
+        logging.basicConfig(level=level)
+        logger = logging.getLogger("omni.credparsing")
+        logger.setLevel(level)
+        logger.warn("Unparsable credential: %s", e)
+
+    if is_abac:
+        return ABACCredential.ABAC_CREDENTIAL_TYPE, "1"
+    elif is_sfa:
+        sfa_version = "3"
+        if not is_valid_v3(None, cred): sfa_version = "2"
+        return Credential.SFA_CREDENTIAL_TYPE, sfa_version
+    else:
+        return CredentialFactory.UNKNOWN_CREDENTIAL_TYPE, "0"
 
 # Want to rule out ABAC
 # Want to rule out geni_sfa v2 if possible
@@ -252,7 +294,7 @@ def get_cred_exp(logger, cred):
             cred = doc.getElementsByTagName("credential")[0]
         expirnode = cred.getElementsByTagName("expires")[0]
         if len(expirnode.childNodes) > 0:
-            credexp = dateutil.parser.parse(expirnode.childNodes[0].nodeValue)
+            credexp = dateutil.parser.parse(expirnode.childNodes[0].nodeValue, tzinfos=tzd)
     except Exception, exc:
         if logger is None:
             level = logging.INFO
@@ -290,10 +332,8 @@ def is_cred_xml(cred):
         else:
             return False
 
-        targetnode = credEle.getElementsByTagName("target_urn")[0]
-        if len(targetnode.childNodes) > 0:
-            urn = str(targetnode.childNodes[0].nodeValue)
-        else:
+        targetnode = credEle.getElementsByTagName("target_gid")[0]
+        if not targetnode:
             return False
     except Exception, exc:
         return False

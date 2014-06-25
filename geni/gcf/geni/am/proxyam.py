@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2012-2013 Raytheon BBN Technologies
+# Copyright (c) 2012-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -28,14 +28,15 @@ from __future__ import absolute_import
 
 import logging
 import os
+import socket
 
-from .. import geni
-from ..geni.am.am2 import AggregateManager
-from ..geni.am.am2 import AggregateManagerServer
-from ..geni.am.am2 import ReferenceAggregateManager
-from ..geni.SecureXMLRPCServer import SecureXMLRPCServer
-from ..geni.util.ch_interface import *
-from ..omnilib.xmlrpc.client import make_client
+from ... import geni
+from ...geni.am.am2 import AggregateManager
+from ...geni.am.am2 import AggregateManagerServer
+from ...geni.am.am2 import ReferenceAggregateManager
+from ...geni.SecureXMLRPCServer import SecureXMLRPCServer
+from ...geni.util.ch_interface import *
+from ...omnilib.xmlrpc.client import make_client
 
 SR_URL = "https://" + socket.gethostname() + "/sr/sr_controller.php"
 

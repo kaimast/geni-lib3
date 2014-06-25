@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -40,6 +40,7 @@ import zlib
 
 from .SecureXMLRPCServer import SecureXMLRPCServer
 from .util.cred_util import CredentialVerifier
+from .util.tz_util import tzd
 from .util.urn_util import publicid_to_urn
 
 
@@ -615,7 +616,7 @@ class ReferenceAggregateManager(object):
                 self.logger.info("Sliver %s not renewed because it is shutdown",
                                  slice_urn)
                 return False
-            requested = dateutil.parser.parse(str(expiration_time))
+            requested = dateutil.parser.parse(str(expiration_time), tzinfos=tzd)
             # Per the AM API, the input time should be TZ-aware
             # But since the slice cred may not (per ISO8601), convert
             # it to naiveUTC for comparison

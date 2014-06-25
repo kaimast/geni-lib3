@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2013 Raytheon BBN Technologies
+# Copyright (c) 2013-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -24,6 +24,10 @@
 from __future__ import absolute_import
 
 from ..util import OmniError
+from . import defs
+
+import os.path
+from xml.dom.minidom import Node as XMLNode
 
 class StitchingError(OmniError):
     '''Errors due to stitching problems'''
@@ -35,6 +39,11 @@ class StitchingCircuitFailedError(StitchingError):
 
 class StitchingRetryAggregateNewVlanError(StitchingError):
     '''Allocation at a single AM failed cause VLAN unavailable. Try a different tag locally before going to the SCS.'''
+    pass
+
+# For use EG when a DCN AM complains it has never seen your project before
+class StitchingRetryAggregateNewVlanImmediatelyError(StitchingRetryAggregateNewVlanError):
+    '''Allocation at a single AM failed cause VLAN unavailable. Try a different tag locally before going to the SCS - immediately.'''
     pass
 
 class StitchingServiceFailedError(StitchingError):
@@ -77,3 +86,31 @@ def stripBlankLines(strWithBlanks):
         if l != '':
             str2 = str2 + line + '\n'
     return str2
+
+def isRSpecStitchingSchemaV2(rspec):
+    '''Does the given RSpec mention stitch schema v2?'''
+    if rspec is None:
+        return False
+    if defs.STITCH_V2_BASE in str(rspec):
+        return True
+    return False
+
+def prependFilePrefix(filePrefix, filePath):
+    '''Prepend the given prefix (if any) to the given file path.
+    Return is normalized with any ~ expanded.'''
+    # filePrefix needs to end in os.sep for os.path.split to treat it as a dir
+    if filePrefix is None or str(filePrefix).strip() == "":
+        if filePath is None:
+            return filePath
+        else:
+            return os.path.normpath(os.path.expanduser(filePath))
+    (preDir, preFile) = os.path.split(filePrefix)
+    (fDir, fFile) = os.path.split(filePath)
+    cFile = os.path.join(preFile, fFile) # FIXME: Need a hyphen or something?
+    # If filePrefix has no directory component, then keep the directory of filePath,
+    # put the filePrefix onto the front of the filename, 
+    # and return the re-assembled filePath
+    if preDir is None or preDir == "":
+        return os.path.normpath(os.path.expanduser(os.path.join(fDir, cFile)))
+    # Otherwise, drop any directory portion of the filePath path and stuff it all together and return
+    return os.path.normpath(os.path.expanduser(os.path.join(preDir, cFile)))

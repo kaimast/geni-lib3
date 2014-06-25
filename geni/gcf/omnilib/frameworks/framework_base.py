@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -35,6 +35,8 @@ from ..util import OmniError
 from ..util import credparsing as credutils
 from ..util import json_encoding
 from ..xmlrpc import client as xmlrpcclient
+
+from ...sfa.trust.credential import Credential
 
 class Framework_Base():
     """
@@ -77,6 +79,12 @@ class Framework_Base():
         Returns the usercred - in XML string format.
         """
         
+        try:
+            if self.user_cred_struct is not None:
+                pass
+        except:
+            self.user_cred_struct = None
+
         # read the usercred from supplied file
         cred = None
         if opts.usercredfile and os.path.exists(opts.usercredfile) and os.path.isfile(opts.usercredfile) and os.path.getsize(opts.usercredfile) > 0:
@@ -91,6 +99,12 @@ class Framework_Base():
                 cred = f.read()
             try:
                 cred = json.loads(cred, encoding='ascii', cls=json_encoding.DateTimeAwareJSONDecoder)
+                if cred and isinstance(cred, dict) and \
+                        cred.has_key('geni_type') and \
+                        cred.has_key('geni_value') and \
+                        cred['geni_type'] == Credential.SFA_CREDENTIAL_TYPE and \
+                        cred['geni_value'] is not None:
+                    self.user_cred_struct = cred
             except Exception, e:
                 logger.debug("Failed to get a JSON struct from cred in file %s. Treat as a string: %s", opts.usercredfile, e)
             cred2 = credutils.get_cred_xml(cred)
@@ -101,9 +115,14 @@ class Framework_Base():
                 else:
                     cred = None
             else:
+                # This would force a saved user cred in struct to be XML. Is that correct?
+                #cred = cred2
                 target = ""
                 try:
                     target = credutils.get_cred_target_urn(logger, cred)
+                    if "+authority+sa" in target:
+                        self.logger.debug("Got target %s - PG user creds list the user as the owner only", target)
+                        target = credutils.get_cred_owner_urn(logger, cred)
                 except:
                     if not opts.devmode:
                         logger.warn("Failed to parse target URN from user cred?")
@@ -114,6 +133,7 @@ class Framework_Base():
             else:
                 logger = logging.getLogger("omni.framework")
             logger.info("NOT getting user credential from file %s - file doesn't exist or is empty", opts.usercredfile)
+
         return cred
         
     def get_version(self):
@@ -161,12 +181,20 @@ class Framework_Base():
         """
         raise NotImplementedError('list_my_slices')
 
-    def list_my_ssh_keys(self):
+    def list_my_projects(self, username):
         """
-        Get a list of SSH public keys for this user.
-        Returns: a list of SSH public keys
+        '''List projects owned by the user (name or URN) provided, returning a list of structs, containing
+        PROJECT_URN, PROJECT_UID, EXPIRED, and PROJECT_ROLE. EXPIRED is a boolean.'''
         """
-        raise NotImplementedError('list_my_ssh_keys')
+        raise NotImplementedError('list_my_projects')
+
+    def list_ssh_keys(self, username=None):
+        """
+        Get a list of SSH key pairs for the given user or the configured current user if not specified.
+        Private key will be omitted if not known or found.
+        Returns: a list of structs containing SSH key pairs ('public_key', 'private_key' (may be omitted))
+        """
+        raise NotImplementedError('list_ssh_keys')
 
     def slice_name_to_urn(self, name):
         """Convert a slice name to a slice urn."""
@@ -230,7 +258,10 @@ class Framework_Base():
            geni_value: <the credential as a string>
         }
         """
-        raise NotImplementedError('get_user_cred_struct')
+        cred, message = self.get_user_cred()
+        if cred:
+            cred = self.wrap_cred(cred)
+        return cred, message
 
     def get_slice_cred_struct(self, urn):
         """
@@ -242,10 +273,81 @@ class Framework_Base():
            geni_value: <the credential as a string>
         }
         """
-        raise NotImplementedError('get_slice_cred_struct')
+        cred = self.get_slice_cred(urn)
+        return self.wrap_cred(cred)
 
     def wrap_cred(self, cred):
         """
         Wrap the given cred in the appropriate struct for this framework.
         """
-        raise NotImplementedError('wrap_cred')
+        if hasattr(self, 'logger'):
+            logger = self.logger
+        else:
+            logger = logging.getLogger("omni.framework")
+        if isinstance(cred, dict):
+            logger.debug("Called wrap on a cred that's already a dict? %s", cred)
+            return cred
+        elif not isinstance(cred, str):
+            logger.warn("Called wrap on non string cred? Stringify. %s", cred)
+            cred = str(cred)
+        cred_type, cred_version = credutils.get_cred_type(cred)
+        ret = dict(geni_type=cred_type, geni_version=cred_version, \
+                       geni_value=cred)
+        return ret
+
+    # get the slice members (urn, email) and their public ssh keys and
+    # slice role
+    def get_members_of_slice(self, slice_urn):
+        raise NotImplementedError('get_members_of_slice')
+
+    # get the members (urn, email) and their role in the project
+    def get_members_of_project(self, project_name):
+        '''Look up members of the project with the given name.
+        Return is a list of member dictionaries
+        containing PROJECT_MEMBER (URN), EMAIL, PROJECT_MEMBER_UID, and PROJECT_ROLE.
+        '''
+        raise NotImplementedError('get_members_of_project')
+
+    # add a new member to a slice (giving them rights to get a slice credential)
+    def add_member_to_slice(self, slice_urn, member_name, role = 'MEMBER'):
+        raise NotImplementedError('add_member_to_slice')
+
+    # remove a member from a slice 
+    def remove_member_from_slice(self, slice_urn, member_name):
+        raise NotImplementedError('remove_member_from_slice')
+
+    # Record new slivers at the CH database 
+    # write new sliver_info to the database using chapi
+    # Manifest is the XML when using APIv1&2 and none otherwise
+    # expiration is the slice expiration
+    # slivers is the return struct from APIv3+ or None
+    # If am_urn is not provided, infer it from the url
+    # If both are not provided, infer the AM from the sliver URNs
+    def create_sliver_info(self, manifest, slice_urn,
+                              aggregate_url, expiration, slivers, am_urn):
+        raise NotImplementedError('create_sliver_info')
+
+    # use the CH database to convert an aggregate url to the corresponding urn
+    def lookup_agg_urn_by_url(self, agg_url):
+        raise NotImplementedError('lookup_agg_urn_by_url')
+
+    # given the slice urn and aggregate urn, find the associated sliver urns from the CH db
+    # Return an empty list if none found
+    def list_sliverinfo_urns(self, slice_urn, aggregate_urn):
+        raise NotImplementedError('list_sliverinfo_urns')
+
+    # update the expiration time for a sliver recorded at the CH,
+    # If we get an argument error indicating the sliver was not yet recorded, try
+    # to record it
+    def update_sliver_info(self, aggregate_urn, slice_urn, sliver_urn, expiration):
+        raise NotImplementedError('update_sliver_info')
+
+    # delete the sliver from the CH database of slivers in a slice
+    def delete_sliver_info(self, sliver_urn):
+        raise NotImplementedError('delete_sliver_info')
+
+    # Find all slivers the SA lists for the given slice
+    # Return a struct by AM URN containing a struct: sliver_urn = sliver info struct
+    def list_sliver_infos_for_slice(self, slice_urn):
+        return {}
+        

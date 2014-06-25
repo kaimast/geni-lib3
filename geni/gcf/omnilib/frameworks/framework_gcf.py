@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -29,6 +29,7 @@ from ..util import credparsing as credutils
 
 from ...geni.util.urn_util import is_valid_urn, URN, string_to_urn_format
 
+import datetime
 import os
 import string
 import sys
@@ -48,13 +49,24 @@ class Framework(Framework_Base):
             sys.exit('GCF Framework keyfile %s is empty' % config['key'])
         if not config.has_key('verbose'):
             config['verbose'] = False
+        if str(config['verbose']).lower().strip() in ('t', 'true', 'y', 'yes', '1', 'on'):
+            config['verbose'] = True
+        else:
+            config['verbose'] = False
+
+        self.logger = config['logger']
+
+        if opts.verbosessl:
+            self.logger.debug('Setting Verbose SSL logging based on option')
+            config['verbose'] = True
+        if config['verbose']:
+            self.logger.info('Verbose logging is on')
         self.config = config
         
         self.ch = self.make_client(config['ch'], self.key, self.cert,
-                                   verbose=config['verbose'])
+                                   verbose=config['verbose'], timeout=opts.ssltimeout)
         self.cert_string = file(config['cert'],'r').read()
         self.user_cred = self.init_user_cred( opts )
-        self.logger = config['logger']
         
     def get_user_cred(self):
         message = ""
@@ -158,54 +170,21 @@ class Framework(Framework_Base):
         expiration = expiration_dt.isoformat()
         (bool, message) = _do_ssl(self, None, ("Renew slice %s on GCF CH %s until %s" % (urn, self.config['ch'], expiration_dt)), self.ch.RenewSlice, urn, expiration)
         if bool:
-            return expiration_dt
+            slicecred = self.get_slice_cred(urn)
+            if slicecred:
+                sliceexp = credutils.get_cred_exp(self.logger, slicecred)
+
+                # If request is diff from sliceexp then log a warning
+                if sliceexp - expiration_dt > datetime.timedelta.resolution:
+                    self.logger.warn("Renewed GCF slice %s expiration %s different than request %s", urn, sliceexp, expiration_dt)
+                return sliceexp
+            else:
+                self.logger.debug("Failed to get renewd GCF slice cred. Use request.")
+                return expiration_dt
         else:
             # FIXME: use any message?
             _ = message #Appease eclipse
             return None
-
-    def get_user_cred_struct(self):
-        """
-        Returns a user credential from the control framework as a string in a struct. And an error message if any.
-        Struct is as per AM API v3:
-        {
-           geni_type: <string>,
-           geni_version: <string>,
-           geni_value: <the credential as a string>
-        }
-        """
-        cred, message = self.get_user_cred()
-        if cred:
-            cred = self.wrap_cred(cred)
-        return cred, message
-
-    def get_slice_cred_struct(self, urn):
-        """
-        Retrieve a slice with the given urn and returns the signed
-        credential as a string in the AM API v3 struct:
-        {
-           geni_type: <string>,
-           geni_version: <string>,
-           geni_value: <the credential as a string>
-        }
-        """
-        cred = self.get_slice_cred(urn)
-        return self.wrap_cred(cred)
-
-    def wrap_cred(self, cred):
-        """
-        Wrap the given cred in the appropriate struct for this framework.
-        """
-        if isinstance(cred, dict):
-            self.logger.warn("Called wrap on a cred that's already a dict? %s", cred)
-            return cred
-        elif not isinstance(cred, str):
-            self.logger.warn("Called wrap on non string cred? Stringify. %s", cred)
-            cred = str(cred)
-        ret = dict(geni_type="geni_sfa", geni_version="2", geni_value=cred)
-        if credutils.is_valid_v3(self.logger, cred):
-            ret["geni_version"] = "3"
-        return ret
 
     def get_version(self):
         pl_response = dict()

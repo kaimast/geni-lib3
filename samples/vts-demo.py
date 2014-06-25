@@ -39,21 +39,21 @@ for src,dst in pairs:
 vtsr.write("vts-demo.xml")
 
 vtsm = VTSAM.DDC.createsliver(context, SLICE, vtsr)
-#IP = "10.50.1.%d"
-#
-#pgr = PG.Request()
-#for idx, circuit in enumerate(vtsm.pg_circuits):
-#  vm = PG.XenVM("vm%d" % (idx))
-#  intf = vm.addInterface("if0")
-#  intf.addAddress(PG.IPv4Address(IP % (idx + 1), "255.255.255.0"))
-#  pgr.addResource(vm)
-#
-#  lnk = PG.Link()
-#  lnk.addInterface(intf)
-#  lnk.connectSharedVlan(circuit)
-#  pgr.addResource(lnk)
-#  
-#pgm = IG.UtahDDC.createsliver(context, SLICE, pgr)
-#for node in pgm.nodes:
-#  for login in node.logins:
-#    print "[%s] %s:%d" % (node.name, login.hostname, login.port)
+IP = "10.50.1.%d"
+
+pgr = PG.Request()
+for idx, circuit in enumerate(vtsm.pg_circuits):
+  vm = PG.XenVM("vm%d" % (idx))
+  intf = vm.addInterface("if0")
+  intf.addAddress(PG.IPv4Address(IP % (idx + 1), "255.255.255.0"))
+  pgr.addResource(vm)
+
+  lnk = PG.Link()
+  lnk.addInterface(intf)
+  lnk.connectSharedVlan(circuit)
+  pgr.addResource(lnk)
+  
+pgm = IG.UtahDDC.createsliver(context, SLICE, pgr)
+for node in pgm.nodes:
+  for login in node.logins:
+    print "[%s] %s:%d" % (node.name, login.hostname, login.port)

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #----------------------------------------------------------------------
-# Copyright (c) 2012-2013 Raytheon BBN Technologies
+# Copyright (c) 2012-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -53,3 +53,5 @@ err_codes[ 21 ] = { 'label': 'CREDENTIAL_EXPIRED', 'description': "Not authorize
 err_codes[ 22 ] = { 'label': 'CREDENTIAL_MISMATCH', 'description': "Not authorized: Supplied credential does not match the supplied client certificate or does not match the given slice URN" }
 err_codes[ 23 ] = { 'label': 'CREDENTIAL_SIGNER_UNTRUSTED', 'description': "Not authorized: Supplied credential not signed by trusted authority" } 
 err_codes[ 24 ] = { 'label': 'VLAN_UNAVAILABLE', 'description': "VLAN tag(s) requested not available (likely stitching failure)" } 
+err_codes[ 25 ] = { 'label': 'INSUFFICIENT_BANDWIDTH', 'description': "Requested capacity for link(s) not available" } 
+err_codes[ 26 ] = { 'label': 'INSUFFICIENT_NODES', 'description': "Not enough nodes available for request" } 

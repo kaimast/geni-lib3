@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #----------------------------------------------------------------------
-# Copyright (c) 2012-2013 Raytheon BBN Technologies
+# Copyright (c) 2012-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -72,7 +72,7 @@ echo "    - user accounts on the experimenter nodes." >>  ~/.gcf/passwords
 echo "" >> ~/.gcf/passwords
 echo "The password is:" >> ~/.gcf/passwords
 echo -n "    " >> ~/.gcf/passwords
-grep -i "rootpwd" ~/gcf/src/geni/am/gibaggregate/config.py | awk '{print $3}' | sed "s/'//g" >> ~/.gcf/passwords
+grep -i "rootpwd" ~/gcf/src/gcf/geni/am/gibaggregate/config.py | awk '{print $3}' | sed "s/'//g" >> ~/.gcf/passwords
 echo "" >> ~/.gcf/passwords
 echo "Please do not change this password." >> ~/.gcf/passwords
  

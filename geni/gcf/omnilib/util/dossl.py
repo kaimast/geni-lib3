@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2013 Raytheon BBN Technologies
+# Copyright (c) 2011-2014 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -59,9 +59,9 @@ def _do_ssl(framework, suppresserrors, reason, fn, *args):
     otherwise returns None. And (2) A message explaining any errors."""
 
     # Change exception name?
-    max_attempts = 2
+    max_attempts = 4
     attempt = 0
-    retry_pause_seconds = 10
+    retry_pause_seconds = 15
 
     failMsg = "Call for %s failed." % reason
     while(attempt <= max_attempts):
@@ -152,7 +152,7 @@ def _do_ssl(framework, suppresserrors, reason, fn, *args):
                 framework.logger.debug(traceback.format_exc())
                 return (None, msg)
             else:
-                msg = "Unknown SSL error %s" % exc
+                msg = "Unknown SSL error: %s" % exc
                 framework.logger.error("%s: %s" % (failMsg, msg))
                 if not framework.logger.isEnabledFor(logging.DEBUG):
                     framework.logger.error('    ..... Run with --debug for more information')
