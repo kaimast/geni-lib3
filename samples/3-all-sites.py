@@ -5,11 +5,13 @@ import nbastin
 context = nbastin.buildContext()
 
 NETMASK = "255.255.255.0"
-IPS = ["10.20.30.1", "10.20.30.2", "10.20.30.3"]
+IPS = ["10.10.1.1", "10.10.1.2", "10.10.1.3"]
+BLACKLIST = set([IG.UtahDDC, IG.NPS])
 
 for site in IG.aggregates():
-  if site is IG.UtahDDC:
-    # Skip DDC as it has no VZ nodes
+  print "Running for %s" % (site.name)
+
+  if site in BLACKLIST:
     continue
 
   try:
@@ -23,7 +25,7 @@ for site in IG.aggregates():
 
   # Xen VMs
   for (idx, node) in enumerate([node for node in ad.nodes if not node.exclusive and "emulab-xen" in node.sliver_types]):
-    vm = PG.XenVM("xen%d" % (idx))
+    vm = PG.XenVM("host%d" % (idx+1))
     intf = vm.addInterface("if0")
     intf.addAddress(PG.IPv4Address(IPS[idx], NETMASK))
     r.addResource(vm)
@@ -34,7 +36,7 @@ for site in IG.aggregates():
   # VZNode
   # Sorry about the stupidity about how to find OpenVZ hosts.  I should fix this.
   vznode = [node for node in ad.nodes if not node.exclusive and "emulab-xen" not in node.sliver_types and node.hardware_types.has_key("pcvm")][0]
-  vzc = PG.VZContainer("vz0")
+  vzc = PG.VZContainer("host3")
   intf = vzc.addInterface("if0")
   intf.addAddress(PG.IPv4Address(IPS[2], NETMASK))
   r.addResource(vzc)
@@ -45,6 +47,7 @@ for site in IG.aggregates():
   # Controller
   cvm = PG.XenVM("controller")
   cvm.routable_control_ip = True
+  cvm.component_manager_id = vznode.component_manager_id
   cvm.addService(PG.Install(url="http://www.gpolab.bbn.com/experiment-support/OpenFlowHW/of-hw.tar.gz", path="/local"))
   cvm.addService(PG.Execute(shell="sh", command = "sudo /local/install-script.sh"))
   r.addResource(cvm)
@@ -56,4 +59,4 @@ for site in IG.aggregates():
   lan.connectSharedVlan("mesoscale-openflow")
   r.addResource(lan)
 
-  r.write("%s.xml" % (site.name))
+  r.write("%s.rspec" % (site.name))
