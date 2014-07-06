@@ -232,7 +232,7 @@ class Node(Resource):
     if self.services:
       svc = ET.SubElement(nd, "{%s}services" % (GNS.REQUEST.name))
       for service in self.services:
-        service._write(svce)
+        service._write(svc)
 
     if self.routable_control_ip:
       rc = ET.SubElement(nd, "{%s}routable_control_ip" % (Namespaces.EMULAB.name))
