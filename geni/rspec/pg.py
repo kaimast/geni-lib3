@@ -127,6 +127,7 @@ class Link(Resource):
     self.type = ltype
     self.shared_vlan = None
     self._mac_learning = True
+    self._vlan_tagging = False
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
@@ -146,6 +147,10 @@ class Link(Resource):
   def disableMACLearning (self):
     self.namespaces.append(Namespaces.VTOP)
     self._mac_learning = False
+
+  def enableVlanTagging (self):
+    self.namespaces.append(Namespaces.EMULAB)
+    self._vlanTagging = True
 
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
@@ -171,6 +176,10 @@ class Link(Resource):
       lrnelem = ET.SubElement(lnk, "{%s}link_attribute" % (Namespaces.VTOP.name))
       lrnelem.attrib["key"] = "nomac_learning"
       lrnelem.attrib["value"] = "yep"
+
+    if self._vlanTagging:
+      tagging = ET.SubElement(lnk, "{%s}vlan_tagging" % (Namespaces.EMULAB.name))
+      tagging.attrib["enabled"] = "true"
 
     for intf in self.interfaces:
       if intf.bandwidth:
