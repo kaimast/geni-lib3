@@ -115,7 +115,7 @@ class Interface(object):
 
 class Link(Resource):
   LNKID = 0
-  DEFAULT_BW = 100000
+  DEFAULT_BW = -1
 
   def __init__ (self, name = None, ltype = ""):
     super(Link, self).__init__()
@@ -190,6 +190,8 @@ class Link(Resource):
             prop.attrib["dest_id"] = intf.name
             prop.attrib["capacity"] = str(intf.bandwidth)
 
+    return lnk
+
 
 class LAN(Link):
   def __init__ (self, name = None):
@@ -202,6 +204,33 @@ class L3GRE(Link):
 class L2GRE(Link):
   def __init__ (self, name = None):
     super(L2GRE, self).__init__(name, "egre-tunnel")
+
+class StitchedLink(Link):
+  class UnknownComponentManagerError(Exception):
+    def __init__ (self, cid):
+      self._cid = cide
+    def __str__ (self):
+      return "Interface with client_id %s is not attached to a bound node." % (self._cid)
+
+  class TooManyInterfacesError(Exception):
+    def __str__ (self):
+      return "Stitched Links may not be connected to more than two interfaces"
+
+  def __init__ (self, name = None):
+    super(StitchedLink, self).__init__(name, "")
+    self.bandwidth = 20000
+
+  def _write (self, root):
+    if len(self.interfaces) > 2:
+      raise StitchedLink.TooManyInterfacesError()
+
+    lnk = super(StitchedLink, self)._write(root)
+    for intf in self.interfaces:
+      if intf.node.component_manager_id is None:
+        raise StitchedLink.UnknownComponentManagerError(intf.client_id)
+      cm = ET.SubElement(lnk, "{%s}component_manager" % (GNS.REQUEST.name))
+      cm.attrib["name"] = intf.node.component_manager_id
+    return lnk
 
 
 class Node(Resource):
