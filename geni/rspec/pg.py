@@ -150,7 +150,7 @@ class Link(Resource):
 
   def enableVlanTagging (self):
     self.namespaces.append(Namespaces.EMULAB)
-    self._vlanTagging = True
+    self._vlan_tagging = True
 
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
@@ -177,7 +177,7 @@ class Link(Resource):
       lrnelem.attrib["key"] = "nomac_learning"
       lrnelem.attrib["value"] = "yep"
 
-    if self._vlanTagging:
+    if self._vlan_tagging:
       tagging = ET.SubElement(lnk, "{%s}vlan_tagging" % (Namespaces.EMULAB.name))
       tagging.attrib["enabled"] = "true"
 
