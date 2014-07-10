@@ -17,10 +17,14 @@ class _Registry(object):
 
 
 class AM(object):
-  def __init__ (self, name, url, api, amtype):
+  class UnspecifiedComponentManagerError(Exception):
+    def __str__ (self):
+      return "AM object does not have a component manager ID specified"
+
+  def __init__ (self, name, url, api, amtype, cmid=None):
     self.url = url
     self.name = name
-    self._urn_prefix = None
+    self._cmid = cmid
     self._apistr = api
     self._api = None
     self._typestr = amtype
@@ -28,7 +32,9 @@ class AM(object):
 
   @property
   def component_manager_id (self):
-    return "%s+authority+am" % (self._urn_prefix)
+    if self._cmid:
+      return self._cmid
+    raise AM.UnspecifiedComponentManagerError()
 
   @property
   def api (self):
