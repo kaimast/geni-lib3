@@ -5,6 +5,9 @@ from __future__ import absolute_import
 import tempfile
 import os
 import os.path
+import datetime
+
+import lxml.etree as ET
 
 from . import cmd
 from ..exceptions import NoUserError, SliceCredError
@@ -26,6 +29,56 @@ class SlicecredProxy(object):
     for x in self._context._slicecred_paths:
       yield x
 
+class SliceCredInfo(object):
+  class CredentialExpiredError(Exception):
+    def __init__ (self, name, expires):
+      self.expires = expires
+      self.sname = name
+    def __str__ (self):
+      return "Credential for slice %s expired on %s" % (self.sname, self.expires)
+
+  def __init__ (self, context, slicename):
+    self.slicename = slicename
+    self.context = context
+    self._path = None
+    self.expires = None
+    self._build()
+
+  def _build (self):
+    # This really should probably be a lot more complicated/painful and be based on the "right thing"
+    # for your framework - e.g. geni-ch this should contain your project, not your user name, etc.
+    self._path = "%s/%s-%s-scred.xml" % (self.context.datadir, self.context._default_user.name, self.slicename)
+    if not os.path.exists(self._path):
+      self._downloadCredential()
+    else:
+      self._setExpires()
+
+  def _downloadCredential (self):
+    (text, cred) = cmd.getslicecred(self.context, self.slicename)
+    if not cred:
+      raise SliceCredError(text)
+    f = open(self._path, "w+")
+    f.write(cred)
+    f.close()
+    self._setExpires()
+
+  def _setExpires (self):
+    r = ET.parse(self._path)
+    expstr = r.find("credential/expires").text
+    if expstr[-1] == 'Z':
+      expstr = expstr[:-1]
+    self.expires = datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
+
+  @property
+  def path (self):
+    checktime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    if self.expires < checktime:
+      # We expire in the next 5 minutes
+      self._downloadCredential()
+      if self.expires < datetime.datetime.now():
+        raise SliceCredInfo.CredentialExpiredError(self.slicename, self.expires)
+    return self._path
+
 
 class Context(object):
   DEFAULT_DIR = os.path.expanduser("~/.bssw/geni")
@@ -38,23 +91,15 @@ class Context(object):
     self.cf = None
     self.project = None
     self._usercred_path = None
-    self._slicecred_paths = {}
+    self._slicecreds = {}
     self.debug = False
 
   def _getSliceCred (self, sname):
-    # TODO: Figure out if a slice cred is expired and get it again
-    scpath = "%s/%s-%s-scred.xml" % (self.datadir, self._default_user.name, sname)
-    if not self._slicecred_paths.has_key(sname):
-      cfg = self.cfg_path
-      self._slicecred_paths[sname] = scpath
-    if not os.path.exists(scpath):
-      (text, cred) = cmd.getslicecred(self, sname)
-      if not cred:
-        raise SliceCredError(text)
-      f = open(scpath, "w+")
-      f.write(cred)
-      f.close()
-    return self._slicecred_paths[sname]
+    if not self._slicecreds.has_key(sname):
+      scinfo = SliceCredInfo(self, sname)
+      self._slicecreds[sname] = scinfo
+
+    return self._slicecreds[sname].path
 
   @property
   def nickCache (self):
