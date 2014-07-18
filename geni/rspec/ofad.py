@@ -11,10 +11,30 @@ TOPO = GNS.Namespace("topo", "http://geni.bssoftworks.com/rspec/ext/topo/1")
 
 XPNS = {'g' : GNS.REQUEST.name, 'o' : GNS.OFv3.name, 't' : TOPO.name}
 
+class Attachment(object):
+  def __init__ (self):
+    self.description = None
+
+class OFAttachment(Attachment):
+  def __init__ (self):
+    super(OFAttachment, self).__init__()
+    self.remote_cmid = None
+    self.remote_port_name = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    a = OFAttachment()
+    a.description = elem.get("desc")
+    a.remote_cmid = elem.get("remote-component-id")
+    a.remote_port_name = elem.get("remote-port-name")
+    return a
+
+  
 class Port(object):
   def __init__ (self):
     self.name = None
     self.number = None
+    self.topo = []
 
   def __repr__ (self):
     return "<Port %s,%s>" % (self.name, self.number)
@@ -24,6 +44,9 @@ class Port(object):
     p = Port()
     p.name = elem.get("name")
     p.number = elem.get("number")
+    for ofa in elem.xpath('t:geni-of', namespaces = XPNS):
+      p.topo.append(OFAttachment._fromdom(ofa))
+    return p
 
 
 class Datapath(object):
