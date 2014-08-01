@@ -11,6 +11,26 @@ from geni.model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 
+class Image(object):
+  def __init__ (self):
+    self.name = None
+    self.os = None
+    self.version = None
+    self.description = None
+
+  def __repr__ (self):
+    return "<Image: %s, os: '%s', version: '%s', description: '%s'>" % (self.name, self.os, self.version, self.description)
+
+  @classmethod
+  def _fromdom (self, elem):
+    i = Image()
+    i.name = elem.get("name")
+    if i.name is None:
+      i.name = elem.get("url")
+    i.os = elem.get("os")
+    i.version = elem.get("version")
+    i.description = elem.get("description")
+    return i
 
 class Location(object):
   def __init__ (self):
@@ -55,6 +75,7 @@ class AdNode(object):
     self.available = False
     self.hardware_types = {}
     self.sliver_types = set()
+    self.images = {}
     self.shared = False
     self.interfaces = []
     self.location = None
@@ -74,7 +95,12 @@ class AdNode(object):
 
     stypes = elem.xpath('g:sliver_type', namespaces = _XPNS)
     for stype in stypes:
-      node.sliver_types.add(stype.get("name"))
+      sliver_name = stype.get("name")
+      node.sliver_types.add(sliver_name)
+      node.images[sliver_name] = []
+      ims = stype.xpath('g:disk_image', namespaces = _XPNS)
+      for im in ims:
+        node.images[sliver_name].append(Image._fromdom(im))
 
     htypes = elem.xpath('g:hardware_type', namespaces = _XPNS)
     for htype in htypes:
@@ -100,6 +126,21 @@ class AdNode(object):
 
     return node
 
+class AdLink(object):
+  def __init__ (self):
+    self.component_id = None
+    self.link_types = set()
+
+  @classmethod
+  def _fromdom (cls, elem):
+    link = AdLink()
+    link.component_id = elem.get("component_id")
+    
+    ltypes = elem.xpath('g:link_type', namespaces = _XPNS)
+    for ltype in ltypes:
+      link.link_types.add(ltype.get("name"))
+
+    return link
 
 class AdSharedVLAN(object):
   def __init__ (self):
@@ -152,6 +193,10 @@ class Advertisement(object):
   @property
   def nodes (self):
     return XPathXRange(self._root.findall("{%s}node" % (GNS.REQUEST.name)), AdNode)
+
+  @property
+  def links (self):
+    return XPathXRange(self._root.findall("{%s}link" % (GNS.REQUEST.name)), AdLink)
 
   @property
   def shared_vlans (self):
