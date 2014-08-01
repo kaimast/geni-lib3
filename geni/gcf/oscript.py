@@ -113,6 +113,7 @@ import optparse
 import os
 import sys
 import urllib
+import shutil
 
 from .omnilib.util import OmniError, AMAPIError
 from .omnilib.handler import CallHandler
@@ -460,7 +461,7 @@ def update_agg_nick_cache( opts, logger ):
                 os.unlink(opts.aggNickCacheName)
             except:
                 pass
-            os.rename(tmpcache, opts.aggNickCacheName)
+            shutil.move(tmpcache, opts.aggNickCacheName)
             logger.info("Downloaded latest `agg_nick_cache` from '%s' and copied to '%s'." % (opts.aggNickDefinitiveLocation, opts.aggNickCacheName))
     except Exception, e:
         logger.info("Attempted to download latest `agg_nick_cache` from '%s' but could not." % opts.aggNickDefinitiveLocation )
