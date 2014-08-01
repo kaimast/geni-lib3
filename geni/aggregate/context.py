@@ -71,9 +71,9 @@ class SliceCredInfo(object):
 
   @property
   def path (self):
-    checktime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    checktime = datetime.datetime.now() + datetime.timedelta(days=6)
     if self.expires < checktime:
-      # We expire in the next 5 minutes
+      # We expire in the next 6 days
       self._downloadCredential()
       if self.expires < datetime.datetime.now():
         raise SliceCredInfo.CredentialExpiredError(self.slicename, self.expires)
