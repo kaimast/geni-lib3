@@ -38,12 +38,12 @@ class ProtoGENI(AMType):
     super(ProtoGENI, self).__init__(name)
 
   def parseAdvertisement (self, data):
-    from geni.rspec import pgad
+    from ..rspec import pgad
     ad = pgad.Advertisement(xml=data)
     return ad
 
   def parseManifest (self, data):
-    from geni.rspec import pgmanifest
+    from ..rspec import pgmanifest
     manifest = pgmanifest.Manifest(xml = data)
     return manifest
 
@@ -53,12 +53,12 @@ class FOAM(AMType):
     super(FOAM, self).__init__(name)
 
   def parseAdvertisement (self, data):
-    from geni.rspec import ofad
+    from ..rspec import ofad
     ad = ofad.Advertisement(xml=data)
     return ad
 
   def parseManifest (self, data):
-    from geni.rspec import ofmanifest
+    from ..rspec import ofmanifest
     manifest = ofmanifest.Manifest(xml = data)
     return manifest
 
@@ -68,12 +68,12 @@ class VTS(AMType):
     super(VTS, self).__init__(name)
 
   def parseAdvertisement (self, data):
-    from geni.rspec import vtsad
+    from ..rspec import vtsad
     ad = vtsad.Advertisement(xml=data)
     return ad
 
   def parseManifest (self, data):
-    from geni.rspec import vtsmanifest
+    from ..rspec import vtsmanifest
     manifest = vtsmanifest.Manifest(xml = data)
     return manifest
 
