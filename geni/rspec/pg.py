@@ -337,6 +337,8 @@ class PGContext(XMLContext):
 
 
 class Request(geni.rspec.RSpec):
+  __sphinx__ = """Container for ProtoGENI resource requests."""
+
   def __init__ (self):
     super(Request, self).__init__("request")
     self.resources = []
@@ -348,6 +350,7 @@ class Request(geni.rspec.RSpec):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
     self.resources.append(rsrc)
+  addResource.__sphinx__ = """Add specified resource specification to your request."""
 
   def write (self, path):
     f = open(path, "w+")
