@@ -9,6 +9,7 @@ from .core import AM
 
 class IGOF(AM):
   def __init__ (self, name, host, url = None):
+    self.host = host
     if url is None:
       url = "https://%s:3626/foam/gapi/2" % (host)
     super(IGOF, self).__init__(name, url, "amapiv2", "foam")
@@ -47,3 +48,11 @@ def aggregates ():
   for name,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       yield obj
+
+def name_to_aggregate ():
+  result = {}
+  module = sys.modules[__name__]
+  for name,obj in inspect.getmembers(module):
+    if isinstance(obj, AM):
+      result[obj.name] = obj
+  return result
