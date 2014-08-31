@@ -14,6 +14,8 @@ class IGCompute(AM):
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
 
 
+# TODO: Should warn if CMID from advertisement differs from one here
+
 CaseWestern = IGCompute("ig-cwru", "boss.geni.case.edu", "urn:publicid:IDN+geni.case.edu+authority+cm")
 Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu", "urn:publicid:IDN+geni.it.cornell.edu+authority+cm")
 Clemson = IGCompute("ig-clemson", "instageni.clemson.edu", "urn:publicid:IDN+instageni.clemson.edu+authority+cm")
@@ -36,6 +38,7 @@ Princeton = IGCompute("ig-princeton", "instageni.cs.princeton.edu", "urn:publici
 Rutgers = IGCompute("ig-rutgers", "instageni.rutgers.edu", "urn:publicid:IDN+instageni.rutgers.edu+authority+cm")
 SOX = IGCompute("ig-sox", "instageni.sox.net", "urn:publicid:IDN+instageni.sox.net+authority+cm")
 Stanford = IGCompute("ig-stanford", "instageni.stanford.edu", "urn:publicid:IDN+instageni.stanford.edu+authority+cm")
+UCLA = IGCompute("ig-ucla", "instageni.idre.ucla.edu", "urn:publicid:IDN+instageni.idre.ucla.edu+authority+cm")
 Utah = IGCompute("ig-utah", "boss.utah.geniracks.net", "urn:publicid:IDN+utah.geniracks.net+authority+cm")
 UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:IDN+utahddc.geniracks.net+authority+cm")
 Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+instageni.wisc.edu+authority+cm")
