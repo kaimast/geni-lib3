@@ -73,7 +73,9 @@ class AMAPIv2(object):
 
   def getversion (self, context, url):
     arglist = self._getDefaultArgs(context, url)
-    arglist.extend("getversion")
+    arglist.extend(["getversion"])
+    text, res = oscript.call(arglist)
+    return res.values()[0]
 
 
 APIRegistry.register("amapiv2", AMAPIv2())

@@ -75,6 +75,9 @@ class AM(object):
     os.remove(path)
     return self.amtype.parseManifest(res)
 
+  def getversion (self, context):
+    return self.api.getversion(context, self.url)
+
 
 APIRegistry = _Registry()
 AMTypeRegistry = _Registry()
