@@ -16,7 +16,7 @@ class IGOF(AM):
 
 
 CaseWestern = IGOF("ig-of-cwru", "foam.geni.case.edu")
-CENIC = IGOF("ig-of-cenic", "foam.instageni.cenic.edu")
+CENIC = IGOF("ig-of-cenic", "foam.instageni.cenic.net")
 Cornell = IGOF("ig-of-cornell", "foam.geni.it.cornell.edu")
 Clemson = IGOF("ig-of-clemson", "foam.instageni.clemson.edu")
 Dublin = IGOF("ig-of-ohmetrodc", "foam.instageni.metrodatacenter.com")
