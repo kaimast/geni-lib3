@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import requests
+import json
 
 from . import germ
 
@@ -28,3 +29,10 @@ class Connection(germ.Connection):
     url = "https://%s:%d/core/admin/vts/pgvlan" % (self.host, self.port)
     d = json.dumps({"name" : name, "vid" : vid})
     r = requests.post(url, d, **self.rkwargs)
+
+  def addCircuitPlane (self, typ, label, endpoint):
+    url = "https://%s:%d/core/admin/vts/circuitplane/%s" % (
+          self.host, self.port, typ)
+    d = json.dumps({"label" : label, "endpoint" : endpoint})
+    r = requests.post(url, d, **self.rkwargs)
+    return r
