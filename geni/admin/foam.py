@@ -4,6 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import json
 import requests
 
 from . import germ
@@ -15,10 +16,22 @@ class Admin(object):
     self._conn = connection
 
   @property
+  def configkeys (self):
+    url = Admin.URL % (self._conn.host, self._conn.port, "get-config-keys")
+    r = requests.get(url, **self._conn.rkwargs)
+    return r.json()["value"]
+
+  @property
   def version (self):
     url = Admin.URL % (self._conn.host, self._conn.port, "get-version")
     r = requests.get(url, **self._conn.rkwargs)
     return r.json()["value"]["version"]
+
+  def getConfig (self, key):
+    url = Admin.URL % (self._conn.host, self._conn.port, "get-config")
+    d = json.dumps({"key":key})
+    r = requests.post(url, d, **self._conn.rkwargs)
+    return r.json()["value"]
 
 class GENI(object):
   URL = "https://%s:%d/core/admin/%s"
