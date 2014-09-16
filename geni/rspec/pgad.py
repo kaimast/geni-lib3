@@ -58,7 +58,10 @@ class AdInterface(pg.Interface):
   @classmethod
   def _fromdom (cls, elem):
     eie = elem.xpath('e:interface', namespaces = _XPNS)
-    intf = AdInterface(eie[0].get("name"))
+    name = elem.get("component_id")
+    if len(eie) > 0:
+      name = eie[0].get("name")
+    intf = AdInterface(name)
 
     intf.component_id = elem.get("component_id")
     intf.role = elem.get("role")
