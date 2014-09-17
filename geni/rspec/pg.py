@@ -253,7 +253,8 @@ class Node(Resource):
   def _write (self, root):
     nd = ET.SubElement(root, "{%s}node" % (GNS.REQUEST.name))
     nd.attrib["client_id"] = self.client_id
-    nd.attrib["exclusive"] = str(self.exclusive).lower()
+    if self.exclusive is not None:  # Don't write this for EG
+      nd.attrib["exclusive"] = str(self.exclusive).lower()
     if self.component_id:
       nd.attrib["component_id"] = self.component_id
     if self.component_manager_id:
@@ -263,8 +264,11 @@ class Node(Resource):
     st.attrib["name"] = self.type
 
     if self.disk_image:
-      di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
-      di.attrib["name"] = self.disk_image
+      if isinstance(self.disk_image, (str, unicode)):
+        di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
+        di.attrib["name"] = self.disk_image
+      else:
+        self.disk_image._write(st)
 
     if self.interfaces:
       for intf in self.interfaces:
