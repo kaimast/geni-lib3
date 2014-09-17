@@ -234,7 +234,7 @@ class StitchedLink(Link):
 
 
 class Node(Resource):
-  def __init__ (self, name, ntype, component_id = None, exclusive = False):
+  def __init__ (self, name, ntype, component_id = None, exclusive = None):
     super(Node, self).__init__()
     self.client_id = name
     self.exclusive = exclusive
