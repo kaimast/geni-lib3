@@ -5,6 +5,9 @@ class Namespace(object):
     self.prefix = prefix
     self.name = name
     self.location = location
+  
+  def __repr__ (self):
+    return self.name
 
 XSNS = Namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
 

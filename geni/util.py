@@ -18,11 +18,13 @@ def checkavailrawpc(context, am):
   return avail
   
 
-def printlogininfo(context, am, slice):
-  manifest = am.listresources(context, slice)
+def printlogininfo(context = None, am = None, slice = None, manifest = None):
+  if not manifest:
+    manifest = am.listresources(context, slice)
   for node in manifest.nodes:
     for login in node.logins:
       print "[%s] %s:%d" % (login.username, login.hostname, login.port)
+
   
 
 # You can't put very much information in a queue before you hang your OS

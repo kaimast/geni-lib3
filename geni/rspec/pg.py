@@ -128,6 +128,7 @@ class Link(Resource):
     self.shared_vlan = None
     self._mac_learning = True
     self._vlan_tagging = False
+    self._ext_children = []
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
@@ -136,6 +137,9 @@ class Link(Resource):
   def newLinkID (cls):
     Link.LNKID += 1
     return "link-%d" % (Link.LNKID)
+
+  def addChild (self, obj):
+    self._ext_children.append(obj)
 
   def addInterface (self, intf):
     self.interfaces.append(intf)
@@ -189,6 +193,9 @@ class Link(Resource):
             prop.attrib["source_id"] = other.name
             prop.attrib["dest_id"] = intf.name
             prop.attrib["capacity"] = str(intf.bandwidth)
+
+    for obj in self._ext_children:
+      obj._write(lnk)
 
     return lnk
 
@@ -341,8 +348,6 @@ class PGContext(XMLContext):
 
 
 class Request(geni.rspec.RSpec):
-  __sphinx__ = """Container for ProtoGENI resource requests."""
-
   def __init__ (self):
     super(Request, self).__init__("request")
     self.resources = []
@@ -354,7 +359,6 @@ class Request(geni.rspec.RSpec):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
     self.resources.append(rsrc)
-  addResource.__sphinx__ = """Add specified resource specification to your request."""
 
   def write (self, path):
     f = open(path, "w+")
