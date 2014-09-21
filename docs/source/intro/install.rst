@@ -2,5 +2,5 @@ Installation
 ============
 
 .. toctree::
-   ubuntuapt
-   ubuntupip
+   ubuntu
+   macosx
