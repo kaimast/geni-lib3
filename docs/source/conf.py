@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'geni-lib'
-copyright = u'2014, Nick Bastin'
+copyright = u'2014, Barnstormer Softworks, Ltd.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

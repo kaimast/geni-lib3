@@ -11,7 +11,12 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: geni.rspec.pg
+   intro/intro
+   intro/install
+   intro/config
+
+..
+  automodule:: geni.rspec.pg
   :undoc-members:
   :members:
 
