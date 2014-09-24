@@ -30,10 +30,10 @@ class Connection(germ.Connection):
     d = json.dumps({"name" : name, "vid" : vid})
     r = requests.post(url, d, **self.rkwargs)
 
-  def addCircuitPlane (self, typ, label, endpoint, types = [], encoded = True):
+  def addCircuitPlane (self, typ, label, endpoint, mtu, types = [], encoded = True):
     url = "https://%s:%d/core/admin/vts/circuitplane/%s" % (
           self.host, self.port, typ)
     d = json.dumps({"label" : label, "endpoint" : endpoint,
-                    "supported-types" : types, "encoded" : encoded})
+                    "supported-types" : types, "encoded" : encoded, "mtu" : mtu})
     r = requests.put(url, d, **self.rkwargs)
     return r
