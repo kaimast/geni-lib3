@@ -63,6 +63,21 @@ class FOAM(AMType):
     return manifest
 
 
+class OpenGENI(AMType):
+  def __init__ (self, name="opengeni"):
+    super(OpenGENI, self).__init__(name)
+
+  def parseAdvertisement (self, data):
+    from ..rspec import pgad
+    ad = pgad.Advertisement(xml=data)
+    return ad
+
+  def parseManifest (self, data):
+    from ..rspec import pgmanifest
+    manifest = pgmanifest.Manifest(xml = data)
+    return manifest
+
+
 class VTS(AMType):
   def __init__ (self, name="vts"):
     super(VTS, self).__init__(name)
@@ -80,6 +95,7 @@ class VTS(AMType):
 
 
 AMTypeRegistry.register("foam", FOAM())
+AMTypeRegistry.register("opengeni", OpenGENI())
 AMTypeRegistry.register("pg", ProtoGENI())
 AMTypeRegistry.register("exogeni", ExoGENI())
 AMTypeRegistry.register("vts", VTS())
