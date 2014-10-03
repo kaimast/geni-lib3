@@ -13,6 +13,7 @@ class EGCompute(AM):
       url = "https://%s:11443/orca/xmlrpc" % (host)
     super(EGCompute, self).__init__(name, url, "amapiv2", "pg")
 
+EXOSM = EGCompute("exosm", "geni.renci.org")
 GPO = EGCompute("eg-gpo", "bbn-hn.exogeni.net")
 RCI = EGCompute("eg-rci", "rci-hn.exogeni.net")
 FIU = EGCompute("eg-fiu", "fiu-hn.exogeni.net")
