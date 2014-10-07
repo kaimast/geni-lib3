@@ -3,3 +3,4 @@ API
 
 .. toctree::
    geniutil
+   genirspecigext

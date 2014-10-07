@@ -109,8 +109,9 @@ Containing the advertisements for all the requested aggregates.  Requests
 are made in parallel and the function blocks until the slowest site
 returns (or times out).
 
-WARNING: Particularly large advertisements may break the shared memory queue
-used by this function."""
+.. warning::
+  Particularly large advertisements may break the shared memory queue
+  used by this function."""
 
 
   q = MP.Queue()
