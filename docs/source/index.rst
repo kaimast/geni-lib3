@@ -15,15 +15,10 @@ Contents:
    intro/install
    intro/config
 
-..
-  automodule:: geni.rspec.pg
-  :undoc-members:
-  :members:
+   api/api
 
-
-..
-  Indices and tables
-  ==================
+Indices and tables
+==================
   * :ref:`genindex`
   * :ref:`modindex`
   * :ref:`search`

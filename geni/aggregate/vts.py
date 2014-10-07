@@ -9,6 +9,7 @@ from .core import AM
 
 class VTS(AM):
   def __init__ (self, name, host, url = None):
+    self.host = host
     if url is None:
       url = "https://%s:3626/foam/gapi/2" % (host)
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
