@@ -20,6 +20,12 @@ class Connection(germ.Connection):
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
 
+  @property
+  def slivers (self):
+    url = "https://%s:%d/core/admin/vts/slivers" % (self.host, self.port)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
   def addTargetBridge (self, name, brname):
     url = "https://%s:%d/core/admin/vts/target-bridge" % (self.host, self.port)
     d = json.dumps({"name" : name, "brname" : brname})

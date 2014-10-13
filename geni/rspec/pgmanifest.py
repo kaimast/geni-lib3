@@ -106,3 +106,8 @@ class Manifest(object):
   @property
   def text (self):
     return ET.tostring(self.root, pretty_print=True)
+
+  def write (self, path):
+    f = open(path, "w+")
+    f.write(ET.tostring(self.root, pretty_print=True))
+    f.close()

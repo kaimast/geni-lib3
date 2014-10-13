@@ -14,7 +14,7 @@ context = nbastin.buildContext()
 SLICE = "gec-20-demo"
 
 try:
-  VTSAM.DDC.deletesliver(context, SLICE)
+  VTSAM.GPO.deletesliver(context, SLICE)
 except DeleteSliverError:
   pass
 
@@ -45,7 +45,7 @@ dps[2].attachPort(VTS.PGCircuit())
 # Write out the XML
 #vtsr.write("vts-demo.xml")
 
-vtsm = VTSAM.DDC.createsliver(context, SLICE, vtsr)
+vtsm = VTSAM.GPO.createsliver(context, SLICE, vtsr)
 #IP = "10.50.1.%d"
 #
 #pgr = PG.Request()
