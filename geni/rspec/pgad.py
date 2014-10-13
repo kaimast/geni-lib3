@@ -17,9 +17,10 @@ class Image(object):
     self.os = None
     self.version = None
     self.description = None
+    self.url = None
 
   def __repr__ (self):
-    return "<Image: %s, os: '%s', version: '%s', description: '%s'>" % (self.name, self.os, self.version, self.description)
+    return "<Image: %s, os: '%s', version: '%s', description: '%s', url: '%s'>" % (self.name, self.os, self.version, self.description, self.url)
 
   @classmethod
   def _fromdom (self, elem):
@@ -30,6 +31,7 @@ class Image(object):
     i.os = elem.get("os")
     i.version = elem.get("version")
     i.description = elem.get("description")
+    i.url = elem.get("url")
     return i
 
 class Location(object):
