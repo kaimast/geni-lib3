@@ -37,3 +37,8 @@ class Manifest(object):
     elems = self._root.xpath("v:datapath/v:port[@shared_lan]", namespaces = XPNS)
     for elem in elems:
       yield elem.get("shared_lan")
+
+  def write (self, path):
+    f = open(path, "w+")
+    f.write(ET.tostring(self.root, pretty_print=True))
+    f.close()
