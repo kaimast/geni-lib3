@@ -141,6 +141,12 @@ class InternalCircuit(Port):
     t.attrib["remote-clientid"] = self.target
     return p
 
+class GRECircuit(Port):
+  def __init__ (self, circuit_plane, endpoint):
+    super(GRECircuit, self).__init__()
+    self.circuit_plane = circuit_plane
+    self.endpoint = endpoint
+
  
 class SSLVPNCircuit(Port):
   def __init__ (self):
