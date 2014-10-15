@@ -10,7 +10,7 @@ import os
 import traceback as tb
 import tempfile
 
-from geni.aggregate.apis import AMError, ListResourcesError
+from geni.aggregate.apis import AMError, ListResourcesError, DeleteSliverError
 
 def checkavailrawpc(context, am):
   """Returns a list of node objects representing available raw PCs at the
