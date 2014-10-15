@@ -147,6 +147,12 @@ class GRECircuit(Port):
     self.circuit_plane = circuit_plane
     self.endpoint = endpoint
 
+  def _write (self, element):
+    p = super(GRECircuit, self)._write(element)
+    p.attrib["circuit-plane"] = self.circuit_plane
+    p.attrib["endpoint"] = self.endpoint
+    return p
+
  
 class SSLVPNCircuit(Port):
   def __init__ (self):
