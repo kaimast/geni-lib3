@@ -46,6 +46,7 @@ dps[2].attachPort(VTS.PGCircuit())
 #vtsr.write("vts-demo.xml")
 
 vtsm = VTSAM.GPO.createsliver(context, SLICE, vtsr)
+vtsm.write("vts-demo-manifest.xml")
 #IP = "10.50.1.%d"
 #
 #pgr = PG.Request()
