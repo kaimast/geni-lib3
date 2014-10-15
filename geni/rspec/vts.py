@@ -149,6 +149,7 @@ class GRECircuit(Port):
 
   def _write (self, element):
     p = super(GRECircuit, self)._write(element)
+    p.attrib["type"] = "gre"
     p.attrib["circuit-plane"] = self.circuit_plane
     p.attrib["endpoint"] = self.endpoint
     return p

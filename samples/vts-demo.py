@@ -18,6 +18,14 @@ try:
 except DeleteSliverError:
   pass
 
+try:
+  VTSAM.Illinois.deletesliver(context, SLICE)
+except DeleteSliverError:
+  pass
+
+gpoad = VTSAM.GPO.listresources(context)
+uiucad = VTSAM.Illinois.listresources(context)
+
 vtsr = VTS.Request()
 
 image = VTS.OVSOpenFlowImage("tcp:54.88.120.184:6633", ofver="1.3")
@@ -42,10 +50,17 @@ dps[0].attachPort(VTS.PGCircuit())
 dps[1].attachPort(VTS.PGCircuit())
 dps[2].attachPort(VTS.PGCircuit())
 
-# Write out the XML
-#vtsr.write("vts-demo.xml")
+# Build the GRE Circuit
+grec = VTS.GRECircuit("geni-core", None)
+for cp in gpoad.circuit_planes:
+  if cp.label == "geni-core":
+    grec.endpoint = cp.endpoint
+dps[2].attachPort(grec)
 
-vtsm = VTSAM.GPO.createsliver(context, SLICE, vtsr)
+# Write out the XML
+vtsr.write("vts-demo.xml")
+
+vtsm = VTSAM.Illinois.createsliver(context, SLICE, vtsr)
 vtsm.write("vts-demo-manifest.xml")
 #IP = "10.50.1.%d"
 #

@@ -129,3 +129,9 @@ returns (or times out).
 
   return d
 
+
+def deleteSliverExists(am, context, slice):
+  try:
+    am.deletesliver(context, slice)
+  except DeleteSliverError:
+    pass
