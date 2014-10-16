@@ -43,7 +43,19 @@ uiucvtsr.write("uiuc-vts-request.xml")
 uiucvtsm = VTSAM.Illinois.createsliver(context, SLICE, uiucvtsr)
 uiucvtsm.write("uiuc-vts-manifest.xml")
 
-# Build the PG Request at Illinois using the circuit information from the VTS manifest
+# Build the VTS request for GPO
+gpovtsr = VTS.Request()
+dp = VTS.Datapath(image, "dp-gpo")
+dp.attachPort(VTS.PGCircuit())
+dp.attachPort(VTS.GRECircuit("geni-core", uiucvtsm.findPort(uiuc_wan_port.clientid).local_endpoint))
+gpovtsr.addResource(dp)
+gpovtsr.write("gpo-vts-request.xml")
+
+# Make the VTS reservation at GPO
+gpovtsm = VTSAM.GPO.createsliver(context, SLICE, gpovtsr)
+gpovtsm.write("gpo-vts-manifest.xml")
+
+# Build the IG Request for Illinois using the circuit information from the VTS manifest
 uiucpgr = PG.Request()
 for idx, circuit in enumerate(uiucvtsm.pg_circuits):
   vm = PG.XenVM("vm%d" % (idx))
@@ -57,14 +69,26 @@ for idx, circuit in enumerate(uiucvtsm.pg_circuits):
   uiucpgr.addResource(lnk)
 uiucpgr.write("uiuc-ig-request.xml")
 
-# Build the VTS request for GPO
-gpovtsr = VTS.Request()
-dp = VTS.Datapath(image, "dp-gpo")
-dp.attachPort(VTS.PGCircuit())
-dp.attachPort(VTS.GRECircuit("geni-core", uiucvtsm.findPort(uiuc_wan_port.clientid).local_endpoint))
-gpovtsr.addResource(dp)
-gpovtsr.write("gpo-vts-request.xml")
+# Build the IG request for GPO using the VTS circuit info
+gpopgr = PG.Request()
+for idx, circuit in enumerate(gpovtsm.pg_circuits):
+  vm = PG.XenVM("vm%d" % (idx))
+  intf = vm.addInterface("if0")
+  intf.addAddress(PG.IPv4Address("172.16.5.2", "255.255.255.0"))
+  gpopgr.addResource(vm)
 
-# Make the VTS reservation at GPO
-gpovtsm = VTSAM.GPO.createsliver(context, SLICE, gpovtsr)
-gpovtsm.write("gpo-vts-manifest.xml")
+  lnk = PG.Link()
+  lnk.addInterface(intf)
+  lnk.connectSharedVlan(circuit)
+  gpopgr.addResource(lnk)
+gpopgr.write("gpo-ig-request.xml")
+
+# Make both IG reservations and wait
+gpopgm = IG.GPO.createsliver(context, SLICE, gpopgr)
+gpopgm.write("gpo-ig-manifest.xml")
+uiucpgm = IG.Illinois.createsliver(context, SLICE, uiucpgr)
+uiucpgm.write("uiuc-ig-manifest.xml")
+
+# Print out our login info
+geni.util.printLoginInfo(manifest = gpopgm)
+geni.util.printLoginInfo(manifest = uiucpgm)
