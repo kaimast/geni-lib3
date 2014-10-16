@@ -59,9 +59,9 @@ class Manifest(object):
 
   @property
   def pg_circuits (self):
-    elems = self._root.xpath("v:datapath/v:port[@shared_lan]", namespaces = XPNS)
+    elems = self._root.xpath("v:datapath/v:port[@shared-lan]", namespaces = XPNS)
     for elem in elems:
-      yield elem.get("shared_lan")
+      yield elem.get("shared-lan")
 
   def findPort (self, client_id):
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)
