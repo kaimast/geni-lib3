@@ -17,6 +17,7 @@ Install / Basic Setup
 
 * Install the above dependencies in their default locations (particularly Python and Omni 2.7)
 
+.. warning::
   If you change any of the install locations you may need to edit configuration files
 
 * Open a command line (``cmd.exe``) and clone the geni-lib repository::
