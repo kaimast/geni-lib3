@@ -57,3 +57,5 @@ created shortcut), and do the following::
 
   C:\> cd C:\Development
   C:\Development> python get-pip.py
+
+Now you can use ``pip`` to install new dependencies that the additional tools may require.
