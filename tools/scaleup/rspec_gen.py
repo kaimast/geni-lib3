@@ -40,7 +40,7 @@ import os.path
 
 if os.path.exists(os.path.normpath("../../.hg")):
   # We're inside the repository, set up some more path nonsense
-  sys.path.append(os.path.normpath("%s/../.." % (os.getcwd())))
+  sys.path.append(os.path.normpath("%s/../.." % (__file__)))
 
 
 import topo_gen
