@@ -35,7 +35,7 @@ Install / Basic Setup
 .. note::
   (The location of ``geni-lib`` can be changed, just alter these paths accordingly)
 
-* Run the batch file in the support/ directory that sets up your environment::
+* Run the batch file in the ``support/`` directory that sets up your environment::
 
    C:\Development\geni-lib> support\envsetup.bat
 
