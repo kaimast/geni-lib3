@@ -21,8 +21,13 @@ Install / Basic Setup
 
 * Open a command line (``cmd.exe``) and clone the geni-lib repository::
 
+   C:\> mkdir C:\Development
+   C:\> cd C:\Development
    C:\Development> hg clone http://bitbucket.org/barnstorm/geni-lib
    C:\Development> cd geni-lib
+
+.. note::
+  (The location of ``geni-lib`` can be changed, just alter these paths accordingly)
 
 * Run the batch file in the support/ directory that sets up your environment::
 
@@ -35,7 +40,6 @@ include the environment setup script::
 
   C:\Windows\System32\cmd.exe /k "C:\Development\geni-lib\support\envsetup.bat"
 
-(The location of ``geni-lib`` can be changed, just alter these paths accordingly)
 
 =====================
 Extended Dependencies
