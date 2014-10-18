@@ -35,12 +35,12 @@ July 8, 2014
 
 # Safe things to import while our environment is broken
 import sys
-import os
 import os.path
 
-if os.path.exists(os.path.normpath("../../.hg")):
+script_dir = os.path.dirname(os.path.realpath(__file__))
+if os.path.exists(os.path.normpath("%s/../../.hg" % (script_dir)))
   # We're inside the repository, set up some more path nonsense
-  sys.path.append(os.path.normpath("%s/../.." % (os.path.dirname(os.path.realpath(__file__)))))
+  sys.path.append(os.path.normpath("%s/../.." % (script_dir)))
 
 
 import topo_gen
