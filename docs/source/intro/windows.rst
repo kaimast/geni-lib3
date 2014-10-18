@@ -13,8 +13,8 @@ Installation Dependencies
 * Omni 2.7 (http://trac.gpolab.bbn.com/gcf/wiki/Omni)
 
 .. note::
-  If you have a 64-bit version of Windows the direct path to python-lxml will not work
-  You will need to visit the pypi page and find the download for the amd64-python2.7 version
+  If you have a 64-bit version of Windows the direct path to python-lxml will not work.  
+  You will need to visit the pypi page and find the download for the amd64-py2.7 version.
 
 =====================
 Install / Basic Setup
