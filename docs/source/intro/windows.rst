@@ -26,14 +26,14 @@ Install / Basic Setup
 
 * Run the batch file in the support/ directory that sets up your environment::
 
-   C:\Development> support/envsetup.bat
+   C:\Development\geni-lib> support\envsetup.bat
 
 Congratulations, you are now ready to launch ``python`` and import geni lib modules!
 
 You can also make a shortcut to ``cmd.exe`` and change the "target" property to
 include the environment setup script::
 
-  C:\Windows\System32\cmd.exe /k "C:\Development\geni-lib\support/envsetup.bat"
+  C:\Windows\System32\cmd.exe /k "C:\Development\geni-lib\support\envsetup.bat"
 
 (The location of ``geni-lib`` can be changed, just alter these paths accordingly)
 
@@ -47,8 +47,8 @@ distribution by default on windows.
 
 You can install ``pip`` on Windows 7 and later by launching ``Powershell`` (not ``cmd.exe``) and doing::
 
-  $client = new-object System.Net.WebClient
-  $client.DownloadFile("http://bootstrap.pypa.io/get-pip.py", "C:/Development/get-pip.py")
+  PS C:\> $client = new-object System.Net.WebClient
+  PS C:\> $client.DownloadFile("http://bootstrap.pypa.io/get-pip.py", "C:/Development/get-pip.py")
 
 Note that the second argument must be a valid full path.  Remember where you placed this file.
 
