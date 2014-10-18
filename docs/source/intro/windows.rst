@@ -36,3 +36,24 @@ include the environment setup script::
   C:\Windows\System32\cmd.exe /k "C:\Development\geni-lib\support/envsetup.bat"
 
 (The location of ``geni-lib`` can be changed, just alter these paths accordingly)
+
+=====================
+Extended Dependencies
+=====================
+
+Some of the applications in the ``tools/`` directory require additional dependencies.  For the most part
+these dependencies can be installed using ``pip``, but ``pip`` is not included in the Python 2.7
+distribution by default on windows.
+
+You can install ``pip`` on Windows 7 and later by launching ``Powershell`` (not ``cmd.exe``) and doing::
+
+  $client = new-object System.Net.WebClient
+  $client.DownloadFile("http://bootstrap.pypa.io/get-pip.py", "C:/Development/get-pip.py")
+
+Note that the second argument must be a valid full path.  Remember where you placed this file.
+
+Now, open ``cmd.exe`` and run the batch file that sets up the geni-lib environment (or use your previously
+created shortcut), and do the following::
+
+  C:\> cd C:\Development
+  C:\Development> python get-pip.py
