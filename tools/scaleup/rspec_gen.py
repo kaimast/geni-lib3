@@ -38,7 +38,7 @@ import sys
 import os.path
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
-if os.path.exists(os.path.normpath("%s/../../.hg" % (script_dir)))
+if os.path.exists(os.path.normpath("%s/../../.hg" % (script_dir))):
   # We're inside the repository, set up some more path nonsense
   sys.path.append(os.path.normpath("%s/../.." % (script_dir)))
 
