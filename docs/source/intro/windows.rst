@@ -12,6 +12,10 @@ Installation Dependencies
 * python-lxml (https://pypi.python.org/packages/2.7/l/lxml/lxml-3.4.0.win32-py2.7.exe)
 * Omni 2.7 (http://trac.gpolab.bbn.com/gcf/wiki/Omni)
 
+.. note::
+  On 64-bit versions of Windows you *must* still install the 32-bit version of Python (and python-lxml),
+  as Omni is only available in 32-bit and it must match a locally installed Python.
+
 =====================
 Install / Basic Setup
 =====================
