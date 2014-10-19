@@ -43,3 +43,21 @@ class Connection(germ.Connection):
                     "supported-types" : types, "encoded" : encoded, "mtu" : mtu})
     r = requests.put(url, d, **self.rkwargs)
     return r
+
+  def getDatapaths (self, sliver_urn):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/datapaths" % (self.host, self.port, sliver_urn)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
+  def removePort (self, sliver_urn, dpname, client_id):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/datapath/%s/port/%s" % (self.host, self.port,
+            sliver_urn, dpname, client_id)
+    r = requests.delete(url, **self.rkwargs)
+    return r.json()["value"]
+
+  def addPGLocal (self, sliver_urn, dpname, client_id, pgcircuit):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/datapath/%s/port/%s" % (self.host, self.port,
+            sliver_urn, dpname, client_id)
+    d = json.dumps({"type" : "pg-local", "shared-lan" : pgcircuit})
+    r = requests.put(url, d, **self.rkwargs)
+    return r.json()["value"]
