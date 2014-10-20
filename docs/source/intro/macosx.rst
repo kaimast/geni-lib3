@@ -13,7 +13,7 @@ Installation Dependencies
 =========================
 
 * HomeBrew (http://brew.sh)
-* Apple XCode Command Line Tools for XCode (https://developer.apple.com/downloads)
+* Apple Command Line Tools for XCode (https://developer.apple.com/downloads)
 
 ===============
 Install / Setup
