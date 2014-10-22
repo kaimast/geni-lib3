@@ -45,7 +45,7 @@ login username, federation urn, etc.).
 
      context = Context()
      context.addUser(user, default = True)
-     context.cf = portal
+     context.cf = framework 
      context.project = "GEC21"
 
   This adds the user we created above, sets the control framework (``cf``), and sets your default project.
