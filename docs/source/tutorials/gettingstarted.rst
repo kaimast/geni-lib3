@@ -72,7 +72,7 @@ Now to see the complete code in one block::
 
      context = Context()
      context.addUser(user, default = True)
-     context.cf = portal
+     context.cf = framework 
      context.project = "GEC21"
 
      return context
