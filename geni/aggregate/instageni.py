@@ -45,9 +45,6 @@ Utah = IGCompute("ig-utah", "boss.utah.geniracks.net", "urn:publicid:IDN+utah.ge
 UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:IDN+utahddc.geniracks.net+authority+cm")
 Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+instageni.wisc.edu+authority+cm")
 
-Kentucky_PG = IGCompute('pg-kentucky', 'www.uky.emulab.net', 'urn:publicid:IDN+uky.emulab.net+authority+cm')
-UTAH_PG = IGCompute('pg-utah', 'www.emulab.net', 'urn:publicid:IDN+emulab.net+authority+cm');
-
 def aggregates ():
   module = sys.modules[__name__]
   for name,obj in inspect.getmembers(module):
