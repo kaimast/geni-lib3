@@ -21,10 +21,6 @@ login username, federation urn, etc.).
    def buildContext ():
      framework = FrameworkRegistry.get("portal")()
   
-.. note::
-  The framework registry returns classes, not instances, so you need to call the framework
-  object you retrieved from the registry in order to create an instance.
-
 * You need to give the framework instance the location of your user certificate and key files::
 
      framework.cert = "/home/user/.ssh/portal-user.pem"
