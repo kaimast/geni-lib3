@@ -37,7 +37,7 @@ which is relatively difficult to work with without a tool.
 
 .. note::
   We will be using GENI AM API version 2 throughout this tutorial.  Some API call names will be
-  different if you elect to interact with aggregates using AM API version 3.
+  different if you elect to interact with aggregates using AM API version 3 in the future.
 
 * Lets start by getting an advertisement from a single aggregate::
 
@@ -52,8 +52,8 @@ which is relatively difficult to work with without a tool.
 
 .. note::
   If you get timeouts or failures, you may want to try a different InstaGENI aggregate (this one may
-  be particularly busy).  You can get a list of (mostly) aggregate objects by using the `dir()` command
-  on the IG module - `dir(IG)`.
+  be particularly busy).  You can get a list of (mostly) aggregate objects by using the ``dir()`` command
+  on the IG module - ``dir(IG)``.
 
 * We can simply print out the advertisement raw text to see what the
   aggregate sent us::
