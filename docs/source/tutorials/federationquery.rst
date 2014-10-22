@@ -11,10 +11,11 @@ Finding Aggregate Locations
 ``geni-lib`` contains a set of package files which have pre-built objects representing known
 aggregates that are ready for you to use, contained within the following Python modules::
 
+   geni.aggregate.exogeni
    geni.aggregate.instageni
    geni.aggregate.instageni_openflow
-   geni.aggregate.exogeni
    geni.aggregate.opengeni
+   geni.aggregate.protogeni
    geni.aggregate.vts
 
 While these aggregates objects will likely cover your needs, ``geni-lib`` may of course not be
