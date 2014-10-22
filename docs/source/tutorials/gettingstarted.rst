@@ -84,9 +84,6 @@ Now to see the complete code in one block::
 You can dynamically alter this object at any time, but your defaults will serve your purposes for the vast
 majority of your use cases.
 
-Congratulations!  You've completed the most important ``geni-lib`` tutorial, and are set up for scripting
-your own tools for better experiments!
-
 Test It Out!
 ============
 
