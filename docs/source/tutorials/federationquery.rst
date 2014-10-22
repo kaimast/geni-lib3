@@ -9,7 +9,7 @@ Finding Aggregate Locations
 ---------------------------
 
 ``geni-lib`` contains a set of package files which have pre-built objects representing known
-aggregates that are ready for you to use, in the following Python modules::
+aggregates that are ready for you to use, contained within the following Python modules::
 
    geni.aggregate.instageni
    geni.aggregate.instageni_openflow
