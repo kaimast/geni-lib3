@@ -6,8 +6,9 @@ a ``Context`` object that contains information about the framework you are using
 ProtoGENI, Emulab, GENI Clearinghouse, etc.), as well as your user information (SSH keys,
 login username, federation urn, etc.).
 
-* To start, we will create a new Python file called ``mycontext.py`` and import the necessary
-  modules to start building our own context using your favorite editor::
+* To start, we will create a new Python file called ``mycontext.py`` and (inside the directory
+  containing your ``geni-lib`` clone) import the necessary modules to start building your own
+  context using your favorite editor::
 
    from geni.aggregate import FrameworkRegistry
    from geni.aggregate.context import Context
@@ -18,7 +19,7 @@ login username, federation urn, etc.).
   GENI Clearinghouse as the default framework)::
 
    def buildContext ():
-     portal = FrameworkRegistry.get("portal")()
+     framework = FrameworkRegistry.get("portal")()
   
 .. note::
   The framework registry returns classes, not instances, so you need to call the framework
@@ -26,8 +27,8 @@ login username, federation urn, etc.).
 
 * You need to give the framework instance the location of your user certificate and key files::
 
-     portal.cert = "/home/user/.ssh/portal-user.pem"
-     portal.key = "/home/user/.ssh/portal-user.key"
+     framework.cert = "/home/user/.ssh/portal-user.pem"
+     framework.key = "/home/user/.ssh/portal-user.key"
 
 .. note::
   You may only have one file which contains both items - you can use the same path for both
@@ -65,14 +66,15 @@ Now to see the complete code in one block::
    from geni.aggregate.user import User
 
    def buildContext ():
-     portal = FrameworkRegistry.get("portal")()
-     portal.cert = "/home/user/.ssh/portal-user.pem"
-     portal.key = "/home/user/.ssh/portal-user.key"
+     framework = FrameworkRegistry.get("portal")()
+     framework.cert = "/home/user/.ssh/portal-user.pem"
+     framework.key = "/home/user/.ssh/portal-user.key"
 
      user = User()
      user.name = "myusername"
      user.urn = "urn:publicid:IDN+ch.geni.net+user+myusername"
      user.addKey("/home/user/.ssh/geni_dsa.pub")
+
      context = Context()
      context.addUser(user, default = True)
      context.cf = portal
@@ -85,3 +87,27 @@ majority of your use cases.
 
 Congratulations!  You've completed the most important ``geni-lib`` tutorial, and are set up for scripting
 your own tools for better experiments!
+
+Test It Out!
+============
+
+Now we can take your newly written file, instantiate our context, and query an aggregate::
+
+   $ python
+   >>> import mycontext
+   >>> context = mycontext.buildContext()
+   >>> import geni.aggregate.instageni as IG
+   >>> import pprint
+   >>> pprint.pprint(IG.GPO.getversion(context))
+   {'code': {'am_code': 0,
+             'am_type': 'protogeni',
+             'geni_code': 0,
+             'protogeni_error_log': 'urn:publicid:IDN+instageni.gpolab.bbn.com+log+abedbcc20e6defe716eb83b8586c7e08',
+             'protogeni_error_url': 'https://boss.instageni.gpolab.bbn.com/spewlogfile.php3?logfile=abedbcc20e6defe716eb83b8586c7e08'},
+   ...snip...
+
+You should get a large structure of formatted output telling you version and configuration
+information about the GPO InstaGENI aggregate.  If you get any errors read them thorougly and
+review what they may be telling you about any mistakes you may have made.  You can also ask your
+instructor (if at a GEC / Live Tutorial), or send a message to the
+`geni-users <https://groups.google.com/forum/#!forum/geni-users>`_ google group.
