@@ -38,7 +38,10 @@ class Framework(object):
     tf = tempfile.NamedTemporaryFile(delete=False)
     path = tf.name
     tf.close()
-    nullf = open("/dev/null")
+    if os.name == "nt":
+      nullf = open("NUL")
+    else:
+      nullf = open("/dev/null")
     # We really don't want shell=True here, but there are pty problems with openssl otherwise
     ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
     # TODO: Test the size afterwards to make sure the password was right, or parse stderr?
