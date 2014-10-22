@@ -36,6 +36,11 @@ class Connection(germ.Connection):
     d = json.dumps({"name" : name, "vid" : vid})
     r = requests.post(url, d, **self.rkwargs)
 
+  def setSSLVPNIP (self, ipstr):
+    url = "https://%s:%d/core/admin/vts/vf/sslvpn/local-ip" % (self.host, self.port)
+    d = json.dumps(ipstr)
+    r = requests.post(url, d, **self.rkwargs)
+
   def addCircuitPlane (self, typ, label, endpoint, mtu, types = [], encoded = True):
     url = "https://%s:%d/core/admin/vts/circuitplane/%s" % (
           self.host, self.port, typ)
@@ -46,6 +51,11 @@ class Connection(germ.Connection):
 
   def getDatapaths (self, sliver_urn):
     url = "https://%s:%d/core/admin/vts/sliver/%s/datapaths" % (self.host, self.port, sliver_urn)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
+  def getRequestRspec (self, sliver_urn):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/request-rspec" % (self.host, self.port, sliver_urn)
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
 

@@ -1,5 +1,5 @@
-MacOS X 10.9.x
-==============
+MacOS X 10.8.x / 10.9.x
+=======================
 
 These installations require the use of HomeBrew (http://brew.sh).  If you use
 MacPorts or a different manager for installing open source tools on your system

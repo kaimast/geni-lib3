@@ -73,14 +73,25 @@ class Emulab(ProtoGENI):
     self._ca = "https://www.emulab.net:443/protogeni/xmlrpc/sa"
 
 
-class Portal(ProtoGENI):
+class CHAPI(Framework):
+  def __init__ (self, name = "chapi"):
+    super(CHAPI, self).__init__(name)
+    self._type = "chapi"
+
+  def listProjectMembers (self, context, project):
+    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listprojectmembers"]
+    args.append(project)
+    (txt, res) = oscript.call(args)
+    return res
+
+
+class Portal(CHAPI):
   def __init__ (self):
     super(Portal, self).__init__("portal")
-    self._type = "pgch"
     self._authority = "ch.geni.net"
-    self._ch = "https://ch.geni.net:8443/"
-    self._sa = "https://ch.geni.net:8443/"
-
+    self._ch = "https://ch.geni.net:8444/CH"
+    self._ma = "https://ch.geni.net:443/MA"
+    self._sa = "https://ch.geni.net:443/SA"
 
   def getConfig (self):
     l = []
@@ -89,6 +100,7 @@ class Portal(ProtoGENI):
     l.append("authority = %s" % (self._authority))
     l.append("ch = %s" % (self._ch))
     l.append("sa = %s" % (self._sa))
+    l.append("ma = %s" % (self._ma))
     l.append("cert = %s" % (self.cert))
     l.append("key = %s" % (self.key))
     return l

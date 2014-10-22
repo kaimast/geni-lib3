@@ -15,6 +15,8 @@ Contents:
    intro/install
    intro/config
 
+   tutorials/index
+
    api/api
 
 Indices and tables

@@ -89,6 +89,19 @@ class SFlow(object):
 # Graph Elements #
 ##################
 
+class SSLVPNFunction(Resource):
+  def __init__ (self, client_id):
+    super(SSLVPNFunction, self).__init__()
+    self.client_id = client_id
+    self.protocol = None
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}function" % (Namespaces.VTS.name))
+    d.attrib["client_id"] = self.client_id
+    d.attrib["type"] = "sslvpn"
+    return d
+
+
 class Datapath(Resource):
   def __init__ (self, image, name):
     super(Datapath, self).__init__()
@@ -129,6 +142,19 @@ class PGCircuit(Port):
     return p
 
 
+class VFCircuit(Port):
+  def __init__ (self, target):
+    super(VFCircuit, self).__init__()
+    self.target = target
+
+  def _write (self, element):
+    p = super(VFCircuit, self)._write(element)
+    p.attrib["type"] = "vf-port"
+    t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
+    t.attrib["remote-clientid"] = self.target
+    return p
+
+
 class InternalCircuit(Port):
   def __init__ (self, target):
     super(InternalCircuit, self).__init__()
@@ -155,16 +181,6 @@ class GRECircuit(Port):
     return p
 
  
-class SSLVPNCircuit(Port):
-  def __init__ (self):
-    super(SSLVPNCircuit, self).__init__()
-
-  def _write (self, element):
-    p = super(SSLVPNCircuit, self)._write(element)
-    p.attrib["type"] = "sslvpn"
-    return p
-
-
 class Request(geni.rspec.RSpec):
   def __init__ (self):
     super(Request, self).__init__("request")
