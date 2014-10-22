@@ -34,17 +34,16 @@ login username, federation urn, etc.).
   You may only have one file which contains both items - you can use the same path for both
   variables if this is the case.
 
-* With your Framework now properly configured, we need to create an object representing yourself as
-  a federation user::
+* Now we need to define an account and SSH key(s) that will be used to access reserved compute resources::
 
      user = User()
      user.name = "myusername"
      user.urn = "urn:publicid:IDN+ch.geni.net+user+myusername"
      user.addKey("/home/user/.ssh/geni_dsa.pub")
 
-  We create a ``User()`` object, give it a name (no spaces, commonly a username), and your credential
-  user URN.  We then add an SSH public key that will be installed on any compute resources that you reserve
-  in order for you to authenticate with those resources.
+  We create a ``User()`` object, give it a name (no spaces, commonly a username), and the user URN.
+  We then add an SSH public key that will be installed on any compute resources that you reserve
+  in order to authenticate with those resources.
 
 * Next we make the parent ``Context`` object and add our user and framework to it, with a default project::
 
