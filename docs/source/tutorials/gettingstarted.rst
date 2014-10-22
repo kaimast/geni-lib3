@@ -81,7 +81,7 @@ You can dynamically alter this object at any time, but your defaults will serve 
 majority of your use cases.
 
 Test It Out!
-============
+------------
 
 Now we can take your newly written file, instantiate our context, and query an aggregate::
 
