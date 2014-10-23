@@ -39,8 +39,10 @@ class Framework(object):
     path = tf.name
     tf.close()
     if os.name == "nt":
-      self._key = val
-#      nullf = open("NUL")
+      nullf = open("NUL")
+      binp = os.path.normpath("C:/OpenSSL-Win32/bin/openssl")
+      ret = subprocess.call("%s rsa -in %s -out %s" % (binp, val, path), stdout=nullf, stderr=nullf, shell=True)
+      self._key = path
     else:
       nullf = open("/dev/null")
       # We really don't want shell=True here, but there are pty problems with openssl otherwise
