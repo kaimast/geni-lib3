@@ -11,6 +11,7 @@ Installation Dependencies
 * Python 2.7.8 (http://www.python.org)
 * python-lxml (https://pypi.python.org/packages/2.7/l/lxml/lxml-3.4.0.win32-py2.7.exe)
 * Omni 2.7 (http://trac.gpolab.bbn.com/gcf/wiki/Omni)
+* OpenSSL-Win32 (https://slproweb.com/products/Win32OpenSSL.html)
 
 .. note::
   On 64-bit versions of Windows you *must* still install the 32-bit version of Python (and python-lxml),
@@ -20,7 +21,7 @@ Installation Dependencies
 Install / Basic Setup
 =====================
 
-* Install the above dependencies in their default locations (particularly Python and Omni 2.7)
+* Install the above dependencies in their default locations (particularly Python, Omni, and OpenSSL)
 
 .. warning::
   If you change any of the install locations you may need to edit configuration files

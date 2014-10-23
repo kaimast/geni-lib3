@@ -41,7 +41,7 @@ class Framework(object):
     if os.name == "nt":
       nullf = open("NUL")
       binp = os.path.normpath("C:/OpenSSL-Win32/bin/openssl")
-      ret = subprocess.call("%s rsa -in %s -out %s" % (binp, val, path), stdout=nullf, stderr=nullf, shell=True)
+      ret = subprocess.call("%s rsa -in \"%s\" -out \"%s\"" % (binp, val, path), stdout=nullf, stderr=nullf, shell=True)
       self._key = path
     else:
       nullf = open("/dev/null")
