@@ -305,7 +305,74 @@ class RawPC(Node):
     super(RawPC, self).__init__(name, NodeType.RAW, component_id = component_id, exclusive = True)
 
 
+
+class VZContainer(Node):
+  def __init__ (self, name, exclusive = False):
+    super(VZContainer, self).__init__(name, "emulab-openvz", exclusive)
+
+
+
+class Namespaces(object):
+  CLIENT = GNS.Namespace("client", "http://www.protogeni.net/resources/rspec/ext/client/1")
+  RS = GNS.Namespace("rs", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
+  EMULAB = GNS.Namespace("emulab", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
+  VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
+
+
+class Request(geni.rspec.RSpec):
+  def __init__ (self):
+    super(Request, self).__init__("request")
+    self.resources = []
+
+    self.addNamespace(GNS.REQUEST, None)
+    self.addNamespace(Namespaces.CLIENT)
+
+  def addResource (self, rsrc):
+    for ns in rsrc.namespaces:
+      self.addNamespace(ns)
+    self.resources.append(rsrc)
+
+  def writeXML (self, path):
+    """Write the current request contents as an XML file that represents an rspec
+    in the GENIv3 format."""
+    f = open(path, "w+")
+
+    rspec = self.getDOM()
+
+    for resource in self.resources:
+      resource._write(rspec)
+
+    f.write(ET.tostring(rspec, pretty_print=True))
+    f.close()
+
+  def toXMLString (self, pretty_print = False):
+    """Return the current request contents as an XML string that represents an rspec
+    in the GENIv3 format."""
+
+    rspec = self.getDOM()
+
+    for resource in self.resources:
+      resource._write(rspec)
+
+    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    return buf
+
+  def write (self, path):
+    """
+.. deprecated:: 0.4
+    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
+
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
+
+#### DEPRECATED #####
 class XenVM(Node):
+  """
+.. deprecated:: 0.4
+   Use :py:class:`geni.rspec.igext.XenVM` instead."""
   def __init__ (self, name, component_id = None, exclusive = False):
     import geni.warnings as GW
     import warnings
@@ -325,60 +392,5 @@ class XenVM(Node):
     xen.attrib["disk"] = str(self.disk)
     return nd
 
-
-class VZContainer(Node):
-  def __init__ (self, name, exclusive = False):
-    super(VZContainer, self).__init__(name, "emulab-openvz", exclusive)
-
 VM = XenVM
-
-
-class Namespaces(object):
-  CLIENT = GNS.Namespace("client", "http://www.protogeni.net/resources/rspec/ext/client/1")
-  RS = GNS.Namespace("rs", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
-  EMULAB = GNS.Namespace("emulab", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
-  VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
-
-
-class XMLContext(object):
-  def __init__ (self, rspec, root, cur_elem = None):
-    self.rspec = rspec
-    self.root = root
-    self.curelem = cur_elem
-
-
-class PGContext(XMLContext):
-  pass
-
-
-class Request(geni.rspec.RSpec):
-  def __init__ (self):
-    super(Request, self).__init__("request")
-    self.resources = []
-
-    self.addNamespace(GNS.REQUEST, None)
-    self.addNamespace(Namespaces.CLIENT)
-
-  def addResource (self, rsrc):
-    for ns in rsrc.namespaces:
-      self.addNamespace(ns)
-    self.resources.append(rsrc)
-
-  def writeXML (self, path):
-    f = open(path, "w+")
-
-    rspec = self.getDOM()
-
-    for resource in self.resources:
-      resource._write(rspec)
-
-    f.write(ET.tostring(rspec, pretty_print=True))
-    f.close()
-
-  def write (self, path):
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
-                  GW.GENILibDeprecationWarning, 2)
-    self.writeXML(path)
 
