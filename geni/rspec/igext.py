@@ -4,7 +4,9 @@ from __future__ import absolute_import
 
 from lxml import etree as ET
 
+from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
+from .pg import Node
 
 class OFController(object):
   """OpenFlow controller specification to be used on a PG VLAN.
@@ -24,3 +26,20 @@ Add to link objects using the Link.addChild() method.
     eof = ET.SubElement(element, "{%s}openflow_controller" % (PGNS.EMULAB))
     eof.attrib["url"] = "tcp:%s:%d" % (self.host, self.port)
     return eof
+
+
+class XenVM(Node):
+  def __init__ (self, name, component_id = None, exclusive = False):
+    super(XenVM, self).__init__(name, "emulab-xen", component_id = component_id, exclusive = exclusive)
+    self.cores = 1
+    self.ram = 256
+    self.disk = 8
+
+  def _write (self, root):
+    nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
+    xen.attrib["cores"] = str(self.cores)
+    xen.attrib["ram"] = str(self.ram)
+    xen.attrib["disk"] = str(self.disk)
+    return nd
