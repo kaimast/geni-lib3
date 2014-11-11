@@ -307,6 +307,10 @@ class RawPC(Node):
 
 class XenVM(Node):
   def __init__ (self, name, component_id = None, exclusive = False):
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("geni.request.pg.XenVM is deprecated, please use geni.request.igext.XenVM instead", 
+                  GW.GENILibDeprecationWarning)
     super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
     self.cores = 1
     self.ram = 256
@@ -360,14 +364,21 @@ class Request(geni.rspec.RSpec):
       self.addNamespace(ns)
     self.resources.append(rsrc)
 
-  def write (self, path):
+  def writeXML (self, path):
     f = open(path, "w+")
 
     rspec = self.getDOM()
-#ctx = Context(self, rspec)
 
     for resource in self.resources:
       resource._write(rspec)
 
     f.write(ET.tostring(rspec, pretty_print=True))
     f.close()
+
+  def write (self, path):
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
+

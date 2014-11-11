@@ -1,10 +1,10 @@
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
 import geni.rspec.pg as PG
-import geni.aggregate.instageni as IG
-import geni.aggregate.apis
+#import geni.aggregate.instageni as IG
+#import geni.aggregate.apis
 
-import nbastin
+#import nbastin
 
 #context = nbastin.buildContext()
 #context.debug = True
