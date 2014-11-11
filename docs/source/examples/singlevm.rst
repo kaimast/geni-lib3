@@ -4,7 +4,7 @@ Creating a Request for a Single VM
 This example walks through the basic of creating an RSpec (xml file) requesting
 a single VM from a compute aggregate.  This example does not require that `geni-lib`
 is configured with user credentials or keys - it will create an XML file that you
-can feed into another tool suck as `Jacks` or `Omni` (other examples cover how to make
+can feed into another tool such as `Jacks` or `Omni` (other examples cover how to make
 this request using `geni-lib` itself).
 
 .. note::
