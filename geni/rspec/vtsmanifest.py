@@ -16,7 +16,7 @@ class UnhandledPortTypeError(Exception):
   def __init__ (self, typ):
     self.typ = typ
   def __str__ (self):
-    return "Port type '%s' isn't supported by port builder.  Perhaps you should contribute some code?"
+    return "Port type '%s' isn't supported by port builder.  Perhaps you should contribute some code?" % (self.typ)
 
 
 class GREPort(object):
@@ -35,6 +35,25 @@ class GREPort(object):
     p.local_endpoint = endpe.get("local")
     p.remote_endpoint = endpe.get("remote")
     return p
+
+
+class ManifestFunction(object):
+  def __init__ (self, client_id):
+    self.client_id = client_id
+
+  @classmethod
+  def _fromdom (cls, elem):
+    typ = elem.get("type")
+    if typ == "sslvpn":
+      f = SSLVPNFunction._fromdom(elem)
+
+
+class SSLVPNFunction(ManifestFunction):
+  def __init__ (sef, client_id):
+    super(SSLVPNFunction, self).__init__(client_id)
+    self.tp_port = None
+    self.local_ip = None
+    self.key = None
     
 
 class Manifest(object):
@@ -62,6 +81,13 @@ class Manifest(object):
     elems = self._root.xpath("v:datapath/v:port[@shared-lan]", namespaces = XPNS)
     for elem in elems:
       yield elem.get("shared-lan")
+
+  @property
+  def functions (self):
+    elems = self._root.xpath("v:functions/v:function", namespaces = XPNS)
+    for elem in elems:
+      yield ManifestFunction._fromdom(elem)
+      
 
   def findPort (self, client_id):
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)
