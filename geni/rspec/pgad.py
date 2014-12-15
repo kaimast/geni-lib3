@@ -215,5 +215,5 @@ class Advertisement(object):
     """Write the current advertisement as an XML file that contains an rspec in the format returned by the
     aggregate."""
     f = open(path, "w+")
-    f.write(ET.tostring(self.root, pretty_print=True))
+    f.write(ET.tostring(self._root, pretty_print=True))
     f.close()
