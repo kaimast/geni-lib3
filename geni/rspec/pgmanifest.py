@@ -108,6 +108,19 @@ class Manifest(object):
     return ET.tostring(self.root, pretty_print=True)
 
   def write (self, path):
+    """
+.. deprecated:: 0.4
+    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
+
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Manifest.write() method is deprecated, please use Manifest.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
+
+  def writeXML (self, path):
+    """Write the current manifest as an XML file that contains an rspec in the format returned by the
+    aggregate."""
     f = open(path, "w+")
     f.write(ET.tostring(self.root, pretty_print=True))
     f.close()

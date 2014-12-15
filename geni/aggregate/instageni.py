@@ -41,6 +41,7 @@ SOX = IGCompute("ig-sox", "instageni.sox.net", "urn:publicid:IDN+instageni.sox.n
 Stanford = IGCompute("ig-stanford", "instageni.stanford.edu", "urn:publicid:IDN+instageni.stanford.edu+authority+cm")
 UCLA = IGCompute("ig-ucla", "instageni.idre.ucla.edu", "urn:publicid:IDN+instageni.idre.ucla.edu+authority+cm")
 UKYPKS2 = IGCompute('ig-ukypks2', 'pks2.sdn.uky.edu', 'urn:publicid:IDN+pks2.sdn.uky.edu+authority+cm');
+UMKC = IGCompute('ig-umkc', 'instageni.umkc.edu', 'urn:publicid:IDN+instageni.umkc.edu+authority+cm');
 Utah = IGCompute("ig-utah", "boss.utah.geniracks.net", "urn:publicid:IDN+utah.geniracks.net+authority+cm")
 UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:IDN+utahddc.geniracks.net+authority+cm")
 Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+instageni.wisc.edu+authority+cm")

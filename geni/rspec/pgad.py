@@ -210,3 +210,10 @@ class Advertisement(object):
   @property
   def text (self):
     return ET.tostring(self._root, pretty_print=True)
+
+  def writeXML (self, path):
+    """Write the current advertisement as an XML file that contains an rspec in the format returned by the
+    aggregate."""
+    f = open(path, "w+")
+    f.write(ET.tostring(self.root, pretty_print=True))
+    f.close()
