@@ -93,9 +93,24 @@ class VTS(AMType):
     return manifest
 
 
+class OESS(AMType):
+  def __init__ (self, name="oess"):
+    super(OESS, self).__init__(name)
+
+  def parseAdvertisement (self, data):
+    from ..rspec import oessad
+    ad = oessad.Advertisement(xml=data)
+    return ad
+
+  def parseManifest (self, data):
+    from ..rspec import oessmanifest
+    manifest = oessmanifest.Manifest(xml = data)
+    return manifest
+
 
 AMTypeRegistry.register("foam", FOAM())
 AMTypeRegistry.register("opengeni", OpenGENI())
 AMTypeRegistry.register("pg", ProtoGENI())
 AMTypeRegistry.register("exogeni", ExoGENI())
 AMTypeRegistry.register("vts", VTS())
+AMTypeRegistry.register("oess", OESS())
