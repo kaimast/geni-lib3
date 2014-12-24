@@ -7,6 +7,7 @@ import sys
 
 from .core import AM
 from .instageni import UtahDDC
+from .apt import Apt
 
 class CloudLabAM(AM):
   def __init__ (self, name, host, cmid = None, url = None):
