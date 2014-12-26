@@ -8,6 +8,7 @@ import geni.namespaces as GNS
 from lxml import etree as ET
 import itertools
 import uuid
+import sys
 
 
 class Resource(object):
@@ -335,7 +336,11 @@ class Request(geni.rspec.RSpec):
   def writeXML (self, path):
     """Write the current request contents as an XML file that represents an rspec
     in the GENIv3 format."""
-    f = open(path, "w+")
+
+    if path is None:
+      f = sys.stdout
+    else:
+      f = open(path, "w+")
 
     rspec = self.getDOM()
 
@@ -343,7 +348,9 @@ class Request(geni.rspec.RSpec):
       resource._write(rspec)
 
     f.write(ET.tostring(rspec, pretty_print=True))
-    f.close()
+    
+    if path is not None:
+      f.close()
 
   def toXMLString (self, pretty_print = False):
     """Return the current request contents as an XML string that represents an rspec
