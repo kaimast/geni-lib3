@@ -24,7 +24,7 @@ class Context (object):
     if 'GENILIB_PORTAL_MODE' in os.environ:
       self._standalone = False
       self._portalRequestPath = os.environ['GENILIB_PORTAL_REQUEST_PATH']
-      self._dumpParams = 'GENILIB_PORTAL_DUMPPARAMS' in os.environ
+      self._dumpParamsPath = os.environ.get('GENILIB_PORTAL_DUMPPARAMS_PATH',None)
     else:
       self._standalone = True
       self._portalRequestPath = None
@@ -44,7 +44,7 @@ class Context (object):
     if self._standalone:
       return self._bindParametersCmdline()
     else:
-      if self._dumpParams:
+      if self._dumpParamsPath:
         self._dumpParamsJSON()
         sys.exit(0)
       else:
@@ -59,7 +59,8 @@ class Context (object):
     return {}
 
   def _dumpParamsJSON (self):
-    print json.dumps(self._parameters)
+    f = open(self._dumpParamsPath, "w+")
+    json.dump(self._parameters,f)
     return
 
   def _checkBind (self):
