@@ -95,6 +95,7 @@ class Context (object):
   def _dumpParamsJSON (self):
     f = open(self._dumpParamsPath, "w+")
     json.dump(self._parameters,f)
+    f.close()
     return
 
   def _checkBind (self):
