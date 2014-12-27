@@ -17,6 +17,9 @@ class ParameterType (object):
   AGGREGATE   = "aggregate"
   NODETYPE    = "nodetype"
 
+  argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
+                  AGGREGATE: str, NODETYPE: str }
+
 class Context (object):
 
   def __init__ (self):
@@ -55,7 +58,11 @@ class Context (object):
     parser = argparse.ArgumentParser()
     for name, opts in self._parameters.iteritems():
       # TODO: handle different types of parameters correctly
-      parser.add_argument("--" + name, default=opts['defaultValue'], help=opts['description'])
+      parser.add_argument("--" + name,
+                          type    = ParameterType.argparsemap[opts['type']],
+                          default = opts['defaultValue'],
+                          choices = opts['legalValues'],
+                          help    = opts['description'])
     return parser.parse_args()
 
   def _bindParametersEnv (self):
