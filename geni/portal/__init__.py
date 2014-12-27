@@ -37,7 +37,6 @@ class Context (object):
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, type, defaultValue, legalValues = None):
-    # TODO: Duplicate checking
     self._parameters[name] = {'description': description, 'type': type,
         'defaultValue': defaultValue, 'legalValues': legalValues}
     if len(self._parameters) == 1:
@@ -57,17 +56,25 @@ class Context (object):
   def _bindParametersCmdline (self):
     parser = argparse.ArgumentParser()
     for name, opts in self._parameters.iteritems():
-      # TODO: handle different types of parameters correctly
       parser.add_argument("--" + name,
                           type    = ParameterType.argparsemap[opts['type']],
                           default = opts['defaultValue'],
                           choices = opts['legalValues'],
                           help    = opts['description'])
-    return parser.parse_args()
+    return vars(parser.parse_args())
 
   def _bindParametersEnv (self):
-    # TODO: Implement
-    return {}
+    params = {}
+    for name, opts in self._parameters.iteritems():
+      val = os.environ.get("GENILIB_PORTAL_ARG_%s" % name, opts['defaultValue'])
+      if opts['legalValues'] and val not in opts['legalValues']:
+        # TODO: Not 100% sure what the right thing is to do here, need to get 
+        # the error back in a nice machine-parsable form
+        sys.stderr.write("ERROR: Illegal value '%s' for option '%s'\n" %
+            (val, name))
+        sys.exit(1)
+      params[name] = ParameterType.argparsemap[opts['type']](val)
+    return params
 
   def _dumpParamsJSON (self):
     f = open(self._dumpParamsPath, "w+")
