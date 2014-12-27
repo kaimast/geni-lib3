@@ -7,7 +7,7 @@ import os
 import atexit
 import warnings
 import json
-import optparse
+import argparse
 
 class ParameterType (object):
   INTEGER     = "integer"
@@ -52,10 +52,10 @@ class Context (object):
         return self._bindParametersEnv()
 
   def _bindParametersCmdline (self):
-    parser = optparse.OptionParser()
+    parser = argparse.ArgumentParser()
     for name, opts in self._parameters.iteritems():
       # TODO: handle different types of parameters correctly
-      parser.add_option("--" + name, action="store", dest=name, default=opts['defaultValue'], help=opts['description'])
+      parser.add_argument("--" + name, default=opts['defaultValue'], help=opts['description'])
     return parser.parse_args()
 
   def _bindParametersEnv (self):
