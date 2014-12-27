@@ -248,6 +248,7 @@ class Node(Resource):
     self.exclusive = exclusive
     self.disk_image = None
     self.type = ntype
+    self.hardware_type = None
     self.interfaces = []
     self.services = []
     self.routable_control_ip = False
@@ -277,6 +278,10 @@ class Node(Resource):
         di.attrib["name"] = self.disk_image
       else:
         self.disk_image._write(st)
+
+    if self.hardware_type:
+        hwt = ET.SubElement(nd, "{%s}hardware_type" % (GNS.REQUEST.name))
+        hwt.attrib["name"] = self.hardware_type
 
     if self.interfaces:
       for intf in self.interfaces:
