@@ -11,10 +11,10 @@ import json
 class ParameterType (object):
   INTEGER     = "integer"
   STRING      = "string"
+  BOOLEAN     = "boolean"
   IMAGE       = "image"
   AGGREGATE   = "aggregate"
   NODETYPE    = "nodetype"
-
 
 class Context (object):
 
