@@ -34,15 +34,33 @@ class Context (object):
       self._portalRequestPath = None
 
   def printRequestRSpec (self, rspec):
+    """Print the given request RSpec; if run standalone (not in the portal), the
+    request will be printed to the standard output; if run in the portal, it
+    will be placed someplace the portal can pick it up."""
     rspec.writeXML(self._portalRequestPath)
 
-  def defineParameter (self, name, description, type, defaultValue, legalValues = None):
+  def defineParameter (self, name, description, type, defaultValue,
+      legalValues = None):
+    """Define a new paramter to the script. The given name will be used when 
+    parameters are bound. The description is help text that will be shown to the
+    user when making his/her selection/ The type should be one of the types
+    defined by ParameterType. defaultValue is required, but legalValues (a list)
+    is optional; the defaultValue must be one of the legalValues.
+    
+    After defining parameters, bindParameters() must be called exactly once."""
     self._parameters[name] = {'description': description, 'type': type,
         'defaultValue': defaultValue, 'legalValues': legalValues}
     if len(self._parameters) == 1:
       atexit.register(self._checkBind)
 
-  def bindParameters(self):
+  def bindParameters (self):
+    """Returns values for the parameters defined by defineParameter() in the form
+    of a Dictionary. Since defaults are required, all parameters are guaranteed
+    to have values in the Dictionary.
+
+    If run standaline (not in the portal), parameters are pulled from the command
+    line (try running with --help); if run in the portal, they are pulled from
+    the portal itself."""
     self._bindingDone = True
     if self._standalone:
       return self._bindParametersCmdline()
@@ -83,4 +101,5 @@ class Context (object):
 
   def _checkBind (self):
     if len(self._parameters) > 0 and not self._bindingDone:
-      warnings.warn("Parameters were defined, but never bound with bindParameters()", RuntimeWarning)
+      warnings.warn("Parameters were defined, but never bound with " +
+          " bindParameters()", RuntimeWarning)
