@@ -8,25 +8,18 @@ import atexit
 import warnings
 import json
 
-class Parameter (object):
-  def __init__ (self, name, description, type, defaultValue, options = None):
-    self._name = name
-    self._description = description
-    self._type = type
-    self._defaultValue = defaultValue
-    self._options = options
-    
-  class Type (object):
-    INTEGER     = "integer"
-    STRING      = "string"
-    IMAGE       = "image"
-    AGGREGATE   = "aggregate"
-    NODETYPE    = "nodetype"
+class ParameterType (object):
+  INTEGER     = "integer"
+  STRING      = "string"
+  IMAGE       = "image"
+  AGGREGATE   = "aggregate"
+  NODETYPE    = "nodetype"
+
 
 class Context (object):
 
   def __init__ (self):
-    self._parameters = []
+    self._parameters = {}
     self._bindingDone = False
     if 'GENILIB_PORTAL_MODE' in os.environ:
       self._standalone = False
@@ -39,8 +32,10 @@ class Context (object):
   def printRequestRSpec (self, rspec):
     rspec.writeXML(self._portalRequestPath)
 
-  def defineParameter (self, param):
-    self._parameters.append(param)
+  def defineParameter (self, name, description, type, defaultValue, legalValues = None):
+    # TODO: Duplicate checking
+    self._parameters[name] = {'description': description, 'type': type,
+        'defaultValue': defaultValue, 'legalValues': legalValues}
     if len(self._parameters) == 1:
       atexit.register(self._checkBind)
 
@@ -64,6 +59,7 @@ class Context (object):
     return {}
 
   def _dumpParamsJSON (self):
+    print json.dumps(self._parameters)
     return
 
   def _checkBind (self):
