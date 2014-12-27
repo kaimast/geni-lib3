@@ -88,9 +88,7 @@ class Context (object):
       if opts['legalValues'] and val not in opts['legalValues']:
         # TODO: Not 100% sure what the right thing is to do here, need to get 
         # the error back in a nice machine-parsable form
-        sys.stderr.write("ERROR: Illegal value '%s' for option '%s'\n" %
-            (val, name))
-        sys.exit(1)
+        sys.exit("ERROR: Illegal value '%s' for option '%s'" % (val, name))
       params[name] = ParameterType.argparsemap[opts['type']](val)
     return params
 
