@@ -29,6 +29,7 @@ class Context (object):
       self._standalone = False
       self._portalRequestPath = os.environ['GENILIB_PORTAL_REQUEST_PATH']
       self._dumpParamsPath = os.environ.get('GENILIB_PORTAL_DUMPPARAMS_PATH',None)
+      self._readParamsPath = os.environ.get('GENILIB_PORTAL_PARAMS_PATH',None)
     else:
       self._standalone = True
       self._portalRequestPath = None
@@ -83,8 +84,13 @@ class Context (object):
 
   def _bindParametersEnv (self):
     params = {}
+    paramValues= {}
+    if self._readParamsPath:
+        f = open(self._readParamsPath, "r")
+        paramValues = json.load(f)
+        f.close()
     for name, opts in self._parameters.iteritems():
-      val = os.environ.get("GENILIB_PORTAL_ARG_%s" % name, opts['defaultValue'])
+      val = paramValues.get(name, opts['defaultValue'])
       if opts['legalValues'] and val not in opts['legalValues']:
         # TODO: Not 100% sure what the right thing is to do here, need to get 
         # the error back in a nice machine-parsable form
