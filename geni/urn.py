@@ -85,7 +85,24 @@ class GENI (Base):
   TYPE_SLICE     = "slice"
   TYPE_SLIVER    = "sliver"
   TYPE_USER      = "user"
+  
+  # We use IDN for authorities, and many identifiers turn into parts of domain
+  # names, so we sort of match against DNS strings (though are somewhat more
+  # permissive)
+  DNS_PART          = "[a-z0-9]+(-[a-z0-9]+)"
+  DNS_FULL          = "(%s*\.?)+" % DNS_PART
 
+  AUTHORITY_PATTERN = DNS_FULL
+  TYPE_PATTERN      = DNS_PART
+  NAME_PATTERN      = DNS_PART
+  GENINSS_PATTERN   = "%s\+%s\+%s\+\%s" % (NSSPREFIX, AUTHORITY_PATTERN,
+                                           TYPE_PATTERN, NAME_PATTERN)
+                                           
+  AUTHORITY_REGEX   = re.compile("^%s$" % AUTHORITY_PATTERN, re.IGNORECASE)
+  TYPE_REGEX        = re.compile("^%s$" % TYPE_PATTERN, re.IGNORECASE)
+  NAME_REGEX        = re.compile("^%s$" % NAME_PATTERN, re.IGNORECASE)
+  GENINSS_PATTERN   = re.compile("^%s$" % GENINSS_PATTERN, re.IGNORECASE)
+  
   def __init__ (self, *args):
     """There are four forms of this constructor:
     1) Pass a single string in GENI URN format (urn:publicid:IDN+auth+type+name)
