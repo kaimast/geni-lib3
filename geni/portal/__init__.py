@@ -8,6 +8,7 @@ import atexit
 import warnings
 import json
 import argparse
+from argparse import Namespace
 
 class ParameterType (object):
   INTEGER     = "integer"
@@ -56,8 +57,9 @@ class Context (object):
 
   def bindParameters (self):
     """Returns values for the parameters defined by defineParameter() in the form
-    of a Dictionary. Since defaults are required, all parameters are guaranteed
-    to have values in the Dictionary.
+    of a Namespace (like argparse), so if you call foo = bindParameters(), a
+    parameter defined with name "bar" is accessed as foo.bar . Since defaults
+    are required, all parameters are guaranteed to have values in the Namespace
 
     If run standaline (not in the portal), parameters are pulled from the command
     line (try running with --help); if run in the portal, they are pulled from
@@ -80,10 +82,10 @@ class Context (object):
                           default = opts['defaultValue'],
                           choices = opts['legalValues'],
                           help    = opts['description'])
-    return vars(parser.parse_args())
+    return parser.parse_args()
 
   def _bindParametersEnv (self):
-    params = {}
+    namespace = Namespace()
     paramValues= {}
     if self._readParamsPath:
         f = open(self._readParamsPath, "r")
@@ -95,8 +97,8 @@ class Context (object):
         # TODO: Not 100% sure what the right thing is to do here, need to get 
         # the error back in a nice machine-parsable form
         sys.exit("ERROR: Illegal value '%s' for option '%s'" % (val, name))
-      params[name] = ParameterType.argparsemap[opts['type']](val)
-    return params
+      setattr(namespace, name, ParameterType.argparsemap[opts['type']](val))
+    return namespace
 
   def _dumpParamsJSON (self):
     f = open(self._dumpParamsPath, "w+")

@@ -16,16 +16,16 @@ params = pc.bindParameters()
 
 rspec = RSpec.Request()
 
-if (params['lan']):
+if (params.lan):
     lan = RSpec.LAN()
     rspec.addResource(lan)
 
-for i in range(1, params['N']+1):
+for i in range(1, params.N+1):
   node = RSpec.RawPC("node%d" % i)
-  node.hardware_type = params['hwtype']
+  node.hardware_type = params.hwtype
   rspec.addResource(node)
 
-  if params['lan']:
+  if params.lan:
     iface = node.addInterface("eth0")
     lan.addInterface(iface)
 
