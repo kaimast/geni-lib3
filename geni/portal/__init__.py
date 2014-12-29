@@ -27,7 +27,7 @@ class Context (object):
     self._bindingDone = False
     if 'GENILIB_PORTAL_MODE' in os.environ:
       self._standalone = False
-      self._portalRequestPath = os.environ['GENILIB_PORTAL_REQUEST_PATH']
+      self._portalRequestPath = os.environ.get('GENILIB_PORTAL_REQUEST_PATH',None)
       self._dumpParamsPath = os.environ.get('GENILIB_PORTAL_DUMPPARAMS_PATH',None)
       self._readParamsPath = os.environ.get('GENILIB_PORTAL_PARAMS_PATH',None)
     else:
