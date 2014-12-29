@@ -8,27 +8,63 @@ from __future__ import absolute_import
 from geni.aggregate.core import AM
 import re
 
+class MalformedURN(Exception):
+  """Exception that indicates that a URN is malformed"""
+  def __init__ (self, val):
+    _val = val
+  
+  def __str__(self):
+    return "Malformed URN: %s" % self._val
+
 class Base (object):
   """Base class representing *any* URN"""
   PREFIX = "urn"
   
+  NID_PATTERN = "[a-z0-9][a-z0-9-]{0,31}"
+  NSS_PATTERN = "[a-z0-9()+,\-.:=@;$_!*'%/?#]+"
+  NID_REGEX = re.compile("^%s$" % NID_PATTERN, re.IGNORECASE)
+  NSS_REGEX = re.compile("^%s$" % NSS_PATTERN, re.IGNORECASE)
+  URN_REGEX = re.compile("^urn:%s:%s$" % (NID_PATTERN, NSS_PATTERN),
+                         re.IGNORECASE)
+  
+  @staticmethod
+  def isValidURN(s):
+    """Returns True if the string is a valid URN, False if not"""
+    return (Base.URN_REGEX.match(s) is not None)
+  
+  @staticmethod
+  def isValidNID(s):
+    """Returns True if the string is a valid NID, False if not"""
+    return (Base.NID_REGEX.match(s) is not None)
+
+  @staticmethod
+  def isValidNSS(s):
+    """Returns True if the string is a valid NSS, False if not"""
+    return (Base.NSS_REGEX.match(s) is not None)
+
+  @staticmethod
+  def _fromStr(s):
+    if not Base.isValidURN(s):
+      raise MalformedURN(s)
+    return tuple(re.split(":",s,3))
+
   def __init__ (self, *args):
     """URNs can be initialized in one of two ways:
     1) Passing a single string in URN format (urn:NID:NSS)
     2) Passing two strings, the NID and the NSS"""
     if len(args) == 1:
+      # Note, _fromStr will thrown an exception if malformed
       (_, self._nid, self._nss) = Base._fromStr(args[0])
     elif len(args) == 2:
+      if not Base.isValidNID(args[0]):
+        raise MalformedURN("NID: %s" % args[0])
+      if not Base.isValidNSS(args[1]):
+        raise MalformedURN("NSS: %s" % args[1])
       self._nid = args[0]
       self._nss = args[1]
     else:
       # TODO thrown an exception
       None
-
-  @staticmethod
-  def _fromStr(s):
-    # TODO Better actual validation
-    return tuple(re.split(":",s,3))
 
   def __str__(self):
     return "%s:%s:%s" % (Base.PREFIX, self._nid, self._nss)
