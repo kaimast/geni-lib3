@@ -1,7 +1,6 @@
-geni.util
+geni.urn
 =========
 
 .. automodule:: geni.urn
-  :undoc-members:
   :members:
 
