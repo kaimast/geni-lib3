@@ -211,12 +211,18 @@ class GENI (Base):
     return (GENI.NAME_REGEX.match(s) is not None)
 
   @staticmethod
-  def isValidGENIURN(s):
+  def GENIURNType(s):
     """Returns the type of the object if the URN is a valid GENI URN, returns
     None otherwise"""
     matches = GENI.GENIURN_REGEX.match(s)
     if matches is None: return None
     else: return matches.group("type")
+
+  @staticmethod
+  def isValidGENIURN(s):
+    """Returns True if the given string is a valid URN in GENI format, False
+    otherwise"""
+    return(GENI.GENIURNType(s) is not None)
 
 class Authority (GENI):
   def __init__ (self, authorities, name):
