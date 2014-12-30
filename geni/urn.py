@@ -131,8 +131,10 @@ class GENI (Base):
       if isinstance(args[0],str):
         self._authorities = [args[0]]
       elif isinstance(args[0], AM):
-        # TODO This might be temporary until we have AMs storing URN objects
-        self._authorities = GENI(args[0].component_manager_id).authorities
+        if isinstance(args[0].component_manager_id, GENI):
+          self._authorities = args[0].component_manager_id.authorities
+        else:
+          self._authorities = GENI(args[0].component_manager_id).authorities
       else:
         self._authorities = args[0]
       self._type = args[1]
