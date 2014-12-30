@@ -89,19 +89,19 @@ class GENI (Base):
   # We use IDN for authorities, and many identifiers turn into parts of domain
   # names, so we sort of match against DNS strings (though are somewhat more
   # permissive)
-  DNS_PART          = "[a-z0-9]+(-[a-z0-9]+)"
-  DNS_FULL          = "(%s*\.?)+" % DNS_PART
+  DNS_PART          = "[a-z0-9]+[a-z0-9-]*"
+  DNS_FULL          = "(%s\.?)+" % DNS_PART
 
   AUTHORITY_PATTERN = DNS_FULL
   TYPE_PATTERN      = DNS_PART
   NAME_PATTERN      = DNS_PART
-  GENINSS_PATTERN   = "%s\+%s\+%s\+\%s" % (NSSPREFIX, AUTHORITY_PATTERN,
+  GENINSS_PATTERN   = "%s\+%s\+%s\+%s" % (NSSPREFIX, AUTHORITY_PATTERN,
                                            TYPE_PATTERN, NAME_PATTERN)
                                            
   AUTHORITY_REGEX   = re.compile("^%s$" % AUTHORITY_PATTERN, re.IGNORECASE)
   TYPE_REGEX        = re.compile("^%s$" % TYPE_PATTERN, re.IGNORECASE)
   NAME_REGEX        = re.compile("^%s$" % NAME_PATTERN, re.IGNORECASE)
-  GENINSS_PATTERN   = re.compile("^%s$" % GENINSS_PATTERN, re.IGNORECASE)
+  GENINSS_REGEX     = re.compile("^%s$" % GENINSS_PATTERN, re.IGNORECASE)
   
   def __init__ (self, *args):
     """There are four forms of this constructor:
@@ -127,6 +127,14 @@ class GENI (Base):
         self._authorities = args[0]
       self._type = args[1]
       self._name = args[2]
+      
+      for authority in self._authorities:
+        if not GENI.isValidAuthority(authority):
+          raise MalformedURN("Authority: %s" % authority)
+      if not GENI.isValidType(self._type):
+        raise MalformedURN("Type: %s" % self._type)
+      if not GENI.isValidName(self._name):
+        raise MalformedURN("Name: %s" % self._name)
       # In this form we have to reconstruct the NSS
       super(GENI,self).__init__(GENI.NID,self._makeNSS())
     else:
@@ -144,6 +152,16 @@ class GENI (Base):
     """Return a single string that captures the entire authority/subauthority
     chain"""
     return ":".join(self._authorities)
+  
+  @property
+  def name(self):
+    """Returns the 'name' part of a GENI URN"""
+    return self._name
+  
+  @property
+  def type(self):
+    """Returns the 'type' part of a GENI URN"""
+    return self._type
 
   def _makeNSS(self):
     return "%s+%s+%s+%s" % (GENI.NSSPREFIX, self.authority, self._type,
@@ -151,14 +169,35 @@ class GENI (Base):
 
   @staticmethod
   def _splitNSS(s):
-    # TODO actual validation
+    print "%s / %s" % (GENI.GENINSS_PATTERN, s)
+    if not GENI.isValidGENINSS(s):
+      raise MalformedURN("GENI NSS: %s" % s)
     matches = re.split("\+",s,4)
     return (GENI._splitAuthorities(matches[1]), matches[2], matches[3])
 
   @staticmethod
   def _splitAuthorities(s):
-    # TODO actual validation
+    parts = re.split(":",s)
+    for part in parts:
+      if not GENI.isValidAuthority(part):
+        raise MalformedURN("GENI Authority: %s" % part)
     return re.split(":",s)
+
+  @staticmethod
+  def isValidGENINSS(s):
+    return (GENI.GENINSS_REGEX.match(s) is not None)
+
+  @staticmethod
+  def isValidAuthority(s):
+    return (GENI.AUTHORITY_REGEX.match(s) is not None)
+
+  @staticmethod
+  def isValidType(s):
+    return (GENI.TYPE_REGEX.match(s) is not None)
+
+  @staticmethod
+  def isValidName(s):
+    return (GENI.NAME_REGEX.match(s) is not None)
 
 class Authority (GENI):
   def __init__ (self, authorities, name):
