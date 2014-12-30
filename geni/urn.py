@@ -8,6 +8,14 @@ from __future__ import absolute_import
 from geni.aggregate.core import AM
 import re
 
+def URN(s):
+  """Returns the 'most specific' URN object that it can for the given string.
+  May throw an exception if the string is not a valid URN at all."""
+  if GENI.isValidGENIURN(s):
+    return GENI(s)
+  else:
+    return Base(s)
+
 class MalformedURN(Exception):
   """Exception that indicates that a URN is malformed"""
   def __init__ (self, val):
@@ -95,13 +103,15 @@ class GENI (Base):
   AUTHORITY_PATTERN = DNS_FULL
   TYPE_PATTERN      = DNS_PART
   NAME_PATTERN      = DNS_PART
-  GENINSS_PATTERN   = "%s\+%s\+%s\+%s" % (NSSPREFIX, AUTHORITY_PATTERN,
+  GENINSS_PATTERN   = "%s\+%s\+(?P<type>%s)\+%s" % (NSSPREFIX, AUTHORITY_PATTERN,
                                            TYPE_PATTERN, NAME_PATTERN)
+  GENIURN_PATTERN   = "%s:%s:%s" % (Base.PREFIX, NID, GENINSS_PATTERN)
                                            
   AUTHORITY_REGEX   = re.compile("^%s$" % AUTHORITY_PATTERN, re.IGNORECASE)
   TYPE_REGEX        = re.compile("^%s$" % TYPE_PATTERN, re.IGNORECASE)
   NAME_REGEX        = re.compile("^%s$" % NAME_PATTERN, re.IGNORECASE)
   GENINSS_REGEX     = re.compile("^%s$" % GENINSS_PATTERN, re.IGNORECASE)
+  GENIURN_REGEX     = re.compile("^%s$" % GENIURN_PATTERN, re.IGNORECASE)
   
   def __init__ (self, *args):
     """There are four forms of this constructor:
@@ -169,7 +179,6 @@ class GENI (Base):
 
   @staticmethod
   def _splitNSS(s):
-    print "%s / %s" % (GENI.GENINSS_PATTERN, s)
     if not GENI.isValidGENINSS(s):
       raise MalformedURN("GENI NSS: %s" % s)
     matches = re.split("\+",s,4)
@@ -193,11 +202,21 @@ class GENI (Base):
 
   @staticmethod
   def isValidType(s):
+    # Note that we don't actually check against the set of known types found
+    # above, as it is not a closed set
     return (GENI.TYPE_REGEX.match(s) is not None)
 
   @staticmethod
   def isValidName(s):
     return (GENI.NAME_REGEX.match(s) is not None)
+
+  @staticmethod
+  def isValidGENIURN(s):
+    """Returns the type of the object if the URN is a valid GENI URN, returns
+    None otherwise"""
+    matches = GENI.GENIURN_REGEX.match(s)
+    if matches is None: return None
+    else: return matches.group("type")
 
 class Authority (GENI):
   def __init__ (self, authorities, name):
@@ -248,6 +267,17 @@ if __name__ == "__main__":
 
     sys.stdout.write(" %s / %s\n" % (urn,value))
 
+  def check_type(s, t):
+    global errors
+    urn = URN(s)
+    if type(urn) is t:
+      sys.stdout.write("PASS")
+    else:
+      sys.stdout.write("FAIL")
+      errors = errors + 1
+
+    sys.stdout.write(" %s / %s\n" % (urn,t.__name__))
+
   check_urn(Base("isbn","0553575384"),"urn:isbn:0553575384")
   check_urn(GENI("emulab.net","user","ricci"),
             "urn:publicid:IDN+emulab.net+user+ricci")
@@ -260,5 +290,8 @@ if __name__ == "__main__":
             "urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD")
   check_urn(User(IG.Clemson,"kwang"),
             "urn:publicid:IDN+instageni.clemson.edu+user+kwang")
+
+  check_type("urn:isbn:0345371984",Base)
+  check_type("urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD",GENI)
 
   sys.exit(errors)
