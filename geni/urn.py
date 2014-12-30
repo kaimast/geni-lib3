@@ -6,6 +6,7 @@ objects"""
 from __future__ import absolute_import
 
 from geni.aggregate.core import AM
+from geni.exceptions import WrongNumberOfArgumentsError
 import re
 
 def Make(s):
@@ -71,8 +72,7 @@ class Base (object):
       self._nid = args[0]
       self._nss = args[1]
     else:
-      # TODO thrown an exception
-      None
+      raise WrongNumberOfArgumentsError()
 
   def __str__(self):
     return "%s:%s:%s" % (Base.PREFIX, self._nid, self._nss)
@@ -148,8 +148,7 @@ class GENI (Base):
       # In this form we have to reconstruct the NSS
       super(GENI,self).__init__(GENI.NID,self._makeNSS())
     else:
-      # TODO throw exception
-      None
+      raise WrongNumberOfArgumentsError()
 
   @property
   def authorities(self):
