@@ -224,37 +224,29 @@ class GENI (Base):
     otherwise"""
     return(GENI.GENIURNType(s) is not None)
 
-class Authority (GENI):
-  def __init__ (self, authorities, name):
-    super(Authority,self).__init(authorities, GENI.TYPE_AUTHORITY, name)
+def Authority (authorities, name):
+  return GENI(authorities, GENI.TYPE_AUTHORITY, name)
 
-class Interface (GENI):
-  def __init__ (self, authorities, name):
-    super(Interface,self).__init(authorities, GENI.TYPE_INTERFACE, name)
+def Interface (authorities, name):
+  return GENI(authorities, GENI.TYPE_INTERFACE, name)
 
-class Image (GENI):
-  def __init__ (self, authorities, name):
-    super(Image,self).__init__(authorities, GENI.TYPE_IMAGE, name)
+def Image (authorities, name):
+  return GENI(authorities, GENI.TYPE_IMAGE, name)
 
-class Link (GENI):
-  def __init__ (self, authorities, name):
-    super(Link,self).__init(authorities, GENI.TYPE_LINK, name)
+def Link (authorities, name):
+  return GENI(authorities, GENI.TYPE_LINK, name)
 
-class Node (GENI):
-  def __init__ (self, authorities, name):
-    super(Node,self).__init(authorities, GENI.TYPE_NODE, name)
+def Node (authorities, name):
+  return GENI(authorities, GENI.TYPE_NODE, name)
 
-class Slice (GENI):
-  def __init__ (self, authorities, name):
-    super(Slice,self).__init(authorities, GENI.TYPE_SLICE, name)
+def Slice (authorities, name):
+  return GENI(authorities, GENI.TYPE_SLICE, name)
 
-class Sliver (GENI):
-  def __init__ (self, authorities, name):
-    super(Sliver,self).__init(authorities, GENI.TYPE_SLIVER, name)
+def Sliver (authorities, name):
+  return GENI(authorities, GENI.TYPE_SLIVER, name)
 
-class User (GENI):
-  def __init__ (self, authorities, name):
-    super(User,self).__init__(authorities, GENI.TYPE_USER, name)
+def User (authorities, name):
+  return GENI(authorities, GENI.TYPE_USER, name)
 
 if __name__ == "__main__":
   # Lame unit tests
