@@ -59,7 +59,9 @@ class Base (object):
 
   def __init__ (self, *args):
     """URNs can be initialized in one of two ways:
+
     1) Passing a single string in URN format (urn:NID:NSS)
+
     2) Passing two strings, the NID and the NSS"""
     if len(args) == 1:
       # Note, _fromStr will thrown an exception if malformed
@@ -115,11 +117,15 @@ class GENI (Base):
   
   def __init__ (self, *args):
     """There are four forms of this constructor:
+
     1) Pass a single string in GENI URN format (urn:publicid:IDN+auth+type+name)
+
     2) Pass three arguments: the authority (single string), the type (see the
        TYPE_ variables above), the object name
+
     3) Pass three arguments: as #2, but each subauthoirty becomes its own entry
        in the list
+
     4) Pass three arguments: as #2, but the authority is a
        geni.aggregate.core.AM object"""
     if len(args) == 1:
