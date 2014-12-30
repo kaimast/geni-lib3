@@ -8,7 +8,7 @@ from __future__ import absolute_import
 from geni.aggregate.core import AM
 import re
 
-def URN(s):
+def Make(s):
   """Returns the 'most specific' URN object that it can for the given string.
   May throw an exception if the string is not a valid URN at all."""
   if GENI.isValidGENIURN(s):
@@ -267,7 +267,7 @@ if __name__ == "__main__":
 
   def check_type(s, t):
     global errors
-    urn = URN(s)
+    urn = Make(s)
     if type(urn) is t:
       sys.stdout.write("PASS")
     else:
