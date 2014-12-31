@@ -11,14 +11,18 @@ import re
 
 def Make(s):
   """Returns the 'most specific' URN object that it can for the given string.
-  May throw an exception if the string is not a valid URN at all."""
+
+  Specifically, returns a GENI URN if the string is in GENI format, or a Base
+  URN if it is not.  May throw a MalformedURN exception if the string is not a
+  valid URN at all."""
   if GENI.isValidGENIURN(s):
     return GENI(s)
   else:
     return Base(s)
 
 class MalformedURN(Exception):
-  """Exception that indicates that a URN is malformed"""
+  """Exception indicating that a string is not a proper URN."""
+
   def __init__ (self, val):
     _val = val
   
@@ -26,7 +30,8 @@ class MalformedURN(Exception):
     return "Malformed URN: %s" % self._val
 
 class Base (object):
-  """Base class representing *any* URN"""
+  """Base class representing any URN (RFC 2141)."""
+
   PREFIX = "urn"
   
   NID_PATTERN = "[a-z0-9][a-z0-9-]{0,31}"
@@ -38,17 +43,17 @@ class Base (object):
   
   @staticmethod
   def isValidURN(s):
-    """Returns True if the string is a valid URN, False if not"""
+    """Returns True if the string is a valid URN, False if not."""
     return (Base.URN_REGEX.match(s) is not None)
   
   @staticmethod
   def isValidNID(s):
-    """Returns True if the string is a valid NID, False if not"""
+    """Returns True if the string is a valid NID, False if not."""
     return (Base.NID_REGEX.match(s) is not None)
 
   @staticmethod
   def isValidNSS(s):
-    """Returns True if the string is a valid NSS, False if not"""
+    """Returns True if the string is a valid NSS, False if not."""
     return (Base.NSS_REGEX.match(s) is not None)
 
   @staticmethod
@@ -58,11 +63,13 @@ class Base (object):
     return tuple(re.split(":",s,3))
 
   def __init__ (self, *args):
-    """URNs can be initialized in one of two ways:
+    """Create a new generic URN
+    
+    URNs can be initialized in one of two ways:
 
-    1) Passing a single string in URN format (urn:NID:NSS)
+    1) Passing a single string in URN format ('urn:NID:NSS')
 
-    2) Passing two strings, the NID and the NSS"""
+    2) Passing two strings (the NID and the NSS) separately"""
     if len(args) == 1:
       # Note, _fromStr will thrown an exception if malformed
       (_, self._nid, self._nss) = Base._fromStr(args[0])
@@ -81,7 +88,7 @@ class Base (object):
 
 class GENI (Base):
   """Class representing the URNs used by GENI, which use the publicid NID and
-  IDN (domain name) scheme"""
+  IDN (domain name) scheme, then impose some additional strucutre."""
   
   NID = "publicid"
   NSSPREFIX = "IDN"
@@ -116,36 +123,45 @@ class GENI (Base):
   GENIURN_REGEX     = re.compile("^%s$" % GENIURN_PATTERN, re.IGNORECASE)
   
   def __init__ (self, *args):
-    """There are four forms of this constructor:
+    """Create a URN in the format used for GENI objects
+    
+    There are four forms of this constructor:
 
-    1) Pass a single string in GENI URN format (urn:publicid:IDN+auth+type+name)
+    1) Pass a single string in GENI URN format ('urn:publicid:IDN+auth+type+name')
 
-    2) Pass three arguments: the authority (single string), the type (see the
-       TYPE_ variables above), the object name
+    2) Pass three arguments: the authority (a single string), the type (see the
+       TYPE_ variables in this class), and the object name
 
-    3) Pass three arguments: as #2, but each subauthoirty becomes its own entry
-       in the list
+    3) Pass three arguments: as #2, but the authorit(ies) are passed as a list,
+       with the top-level authority coming first, followed by any subauthorities
 
     4) Pass three arguments: as #2, but the authority is a
-       geni.aggregate.core.AM object"""
+       geni.aggregate.core.AM object, and the authority is taken from that
+       object"""
     if len(args) == 1:
       # Superclass constructor parses and sets self._nss, which we then split
-      # into its constituent GENI parts
+      # into its constituent GENI parts. _splitNSS might throw an exception.
       super(GENI,self).__init__(args[0])
       self._authorities, self._type, self._name = GENI._splitNSS(self._nss)
     elif len(args) == 3:
       if isinstance(args[0],str):
-        self._authorities = [args[0]]
+        # They gave us a string, figure out if it might have subauthorities
+        # in it
+        self._authorities = GENI._splitAuthorities(args[0])
       elif isinstance(args[0], AM):
+        # If given an AM, extract its authority information; accept either a
+        # proper URN object or a simple string
         if isinstance(args[0].component_manager_id, GENI):
           self._authorities = args[0].component_manager_id.authorities
         else:
           self._authorities = GENI(args[0].component_manager_id).authorities
       else:
         self._authorities = args[0]
+
       self._type = args[1]
       self._name = args[2]
       
+      # Check if everything we got was well formed
       for authority in self._authorities:
         if not GENI.isValidAuthority(authority):
           raise MalformedURN("Authority: %s" % authority)
@@ -153,7 +169,9 @@ class GENI (Base):
         raise MalformedURN("Type: %s" % self._type)
       if not GENI.isValidName(self._name):
         raise MalformedURN("Name: %s" % self._name)
-      # In this form we have to reconstruct the NSS
+
+      # In this form we have to reconstruct the NSS from all of the info we just
+      # collected
       super(GENI,self).__init__(GENI.NID,self._makeNSS())
     else:
       raise WrongNumberOfArgumentsError()
@@ -161,23 +179,22 @@ class GENI (Base):
   @property
   def authorities(self):
     """Returns a list containing at least one authority string (the top level
-    authority) and possibly additional subauthorities"""
+    authority) and possibly additional subauthorities."""
     return self._authorities
   
   @property
   def authority(self):
-    """Return a single string that captures the entire authority/subauthority
-    chain"""
+    """Return a single string capturing the entire authority/subauthority chain"""
     return ":".join(self._authorities)
   
   @property
   def name(self):
-    """Returns the 'name' part of a GENI URN"""
+    """Returns the 'name' part of a GENI URN."""
     return self._name
   
   @property
   def type(self):
-    """Returns the 'type' part of a GENI URN"""
+    """Returns the 'type' part of a GENI URN."""
     return self._type
 
   def _makeNSS(self):
@@ -219,8 +236,8 @@ class GENI (Base):
 
   @staticmethod
   def GENIURNType(s):
-    """Returns the type of the object if the URN is a valid GENI URN, returns
-    None otherwise"""
+    """Returns the type of the object if the URN is a valid GENI URN, or
+    None otherwise."""
     matches = GENI.GENIURN_REGEX.match(s)
     if matches is None: return None
     else: return matches.group("type")
@@ -228,39 +245,39 @@ class GENI (Base):
   @staticmethod
   def isValidGENIURN(s):
     """Returns True if the given string is a valid URN in GENI format, False
-    otherwise"""
+    otherwise."""
     return(GENI.GENIURNType(s) is not None)
 
 def Authority (authorities, name):
-  """Create a new GENI URN with type 'authority'"""
+  """Create a new GENI URN with type 'authority'."""
   return GENI(authorities, GENI.TYPE_AUTHORITY, name)
 
 def Interface (authorities, name):
-  """Create a new GENI URN with type 'interface'"""
+  """Create a new GENI URN with type 'interface'."""
   return GENI(authorities, GENI.TYPE_INTERFACE, name)
 
 def Image (authorities, name):
-  """Create a new GENI URN with type 'image'"""
+  """Create a new GENI URN with type 'image'."""
   return GENI(authorities, GENI.TYPE_IMAGE, name)
 
 def Link (authorities, name):
-  """Create a new GENI URN with type 'link'"""
+  """Create a new GENI URN with type 'link'."""
   return GENI(authorities, GENI.TYPE_LINK, name)
 
 def Node (authorities, name):
-  """Create a new GENI URN with type 'node'"""
+  """Create a new GENI URN with type 'node'."""
   return GENI(authorities, GENI.TYPE_NODE, name)
 
 def Slice (authorities, name):
-  """Create a new GENI URN with type 'slice'"""
+  """Create a new GENI URN with type 'slice'."""
   return GENI(authorities, GENI.TYPE_SLICE, name)
 
 def Sliver (authorities, name):
-  """Create a new GENI URN with type 'sliver'"""
+  """Create a new GENI URN with type 'sliver'."""
   return GENI(authorities, GENI.TYPE_SLIVER, name)
 
 def User (authorities, name):
-  """Create a new GENI URN with type 'user'"""
+  """Create a new GENI URN with type 'user'."""
   return GENI(authorities, GENI.TYPE_USER, name)
 
 if __name__ == "__main__":
