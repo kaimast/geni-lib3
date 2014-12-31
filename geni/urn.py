@@ -232,27 +232,35 @@ class GENI (Base):
     return(GENI.GENIURNType(s) is not None)
 
 def Authority (authorities, name):
+  """Create a new GENI URN with type 'authority'"""
   return GENI(authorities, GENI.TYPE_AUTHORITY, name)
 
 def Interface (authorities, name):
+  """Create a new GENI URN with type 'interface'"""
   return GENI(authorities, GENI.TYPE_INTERFACE, name)
 
 def Image (authorities, name):
+  """Create a new GENI URN with type 'image'"""
   return GENI(authorities, GENI.TYPE_IMAGE, name)
 
 def Link (authorities, name):
+  """Create a new GENI URN with type 'link'"""
   return GENI(authorities, GENI.TYPE_LINK, name)
 
 def Node (authorities, name):
+  """Create a new GENI URN with type 'node'"""
   return GENI(authorities, GENI.TYPE_NODE, name)
 
 def Slice (authorities, name):
+  """Create a new GENI URN with type 'slice'"""
   return GENI(authorities, GENI.TYPE_SLICE, name)
 
 def Sliver (authorities, name):
+  """Create a new GENI URN with type 'sliver'"""
   return GENI(authorities, GENI.TYPE_SLIVER, name)
 
 def User (authorities, name):
+  """Create a new GENI URN with type 'user'"""
   return GENI(authorities, GENI.TYPE_USER, name)
 
 if __name__ == "__main__":
