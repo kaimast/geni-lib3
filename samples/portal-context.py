@@ -1,14 +1,14 @@
 import geni.portal as portal
 import geni.rspec.pg as RSpec
 
-hw_types = ["m400", "dl360" ]
+hw_types = [("m400", "ARM64"), ("dl360", "x86-64")]
 
 pc = portal.Context()
 
 pc.defineParameter("N", "Number of nodes",
                    portal.ParameterType.INTEGER, 5)
 pc.defineParameter("hwtype", "Hardware type of all nodes",
-                   portal.ParameterType.NODETYPE, hw_types[0], hw_types)
+                   portal.ParameterType.NODETYPE, "m400", hw_types)
 pc.defineParameter("lan",  "Put all nodes in a LAN",
                    portal.ParameterType.BOOLEAN, False)
 
