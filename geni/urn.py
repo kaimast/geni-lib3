@@ -94,14 +94,14 @@ class GENI (Base):
   NSSPREFIX = "IDN"
 
   # Taken from the list at http://www.protogeni.net/wiki/URNs
-  TYPE_AUTHORITY = "authority"
-  TYPE_IMAGE     = "image"
-  TYPE_INTERFACE = "interface"
-  TYPE_LINK      = "link"
-  TYPE_NODE      = "node"
-  TYPE_SLICE     = "slice"
-  TYPE_SLIVER    = "sliver"
-  TYPE_USER      = "user"
+  TYPE_AUTHORITY = "authority"  #: Aggregate Managers, Slice Authorities, etc.
+  TYPE_IMAGE     = "image"      #: Disk images
+  TYPE_INTERFACE = "interface"  #: Network interfaces
+  TYPE_LINK      = "link"       #: Point-to-point and multipoint links
+  TYPE_NODE      = "node"       #: Physical and virtual machines
+  TYPE_SLICE     = "slice"      #: Container for allocated resources
+  TYPE_SLIVER    = "sliver"     #: Slice of a specific resource
+  TYPE_USER      = "user"       #: Principal
   
   # We use IDN for authorities, and many identifiers turn into parts of domain
   # names, so we sort of match against DNS strings (though are somewhat more
