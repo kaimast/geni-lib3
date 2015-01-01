@@ -254,6 +254,10 @@ class Node(Resource):
     self.component_id = component_id
     self.component_manager_id = None
 
+  class DuplicateInterfaceName(Exception):
+    def __str__ (self):
+      return "Duplicate interface names"
+
   @property
   def name (self):
     return self.client_id
@@ -296,8 +300,20 @@ class Node(Resource):
 
     return nd
 
-  def addInterface (self, name):
-    intf = Interface("%s:%s" % (self.client_id, name), self)
+  def addInterface (self, name = None):
+    existingNames = map(lambda x: getattr(x,'name'), self.interfaces)
+    if name is not None:
+      intfName = "%s:%s" % (self.client_id, name)
+    else:
+      for i in range(0, 100):
+        intfName = "%s:if%i" % (self.client_id, i)
+        if intfName not in existingNames:
+          break
+
+    if intfName in existingNames:
+      raise Node.DuplicateInterfaceName()
+
+    intf = Interface(intfName, self)
     self.interfaces.append(intf)
     return intf
 
