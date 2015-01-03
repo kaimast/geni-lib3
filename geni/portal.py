@@ -1,4 +1,5 @@
 # Copyright (c) 2014 The University of Utah
+"""Library for dealing with scripts that are run in the context of a portal."""
 
 from __future__ import absolute_import
 
@@ -13,15 +14,15 @@ from argparse import Namespace
 class ParameterType (object):
   """Parameter types understood by Context.defineParameter()."""
 
-  INTEGER     = "integer"
-  STRING      = "string"
-  BOOLEAN     = "boolean"
-  IMAGE       = "image"
-  AGGREGATE   = "aggregate"
-  NODETYPE    = "nodetype"
-  BANDWIDTH   = "bandwidth"
-  LATENCY     = "latency"
-  SIZE        = "size"
+  INTEGER     = "integer"       #: Simple integer
+  STRING      = "string"        #: Any string
+  BOOLEAN     = "boolean"       #: True/False
+  IMAGE       = "image"         #: URN specifying a particular image
+  AGGREGATE   = "aggregate"     #: URN specifying an Aggregate Manger
+  NODETYPE    = "nodetype"      #: String specifying a type of node
+  BANDWIDTH   = "bandwidth"     #: Floating-point number to be used for bandwidth
+  LATENCY     = "latency"       #: Floating-point number to be used for latency
+  SIZE        = "size"          #: Integer for size (eg. MB, GB, etc.)
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str }
