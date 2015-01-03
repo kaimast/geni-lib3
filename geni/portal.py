@@ -96,13 +96,16 @@ class Context (object):
         sys.exit(0)
       else:
         return self._bindParametersEnv()
+  
+  @staticmethod
+  def _legalList(l):
+    return map(lambda x: x if not isinstance(x,tuple) else x[0], l)
 
   def _bindParametersCmdline (self):
     parser = argparse.ArgumentParser()
     for name, opts in self._parameters.iteritems():
       if opts['legalValues']:
-        legal = map(lambda x: x if not isinstance(x,tuple) else x[0],
-            opts['legalValues'])
+        legal = Context._legalList(opts['legalValues'])
       else:
         legal = None
       parser.add_argument("--" + name,
@@ -121,13 +124,10 @@ class Context (object):
         f.close()
     for name, opts in self._parameters.iteritems():
       val = paramValues.get(name, opts['defaultValue'])
-      if opts['legalValues']:
-        legal = map(lambda x: x if not isinstance(x,tuple) else x[0],
-          opts['legalValues'])
-        if val not in legal:
-          # TODO: Not 100% sure what the right thing is to do here, need to get 
-          # the error back in a nice machine-parsable form
-          sys.exit("ERROR: Illegal value '%s' for option '%s'" % (val, name))
+      if opts['legalValues'] and val not in Context._legalList(opts['legalValues']):
+        # TODO: Not 100% sure what the right thing is to do here, need to get 
+        # the error back in a nice machine-parsable form
+        sys.exit("ERROR: Illegal value '%s' for option '%s'" % (val, name))
       setattr(namespace, name, ParameterType.argparsemap[opts['type']](val))
     return namespace
 
