@@ -25,7 +25,8 @@ class ParameterType (object):
   SIZE        = "size"          #: Integer for size (eg. MB, GB, etc.)
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
-                  AGGREGATE: str, NODETYPE: str }
+                  AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
+                  LATENCY: float, SIZE: int}
 
 class Context (object):
   """Handle context for scripts being run inside a portal.
