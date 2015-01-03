@@ -19,6 +19,7 @@ class ParameterType (object):
   NODETYPE    = "nodetype"
   BANDWIDTH   = "bandwidth"
   LATENCY     = "latency"
+  SIZE        = "size"
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str }
