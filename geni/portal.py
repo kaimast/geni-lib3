@@ -72,6 +72,9 @@ class Context (object):
     entry is what is shown to the user.
     
     After defining parameters, bindParameters() must be called exactly once."""
+    if legalValues and defaultValue not in Context._legalList(legalValues):
+      raise Context.IllegalDefaultError(defaultValue)
+
     self._parameters[name] = {'description': description, 'type': type,
         'defaultValue': defaultValue, 'legalValues': legalValues}
     if len(self._parameters) == 1:
@@ -141,3 +144,10 @@ class Context (object):
     if len(self._parameters) > 0 and not self._bindingDone:
       warnings.warn("Parameters were defined, but never bound with " +
           " bindParameters()", RuntimeWarning)
+
+  class IllegalDefaultError (Exception):
+    def __init__ (self,val):
+      self._val = val 
+
+    def __str__ (self):
+      return "% given as a default value, but is not listed as a legal value" % self._val
