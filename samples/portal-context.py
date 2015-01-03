@@ -7,7 +7,7 @@ pc = portal.Context()
 
 pc.defineParameter("N", "Number of nodes",
                    portal.ParameterType.INTEGER, 5)
-pc.defineParameter("hwtype", "Hardware type of all nodes",
+pc.defineParameter("hwtype", "Hardware type",
                    portal.ParameterType.NODETYPE, "m400", hw_types)
 pc.defineParameter("lan",  "Put all nodes in a LAN",
                    portal.ParameterType.BOOLEAN, False)

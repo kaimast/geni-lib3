@@ -64,7 +64,10 @@ class Context (object):
     help text that will be shown to the user when making his/her selection/ The
     type should be one of the types defined by ParameterType. defaultValue is
     required, but legalValues (a list) is optional; the defaultValue must be
-    one of the legalValues.
+    one of the legalValues. Entries in the legalValues list may be either
+    simple strings (eg. "m400"), in which case they will be show directly to
+    the user, or 2-element tuples (eg. ("m400", "ARM64"),), in which the second
+    entry is what is shown to the user.
     
     After defining parameters, bindParameters() must be called exactly once."""
     self._parameters[name] = {'description': description, 'type': type,
