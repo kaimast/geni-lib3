@@ -11,6 +11,8 @@ import argparse
 from argparse import Namespace
 
 class ParameterType (object):
+  """Parameter types understood by Context.defineParameter()."""
+
   INTEGER     = "integer"
   STRING      = "string"
   BOOLEAN     = "boolean"
@@ -25,6 +27,14 @@ class ParameterType (object):
                   AGGREGATE: str, NODETYPE: str }
 
 class Context (object):
+  """Handle context for scripts being run inside a portal.
+
+  This class handles context for the portal, including where to put output
+  RSpecs and handling parameterized scripts.
+
+  Scripts using this class can also be run "standalone" (ie. not by the
+  portal), in which case they take parameters on the command line and put
+  RSpecs on the standard output."""
 
   def __init__ (self):
     self._parameters = {}
@@ -39,18 +49,22 @@ class Context (object):
       self._portalRequestPath = None
 
   def printRequestRSpec (self, rspec):
-    """Print the given request RSpec; if run standalone (not in the portal), the
-    request will be printed to the standard output; if run in the portal, it
-    will be placed someplace the portal can pick it up."""
+    """Print the given request RSpec.
+    
+    If run standalone (not in the portal), the request will be printed to the
+    standard output; if run in the portal, it will be placed someplace the
+    portal can pick it up."""
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, type, defaultValue,
       legalValues = None):
-    """Define a new paramter to the script. The given name will be used when 
-    parameters are bound. The description is help text that will be shown to the
-    user when making his/her selection/ The type should be one of the types
-    defined by ParameterType. defaultValue is required, but legalValues (a list)
-    is optional; the defaultValue must be one of the legalValues.
+    """Define a new paramter to the script.
+
+    The given name will be used when parameters are bound. The description is
+    help text that will be shown to the user when making his/her selection/ The
+    type should be one of the types defined by ParameterType. defaultValue is
+    required, but legalValues (a list) is optional; the defaultValue must be
+    one of the legalValues.
     
     After defining parameters, bindParameters() must be called exactly once."""
     self._parameters[name] = {'description': description, 'type': type,
@@ -59,8 +73,9 @@ class Context (object):
       atexit.register(self._checkBind)
 
   def bindParameters (self):
-    """Returns values for the parameters defined by defineParameter() in the form
-    of a Namespace (like argparse), so if you call foo = bindParameters(), a
+    """Returns values for the parameters defined by defineParameter().
+    
+    Returns a Namespace (like argparse), so if you call foo = bindParameters(), a
     parameter defined with name "bar" is accessed as foo.bar . Since defaults
     are required, all parameters are guaranteed to have values in the Namespace
 
