@@ -14,3 +14,7 @@ class SliceCredError(Exception):
 
   def __str__ (self):
     return text
+
+class WrongNumberOfArgumentsError(Exception):
+  def __str__ (self):
+    return "Called a function with the wrong number of arguments"
