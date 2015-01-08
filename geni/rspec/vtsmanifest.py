@@ -30,6 +30,14 @@ class GenericPort(object):
     p.client_id = elem.get("client_id")
     return p
 
+  @property
+  def name (self):
+    # Assumes that the client_id is in the format "dp_name:port_name"
+    if self.client_id.count(":") == 1:
+      return self.client_id[self.client_id.index(":")+1:]
+    return None
+    ### TODO: Raise an exception here
+
 
 class GREPort(GenericPort):
   def __init__ (self):
