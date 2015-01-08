@@ -2,7 +2,8 @@ API
 ===
 
 .. toctree::
-   geniutil
+   geniportal
    genirspecigext
    genirspecpg
    geniurn
+   geniutil
