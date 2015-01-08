@@ -110,7 +110,10 @@ class Datapath(Resource):
     self.name = name
 
   def attachPort (self, port):
-    port.clientid = "%s:%d" % (self.name, len(self.ports))
+    if port.name is None:
+      port.clientid = "%s:%d" % (self.name, len(self.ports))
+    else:
+      port.clientid = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
 
   def _write (self, element):
@@ -123,8 +126,9 @@ class Datapath(Resource):
 
 
 class Port(object):
-  def __init__ (self):
+  def __init__ (self, name = None):
     self.clientid = None
+    self.name = name
 
   def _write (self, element):
     p = ET.SubElement(element, "{%s}port" % (Namespaces.VTS.name))
@@ -133,8 +137,8 @@ class Port(object):
 
 
 class PGCircuit(Port):
-  def __init__ (self):
-    super(PGCircuit, self).__init__()
+  def __init__ (self, name = None):
+    super(PGCircuit, self).__init__(name)
 
   def _write (self, element):
     p = super(PGCircuit, self)._write(element)
@@ -166,6 +170,7 @@ class InternalCircuit(Port):
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
+
 
 class GRECircuit(Port):
   def __init__ (self, circuit_plane, endpoint):
