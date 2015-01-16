@@ -1,4 +1,3 @@
-M2Crypto
 python-dateutil
 lxml
 pyOpenSSL
