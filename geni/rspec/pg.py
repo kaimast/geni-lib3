@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import geni.rspec
 import geni.namespaces as GNS
+import geni.urn
 
 from lxml import etree as ET
 import itertools
@@ -269,17 +270,17 @@ class Node(Resource):
     if self.exclusive is not None:  # Don't write this for EG
       nd.attrib["exclusive"] = str(self.exclusive).lower()
     if self.component_id:
-      nd.attrib["component_id"] = self.component_id
+      nd.attrib["component_id"] = str(self.component_id)
     if self.component_manager_id:
-      nd.attrib["component_manager_id"] = self.component_manager_id
+      nd.attrib["component_manager_id"] = str(self.component_manager_id)
     
     st = ET.SubElement(nd, "{%s}sliver_type" % (GNS.REQUEST.name))
     st.attrib["name"] = self.type
 
     if self.disk_image:
-      if isinstance(self.disk_image, (str, unicode)):
+      if isinstance(self.disk_image, (str, unicode, geni.urn.Base)):
         di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
-        di.attrib["name"] = self.disk_image
+        di.attrib["name"] = str(self.disk_image)
       else:
         self.disk_image._write(st)
 
