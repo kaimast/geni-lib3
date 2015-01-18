@@ -109,7 +109,10 @@ class Interface(object):
     intf = ET.SubElement(element, "{%s}interface" % (GNS.REQUEST.name))
     intf.attrib["client_id"] = self.client_id
     if self.component_id:
-      intf.attrib["component_id"] = self.component_id
+      if isinstance(self.component_id, geni.urn.Base):
+        intf.attrib["component_id"] = self.component_id.toString()
+      else:
+        intf.attrib["component_id"] = self.component_id
     for addr in self.addresses:
       addr._write(intf)
 
@@ -269,9 +272,15 @@ class Node(Resource):
     if self.exclusive is not None:  # Don't write this for EG
       nd.attrib["exclusive"] = str(self.exclusive).lower()
     if self.component_id:
-      nd.attrib["component_id"] = self.component_id
+      if isinstance(self.component_id, geni.urn.Base):
+        nd.attrib["component_id"] = self.component_id.toString()
+      else:
+        nd.attrib["component_id"] = self.component_id
     if self.component_manager_id:
-      nd.attrib["component_manager_id"] = self.component_manager_id
+      if isnstance(self.component_manager_id, geni.urn.Base):
+        nd.attrib["component_manager_id"] = self.component_manager_id.toString()
+      else:
+        nd.attrib["component_manager_id"] = self.component_manager_id
     
     st = ET.SubElement(nd, "{%s}sliver_type" % (GNS.REQUEST.name))
     st.attrib["name"] = self.type
@@ -280,6 +289,9 @@ class Node(Resource):
       if isinstance(self.disk_image, (str, unicode)):
         di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
         di.attrib["name"] = self.disk_image
+      elif isinstance(self.disk_image, geni.urn.Base):
+        di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
+        di.attrib["name"] = self.disk_image.toString()
       else:
         self.disk_image._write(st)
 
