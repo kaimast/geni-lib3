@@ -86,6 +86,9 @@ class Base (object):
   def __str__(self):
     return "%s:%s:%s" % (Base.PREFIX, self._nid, self._nss)
 
+  def __repr__(self):
+    return self.__str__()
+
 class GENI (Base):
   """Class representing the URNs used by GENI, which use the publicid NID and
   IDN (domain name) scheme, then impose some additional strucutre."""
