@@ -69,9 +69,14 @@ class Context (object):
     one of the legalValues. Entries in the legalValues list may be either
     simple strings (eg. "m400"), in which case they will be show directly to
     the user, or 2-element tuples (eg. ("m400", "ARM64"),), in which the second
-    entry is what is shown to the user.
+    entry is what is shown to the user. defaultValue may be a tuple, so that 
+    one can pass, say, 'legalvalues[0]' for the option.
     
     After defining parameters, bindParameters() must be called exactly once."""
+
+    if isinstance(defaultValue, tuple):
+      defaultValue = defaultValue[0]
+
     if legalValues and defaultValue not in Context._legalList(legalValues):
       raise Context.IllegalDefaultError(defaultValue)
 
