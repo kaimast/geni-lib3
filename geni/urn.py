@@ -83,8 +83,11 @@ class Base (object):
     else:
       raise WrongNumberOfArgumentsError()
 
-  def __str__(self):
+  def toString(self):
     return "%s:%s:%s" % (Base.PREFIX, self._nid, self._nss)
+
+  __repr__ = toString
+  __str__ = toString
 
 class GENI (Base):
   """Class representing the URNs used by GENI, which use the publicid NID and
@@ -109,9 +112,9 @@ class GENI (Base):
   DNS_PART          = "[a-z0-9]+[a-z0-9-]*"
   DNS_FULL          = "(%s\.?)+" % DNS_PART
 
-  AUTHORITY_PATTERN = DNS_FULL
+  AUTHORITY_PATTERN = "%s(:%s)*" % (DNS_FULL, DNS_FULL)
   TYPE_PATTERN      = DNS_PART
-  NAME_PATTERN      = DNS_PART
+  NAME_PATTERN      = "%s(:%s)*" % (DNS_PART, DNS_PART) 
   GENINSS_PATTERN   = "%s\+%s\+(?P<type>%s)\+%s" % (NSSPREFIX, AUTHORITY_PATTERN,
                                            TYPE_PATTERN, NAME_PATTERN)
   GENIURN_PATTERN   = "%s:%s:%s" % (Base.PREFIX, NID, GENINSS_PATTERN)
