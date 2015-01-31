@@ -13,7 +13,7 @@ class SliceCredError(Exception):
     self.text = text
 
   def __str__ (self):
-    return text
+    return self.text
 
 class WrongNumberOfArgumentsError(Exception):
   def __str__ (self):
