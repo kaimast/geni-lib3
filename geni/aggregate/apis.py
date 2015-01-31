@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-from ..gcf import oscript
 from .core import APIRegistry
 
 class AMError(Exception):
@@ -26,6 +25,7 @@ class AMAPIv2(object):
       return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
 
   def listresources (self, context, url, sname):
+    from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
 
     if sname:
@@ -41,6 +41,7 @@ class AMAPIv2(object):
       raise ListResourcesError(text)
 
   def createsliver (self, context, url, sname, rspec):
+    from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "createsliver", sname, rspec])
     text,res = oscript.call(arglist)
@@ -49,6 +50,7 @@ class AMAPIv2(object):
     return res
 
   def sliverstatus (self, context, url, sname):
+    from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "sliverstatus", sname])
     text, res = oscript.call(arglist)
@@ -57,6 +59,7 @@ class AMAPIv2(object):
     return res.values()[0]
 
   def renewsliver (self, context, url, sname, date):
+    from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
     text, res = oscript.call(arglist)
@@ -65,6 +68,7 @@ class AMAPIv2(object):
     return (text, res)
 
   def deletesliver (self, context, url, sname):
+    from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "deletesliver", sname])
     text,res = oscript.call(arglist)
@@ -72,6 +76,7 @@ class AMAPIv2(object):
       raise DeleteSliverError(text)
 
   def getversion (self, context, url):
+    from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["getversion"])
     text, res = oscript.call(arglist)

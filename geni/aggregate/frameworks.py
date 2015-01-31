@@ -7,7 +7,6 @@ import subprocess
 import os.path
 
 from .core import FrameworkRegistry
-from ..gcf import oscript
 
 
 class Framework(object):
@@ -59,6 +58,7 @@ class Framework(object):
     self._cert = val
 
   def createslice (self, context, name):
+    from ..gcf import oscript
     args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "createslice"]
     args.append(name)
     (txt, res) = oscript.call(args)
@@ -85,6 +85,7 @@ class CHAPI(Framework):
     self._type = "chapi"
 
   def listProjectMembers (self, context, project):
+    from ..gcf import oscript
     args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listprojectmembers"]
     args.append(project)
     (txt, res) = oscript.call(args)
