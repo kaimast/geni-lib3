@@ -110,7 +110,7 @@ class Interface(object):
     intf.attrib["client_id"] = self.client_id
     if self.component_id:
       if isinstance(self.component_id, geni.urn.Base):
-        intf.attrib["component_id"] = self.component_id.toString()
+        intf.attrib["component_id"] = str(self.component_id)
       else:
         intf.attrib["component_id"] = self.component_id
     for addr in self.addresses:
@@ -273,12 +273,12 @@ class Node(Resource):
       nd.attrib["exclusive"] = str(self.exclusive).lower()
     if self.component_id:
       if isinstance(self.component_id, geni.urn.Base):
-        nd.attrib["component_id"] = self.component_id.toString()
+        nd.attrib["component_id"] = str(self.component_id)
       else:
         nd.attrib["component_id"] = self.component_id
     if self.component_manager_id:
       if isnstance(self.component_manager_id, geni.urn.Base):
-        nd.attrib["component_manager_id"] = self.component_manager_id.toString()
+        nd.attrib["component_manager_id"] = str(self.component_manager_id)
       else:
         nd.attrib["component_manager_id"] = self.component_manager_id
     
@@ -286,12 +286,13 @@ class Node(Resource):
     st.attrib["name"] = self.type
 
     if self.disk_image:
+      # TODO: Force disk images to be objects, and stop supporting old style strings
       if isinstance(self.disk_image, (str, unicode)):
         di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
         di.attrib["name"] = self.disk_image
       elif isinstance(self.disk_image, geni.urn.Base):
         di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
-        di.attrib["name"] = self.disk_image.toString()
+        di.attrib["name"] = str(self.disk_image)
       else:
         self.disk_image._write(st)
 

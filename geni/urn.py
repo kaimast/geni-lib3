@@ -83,11 +83,10 @@ class Base (object):
     else:
       raise WrongNumberOfArgumentsError()
 
-  def toString(self):
+  def __str__ (self):
     return "%s:%s:%s" % (Base.PREFIX, self._nid, self._nss)
 
-  __repr__ = toString
-  __str__ = toString
+  __repr__ = __str__
 
 class GENI (Base):
   """Class representing the URNs used by GENI, which use the publicid NID and
