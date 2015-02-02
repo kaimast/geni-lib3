@@ -131,7 +131,43 @@ returns (or times out).
 
 
 def deleteSliverExists(am, context, slice):
+  """Attempts to delete all slivers for the given slice at the given AM, suppressing all returned errors."""
   try:
     am.deletesliver(context, slice)
   except DeleteSliverError:
     pass
+
+def builddot (manifests, path):
+  """Constructs a dotfile of the topology described in the passed in manifest list and saves it at `path`."""
+
+  from .rspec.vtsmanifest import Manifest as VTSM
+  from .rspec.pgmanifest import Manifest as PGM
+
+  dot_data = []
+  dda = dot_data.append # Save a lot of typing
+
+  dda("graph {")
+
+  for manifest in manifests:
+    if isinstance(manifest, PGM):
+      intf_map = {}
+      for node in manifest.nodes:
+        dda("\"%s\" [label = \"%s\"]" % (node.component_id, node.name))
+        for interface in node.interfaces:
+          intf_map[interface.sliver_id] = node.component_id
+
+      for link in manifest.links:
+        lannode = link.client_id
+        if link.vlan:
+          lannode = "%s" % (link.vlan)
+
+        for ref in link.interface_refs:
+          dda("\"%s\" -- \"%s\"" % (intf_map[ref], lannode))
+        
+    elif isinstance(manifest, VTSM):
+      pass
+
+  dda("}")
+
+  return "\n".join(dot_data)
+    

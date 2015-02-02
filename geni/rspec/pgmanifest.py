@@ -15,6 +15,7 @@ _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
 class ManifestLink(Link):
   def __init__ (self):
     super(ManifestLink, self).__init__()
+    self.interface_refs = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -22,6 +23,16 @@ class ManifestLink(Link):
     lnk.client_id = elem.get("client_id")
     lnk.sliver_id = elem.get("sliver_id")
     lnk.vlan = elem.get("vlantag", None)
+
+    refs = elem.xpath('g:interface_ref', namespaces = _XPNS)
+    for ref in refs:
+      lnk.interface_refs.append(ref.get("sliver_id"))
+
+    svlans = elem.xpath('s:link_shared_vlan', namespaces = _XPNS)
+    if svlans:
+      # TODO: Can a link be attached to more than one shared vlan?
+      # Don't believe PG supports trunks, but the rspec doesn't really forbid it
+      lnk.vlan = svlans[0].get("name")
 
     return lnk
 
@@ -46,11 +57,13 @@ class ManifestNode(object):
     self.logins = []
     self.interfaces = []
     self.name = None
+    self.component_id = None
 
   @classmethod
   def _fromdom (cls, elem):
     n = ManifestNode()
     n.name = elem.get("client_id")
+    n.component_id = elem.get("component_id")
 
     logins = elem.xpath('g:services/g:login', namespaces = _XPNS)
     for lelem in logins:
@@ -66,6 +79,7 @@ class ManifestNode(object):
       i = ManifestNode.Interface()
       i.client_id = ielem.get("client_id")
       i.sliver_id = ielem.get("sliver_id")
+      i.component_id = ielem.get("component_id")
       i.mac_address = ielem.get("mac_address")
       try:
         ipelem = ielem.xpath('g:ip', namespaces = _XPNS)[0]
