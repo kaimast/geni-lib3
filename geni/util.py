@@ -137,8 +137,8 @@ def deleteSliverExists(am, context, slice):
   except DeleteSliverError:
     pass
 
-def builddot (manifests, path):
-  """Constructs a dotfile of the topology described in the passed in manifest list and saves it at `path`."""
+def builddot (manifests):
+  """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
 
   from .rspec import vtsmanifest as VTSM
   from .rspec.pgmanifest import Manifest as PGM
