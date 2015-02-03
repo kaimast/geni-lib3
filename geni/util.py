@@ -140,13 +140,13 @@ def deleteSliverExists(am, context, slice):
 def builddot (manifests, path):
   """Constructs a dotfile of the topology described in the passed in manifest list and saves it at `path`."""
 
-  from .rspec.vtsmanifest import Manifest as VTSM
+  from .rspec import vtsmanifest as VTSM
   from .rspec.pgmanifest import Manifest as PGM
 
   dot_data = []
   dda = dot_data.append # Save a lot of typing
 
-  dda("graph {")
+  dda("digraph {")
 
   for manifest in manifests:
     if isinstance(manifest, PGM):
@@ -164,10 +164,19 @@ def builddot (manifests, path):
         for ref in link.interface_refs:
           dda("\"%s\" -- \"%s\"" % (intf_map[ref], lannode))
         
-    elif isinstance(manifest, VTSM):
-      pass
+    elif isinstance(manifest, VTSM.Manifest):
+      # TODO: We need to actually go through datapaths and such, but we can approximate for now
+      for port in manifest.ports:
+        if isinstance(port, VTSM.GREPort):
+          pass
+        elif isinstance(port, VTSM.PGLocalPort):
+          dda("\"%s\" -- \"%s\"" % (port.dpname, port.shared_vlan))
+        elif isinstance(port, VTSM.InternalPort):
+          dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_dpname))
+        else:
+          continue ### TODO: Unsupported Port Type
 
   dda("}")
 
   return "\n".join(dot_data)
-    
+

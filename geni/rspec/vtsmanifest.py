@@ -38,6 +38,33 @@ class GenericPort(object):
     return None
     ### TODO: Raise an exception here
 
+  @property
+  def dpname (self):
+    if self.client_id.count(":") == 1:
+      return self.client_id.split(":")[0]
+    return None
+    ### TODO: Raise an exception here
+
+
+class InternalPort(GenericPort):
+  def __init__ (self):
+    super(InternalPort, self).__init__("internal")
+    self.remote_client_id = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    p = InternalPort()
+    p.client_id = elem.get("client_id")
+    p.remote_client_id = elem.get("remote-clientid")
+    return p
+
+  @property
+  def remote_dpname (self):
+    if self.remote_client_id.count(":") == 1:
+      return self.remote_client_id.split(":")[0]
+    return None
+    ### TODO: Raise an exception here
+
 
 class GREPort(GenericPort):
   def __init__ (self):
@@ -141,10 +168,11 @@ class Manifest(object):
     elif t == "vf-port":
       return GenericPort._fromdom(elem)
     elif t == "internal":
-      return GenericPort._fromdom(elem)
+      return InternalPort._fromdom(elem)
     raise UnhandledPortTypeError(t)
 
   def write (self, path):
     f = open(path, "w+")
     f.write(ET.tostring(self.root, pretty_print=True))
     f.close()
+
