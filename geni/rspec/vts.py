@@ -115,6 +115,7 @@ class Datapath(Resource):
     else:
       port.clientid = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
+    return port
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}datapath" % (Namespaces.VTS.name))
