@@ -152,9 +152,9 @@ def builddot (manifests):
     if isinstance(manifest, PGM):
       intf_map = {}
       for node in manifest.nodes:
-        dda("\"%s\" [label = \"%s\"]" % (node.component_id, node.name))
+        dda("\"%s\" [label = \"%s\"]" % (node.sliver_id, node.name))
         for interface in node.interfaces:
-          intf_map[interface.sliver_id] = node.component_id
+          intf_map[interface.sliver_id] = node.sliver_id
 
       for link in manifest.links:
         lannode = link.client_id
