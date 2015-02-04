@@ -417,7 +417,7 @@ class XenVM(Node):
   def __init__ (self, name, component_id = None, exclusive = False):
     import geni.warnings as GW
     import warnings
-    warnings.warn("geni.request.pg.XenVM is deprecated, please use geni.request.igext.XenVM instead", 
+    warnings.warn("geni.rspec.pg.XenVM is deprecated, please use geni.rspec.igext.XenVM instead", 
                   GW.GENILibDeprecationWarning)
     super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
     self.cores = 1
