@@ -58,12 +58,14 @@ class ManifestNode(object):
     self.interfaces = []
     self.name = None
     self.component_id = None
+    self.sliver_id = None
 
   @classmethod
   def _fromdom (cls, elem):
     n = ManifestNode()
     n.name = elem.get("client_id")
     n.component_id = elem.get("component_id")
+    n.sliver_id = elem.get("sliver_id")
 
     logins = elem.xpath('g:services/g:login', namespaces = _XPNS)
     for lelem in logins:
