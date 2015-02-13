@@ -22,6 +22,11 @@ NCSU = EGCompute("eg-ncsu", "ncsu-hn.exogeni.net")
 UFL = EGCompute("eg-ufl", "ufl-hn.exogeni.net")
 OSF = EGCompute("eg-osf", "osf-hn.exogeni.net")
 UCD = EGCompute("eg-ucd", "ucd-hn.exogeni.net")
+NICTA = EGCompute("eg-nicta", "nicta-hn.exogeni.net")
+SL = EGCompute("eg-sl", "sl-hn.exogeni.net")
+TAMU = EGCompute("eg-tamu", "tamu-hn.exogeni.net")
+WVN = EGCompute("eg-wvn", "wvn-hn.exogeni.net")
+WSU = EGCompute("eg-wsu", "wsu-hn.exogeni.net")
 
 def aggregates ():
   module = sys.modules[__name__]

@@ -15,6 +15,9 @@ class PGCompute(AM):
 
 Kentucky_PG = PGCompute('pg-kentucky', 'www.uky.emulab.net', 'urn:publicid:IDN+uky.emulab.net+authority+cm')
 UTAH_PG = PGCompute('pg-utah', 'www.emulab.net', 'urn:publicid:IDN+emulab.net+authority+cm');
+Wall2_PG = PGCompute("pg-wall2", "www.wall2.ilabt.iminds.be", "urn:publicid:IDN+wall2.ilabt.iminds.be+authority+cm")
+APT = PGCompute("apt", "boss.apt.emulab.net", "urn:publicid:IDN+apt.emulab.net+authority+cm")
+CloudLab = PGCompute("cloudlab", "boss.utah.cloudlab.us", "urn:publicid:IDN+utah.cloudlab.us+authority+cm")
 
 def aggregates ():
   module = sys.modules[__name__]
