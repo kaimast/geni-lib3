@@ -162,7 +162,9 @@ def builddot (manifests):
           lannode = "%s" % (link.vlan)
 
         for ref in link.interface_refs:
-          dda("\"%s\" -- \"%s\"" % (intf_map[ref], lannode))
+          dda("\"%s\" -> \"%s\"" % (intf_map[ref], lannode))
+          dda("\"%s\" -> \"%s\"" % (lannode, intf_map[ref]))
+
         
     elif isinstance(manifest, VTSM.Manifest):
       # TODO: We need to actually go through datapaths and such, but we can approximate for now
@@ -170,7 +172,8 @@ def builddot (manifests):
         if isinstance(port, VTSM.GREPort):
           pass
         elif isinstance(port, VTSM.PGLocalPort):
-          dda("\"%s\" -- \"%s\"" % (port.dpname, port.shared_vlan))
+          dda("\"%s\" -> \"%s\"" % (port.dpname, port.shared_vlan))
+          dda("\"%s\" -> \"%s\"" % (port.shared_vlan, port.dpname))
         elif isinstance(port, VTSM.InternalPort):
           dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_dpname))
         else:
