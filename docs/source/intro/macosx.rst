@@ -8,6 +8,9 @@ you will need to satisfy the dependencies using your tool of choice.
 You will need to have an Apple Developer account (free registration) in order to download
 the required tools.
 
+.. warning::
+  These instructions DO NOT WORK for 10.10 (Yosemite).
+
 =========================
 Installation Dependencies
 =========================
