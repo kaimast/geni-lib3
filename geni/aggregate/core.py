@@ -70,7 +70,7 @@ class AM(object):
     tf = tempfile.NamedTemporaryFile(delete=False)
     path = tf.name
     tf.close()
-    rspec.write(path)
+    rspec.writeXML(path)
     res = self.api.createsliver(context, self.url, sname, path)
     os.remove(path)
     return self.amtype.parseManifest(res)
