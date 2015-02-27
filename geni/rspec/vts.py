@@ -201,7 +201,7 @@ class Request(geni.rspec.RSpec):
       self.addNamespace(ns)
     self.resources.append(rsrc)
 
-  def write (self, path):
+  def writeXML (self, path):
     f = open(path, "w+")
 
     rspec = self.getDOM()
@@ -211,6 +211,17 @@ class Request(geni.rspec.RSpec):
 
     f.write(ET.tostring(rspec, pretty_print=True))
     f.close()
+
+  def write (self, path):
+    """
+.. deprecated:: 0.4
+    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
+
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
 
 #############
 # Utilities #
