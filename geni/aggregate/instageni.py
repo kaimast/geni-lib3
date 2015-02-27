@@ -20,6 +20,7 @@ CaseWestern = IGCompute("ig-cwru", "boss.geni.case.edu", "urn:publicid:IDN+geni.
 CENIC = IGCompute("ig-cenic", "instageni.cenic.net", "urn:publicid:IDN+instageni.cenic.net+authority+cm")
 Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu", "urn:publicid:IDN+geni.it.cornell.edu+authority+cm")
 Clemson = IGCompute("ig-clemson", "instageni.clemson.edu", "urn:publicid:IDN+instageni.clemson.edu+authority+cm")
+Colorado = IGCompute("ig-colorado", "instageni.colorado.edu", "urn:publicid:IDN+instageni.colorado.edu+authority+cm")
 Dublin = IGCompute("ig-ohmetrodc", "instageni.metrodatacenter.com", "urn:publicid:IDN+instageni.metrodatacenter.com+authority+cm")
 GATech = IGCompute("ig-gatech", "instageni.rnoc.gatech.edu", "urn:publicid:IDN+instageni.rnoc.gatech.edu+authority+cm")
 GPO = IGCompute("ig-gpo", "boss.instageni.gpolab.bbn.com", "urn:publicid:IDN+instageni.gpolab.bbn.com+authority+cm")
@@ -44,6 +45,8 @@ UKYPKS2 = IGCompute('ig-ukypks2', 'pks2.sdn.uky.edu', 'urn:publicid:IDN+pks2.sdn
 UMKC = IGCompute('ig-umkc', 'instageni.umkc.edu', 'urn:publicid:IDN+instageni.umkc.edu+authority+cm');
 Utah = IGCompute("ig-utah", "boss.utah.geniracks.net", "urn:publicid:IDN+utah.geniracks.net+authority+cm")
 UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:IDN+utahddc.geniracks.net+authority+cm")
+UTC = IGCompute("ig-utc", "instageni.utc.edu", "urn:publicid:IDN+instageni.utc.edu+authority+cm")
+UWashington = IGCompute("ig-uwashington", "instageni.washington.edu", "urn:publicid:IDN+instageni.washington.edu+authority+cm")
 Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+instageni.wisc.edu+authority+cm")
 
 def aggregates ():
