@@ -19,6 +19,7 @@ class IGCompute(AM):
 CaseWestern = IGCompute("ig-cwru", "boss.geni.case.edu", "urn:publicid:IDN+geni.case.edu+authority+cm")
 CENIC = IGCompute("ig-cenic", "instageni.cenic.net", "urn:publicid:IDN+instageni.cenic.net+authority+cm")
 Cornell = IGCompute("ig-cornell", "geni.it.cornell.edu", "urn:publicid:IDN+geni.it.cornell.edu+authority+cm")
+Chicago = IGCompute("ig-chicago", "geni.uchicago.edu", "urn:publicid:IDN+geni.uchicago.edu+authority+cm")
 Clemson = IGCompute("ig-clemson", "instageni.clemson.edu", "urn:publicid:IDN+instageni.clemson.edu+authority+cm")
 Colorado = IGCompute("ig-colorado", "instageni.colorado.edu", "urn:publicid:IDN+instageni.colorado.edu+authority+cm")
 Dublin = IGCompute("ig-ohmetrodc", "instageni.metrodatacenter.com", "urn:publicid:IDN+instageni.metrodatacenter.com+authority+cm")
