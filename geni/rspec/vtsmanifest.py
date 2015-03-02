@@ -172,6 +172,17 @@ class Manifest(object):
     raise UnhandledPortTypeError(t)
 
   def write (self, path):
+    """
+.. deprecated:: 0.4
+    Use :py:meth:`geni.rspec.vtsmanifest.Manifest.writeXML` instead."""
+
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Manifest.write() method is deprecated, please use Manifest.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
+
+  def writeXML (self, path):
     f = open(path, "w+")
     f.write(ET.tostring(self.root, pretty_print=True))
     f.close()

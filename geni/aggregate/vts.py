@@ -18,6 +18,7 @@ DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Illinois = VTS("vts-illinois", "pc5.instageni.illinois.edu")
 MAX = VTS("vts-max", "max.vts.bsswks.net")
 GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
+UtahDDC = DDC
 
 
 def aggregates ():
