@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import geni.rspec
 import geni.namespaces as GNS
+import geni.urn
 
 from lxml import etree as ET
 import itertools
