@@ -19,6 +19,8 @@ Illinois = VTS("vts-illinois", "pc5.instageni.illinois.edu")
 MAX = VTS("vts-max", "max.vts.bsswks.net")
 GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
 UtahDDC = DDC
+StarLight = VTS("vts-starlight", "starlight.vts.bsswks.net")
+UH = VTS("vts-uh", "uh.vts.bsswks.net")
 
 
 def aggregates ():
