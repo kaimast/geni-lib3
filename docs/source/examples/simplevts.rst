@@ -31,7 +31,7 @@ for ExoGENI sites that have VTS support as well if you change the InstaGENI
 imports to the relevant ones for ExoGENI.
 
 * We need to set up basic imports to create requests and send them to the
-aggregate::
+  aggregate::
 
   import geni.rspec.pg as PG
   import geni.rspec.igext as IGX
@@ -41,7 +41,7 @@ aggregate::
   import geni.aggregate.vts as VTSAM
 
 * VTS reservations are a two-stage process, where the VTS resources must be
-reserved first and the results used to create the proper compute request::
+  reserved first and the results used to create the proper compute request::
 
   vtsr = VTS.Request()
 
@@ -54,7 +54,7 @@ reserved first and the results used to create the proper compute request::
   sflow and netflow collectors, openflow controllers, etc.
 
 * We then instantiate a single forwarding element with this image, and request
-two local circuits to connect to our VMs::
+  two local circuits to connect to our VMs::
 
   felement = VTS.Datapath(image, "fe0")
   felement.attachPort(VTS.LocalCircuit())
