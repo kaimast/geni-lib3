@@ -33,21 +33,21 @@ imports to the relevant ones for ExoGENI.
 * We need to set up basic imports to create requests and send them to the
   aggregate::
 
-  import geni.rspec.pg as PG
-  import geni.rspec.igext as IGX
-  import geni.rspec.vts as VTS
+   import geni.rspec.pg as PG
+   import geni.rspec.igext as IGX
+   import geni.rspec.vts as VTS
 
-  import geni.aggregate.instageni as IGAM
-  import geni.aggregate.vts as VTSAM
+   import geni.aggregate.instageni as IGAM
+   import geni.aggregate.vts as VTSAM
 
 * VTS reservations are a two-stage process, where the VTS resources must be
   reserved first and the results used to create the proper compute request::
 
-  vtsr = VTS.Request()
+   vtsr = VTS.Request()
 
 * First we select the image we want to use for our VTS forwarding elements::
 
-  image = VTS.OVSL2Image()
+   image = VTS.OVSL2Image()
 
 .. note::
   Images support varying functionality that can be configured here, such as
@@ -56,6 +56,6 @@ imports to the relevant ones for ExoGENI.
 * We then instantiate a single forwarding element with this image, and request
   two local circuits to connect to our VMs::
 
-  felement = VTS.Datapath(image, "fe0")
-  felement.attachPort(VTS.LocalCircuit())
-  felement.attachPort(VTS.LocalCircuit())
+   felement = VTS.Datapath(image, "fe0")
+   felement.attachPort(VTS.LocalCircuit())
+   felement.attachPort(VTS.LocalCircuit())
