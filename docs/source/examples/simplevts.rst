@@ -12,7 +12,7 @@ structure the 2nd request.
 The resultant topology will be as in the diagram below.  The resources are
 color-coded to indicate which aggregate will provision them:
 
-.. image:: images/vts-simple-topo.*
+.. image:: images/vts-simple.*
 
 This obviously has no advantage over having the local site compute aggregate
 connect the VMs directly, but it serves as the simplest example of how to
