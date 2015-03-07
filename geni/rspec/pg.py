@@ -278,7 +278,7 @@ class Node(Resource):
       else:
         nd.attrib["component_id"] = self.component_id
     if self.component_manager_id:
-      if isnstance(self.component_manager_id, geni.urn.Base):
+      if isinstance(self.component_manager_id, geni.urn.Base):
         nd.attrib["component_manager_id"] = str(self.component_manager_id)
       else:
         nd.attrib["component_manager_id"] = self.component_manager_id
