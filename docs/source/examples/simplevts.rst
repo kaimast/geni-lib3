@@ -23,8 +23,8 @@ use cases.
   This example requires that you have set up a valid context object with GENI
   credentials.
 
-Walk-through
-------------
+Set up VTS Sliver
+-----------------
 
 For this example we'll use InstaGENI compute resources, but this would work
 for ExoGENI sites that have VTS support as well if you change the InstaGENI
@@ -39,6 +39,16 @@ imports to the relevant ones for ExoGENI.
 
    import geni.aggregate.instageni as IGAM
    import geni.aggregate.vts as VTSAM
+
+* Here we also set up the slice name you're going to use, as well as the
+  context object that specifies your credential information **(You must
+  replace this code with your own information, as set up in the basic
+  `geni-lib` tutorial)**::
+
+   import mycontext
+
+   context = mycontext.buildContext()
+   slicename = "my-slice-name"
 
 * VTS reservations are a two-stage process, where the VTS resources must be
   reserved first and the results used to create the proper compute request::
@@ -59,3 +69,19 @@ imports to the relevant ones for ExoGENI.
    felement = VTS.Datapath(image, "fe0")
    felement.attachPort(VTS.LocalCircuit())
    felement.attachPort(VTS.LocalCircuit())
+   vtsr.addResource(felement)
+
+* Now the request object is complete - we need to contact the aggregate and
+  have it build our topology for us::
+
+   manifest = VTSAM.UtahDDC.createsliver(context, slicename, vtsr)
+
+Set up InstaGENI Compute Sliver
+-------------------------------
+
+The VTS aggregate manager returned to us a manifest containing information
+about the resources we have provisioned - specifically identifying information
+about the local circuits we requested.  We will now use this information to
+request compute resources and connect them to the VTS sliver.
+
+
