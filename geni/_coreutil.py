@@ -20,4 +20,4 @@ def getDefaultDir ():
 
 def getDefaultContextPath ():
   ddir = getDefaultDir()
-  return os.path.normpath("%s/config.json" % (ddir))
+  return os.path.normpath("%s/context.json" % (ddir))
