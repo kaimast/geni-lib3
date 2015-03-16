@@ -65,7 +65,7 @@ def build_context (opts):
     pkpath = "%s/.ssh/id_geni_ssh_rsa.pub" % (HOME)
     if not os.path.exists(pkpath):
         with open(pkpath, "w+") as tf:
-          tf.write(zf.open("ssh/private/id_geni_ssh_rsa.pub").read())
+          tf.write(zf.open("ssh/public/id_geni_ssh_rsa.pub").read())
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)
