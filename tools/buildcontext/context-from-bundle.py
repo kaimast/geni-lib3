@@ -6,6 +6,7 @@ import sys
 import os
 import os.path
 import argparse
+import json
 
 def parse_args ():
   parser = argparse.ArgumentParser()
@@ -58,11 +59,13 @@ def build_context (opts):
   if not pkpath:
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
-        zf.extract("ssh/private/id_geni_ssh_rsa", "%s/.ssh/" % (HOME))
+        with tf as open("%s/.ssh/id_geni_ssh_rsa" % (HOME), "w+"):
+          tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
     
     pkpath = "%s/.ssh/id_geni_ssh_rsa.pub" % (HOME)
     if not os.path.exists(pkpath):
-      zf.extract("ssh/public/id_geni_ssh_rsa.pub", "%s/.ssh/" % (HOME))
+        with tf as open(pkpath, "w+"):
+          tf.write(zf.open("ssh/private/id_geni_ssh_rsa.pub").read())
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)
