@@ -8,6 +8,8 @@ import os.path
 import argparse
 import json
 
+import geni._coreutil as GCU
+
 def parse_args ():
   parser = argparse.ArgumentParser()
   parser.add_argument("--pubkey", dest="pubkey_path", help="Path to public key file", default = None)
@@ -18,15 +20,7 @@ def build_context (opts):
   HOME = os.path.expanduser("~")
 
   # Create the .bssw directories if they don't exist
-  if os.name == "posix":
-    DEF_DIR = "%s/.bssw/geni/" % (HOME)
-    if not os.path.exists(DEF_DIR):
-      os.makedirs(DEF_DIR, 0775)
-  elif os.name == "nt":
-    DEF_DIR = "%s/bssw/geni/" % (HOME)
-    if not os.path.exists(DEF_DIR):
-      os.makedirs(DEF_DIR, 0775)
-    # TODO: attrib +h somehow
+  DEF_DIR = GCU.getDefaultDir()
 
   zf = zipfile.ZipFile(opts.bundle_path)
 
