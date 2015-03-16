@@ -46,6 +46,7 @@ class Shell(object):
     imports["IGAM"] = geni.aggregate.instageni
     imports["VTSAM"] = geni.aggregate.vts
     imports["EGAM"] = geni.aggregate.exogeni
+    imports["context"] = geni.util.loadContext()
 
     code.interact(local=imports)
 
