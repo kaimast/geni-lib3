@@ -77,7 +77,7 @@ def build_context (opts):
   cdata["user-urn"] = urn
   cdata["user-pubkeypath"] = pkpath
   cdata["project"] = project
-  json.dump(cdata, open("%s/context.json", "w+"))
+  json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
 
 
 if __name__ == '__main__':
