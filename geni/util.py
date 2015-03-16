@@ -9,6 +9,7 @@ import time
 import os
 import traceback as tb
 import tempfile
+import json
 
 from geni.aggregate.apis import AMError, ListResourcesError, DeleteSliverError
 
@@ -185,4 +186,31 @@ def builddot (manifests):
   dda("}")
 
   return "\n".join(dot_data)
+
+def loadContext (path = None):
+  import geni._coreutil as GCU
+  from geni.aggregate import FrameworkRegistry
+  from geni.aggregate.context import Context
+  from geni.aggregate.user import User
+
+  if path is None:
+    path = GCU.getDefaultContextPath()
+
+  obj = json.load(open(path, "r"))
+
+  cf = FrameworkRegistry.get(obj["framework"])()
+  cf.cert = obj["cert-path"]
+  cf.key = obj["key-path"]
+
+  user = User()
+  user.name = obj["user-name"]
+  user.urn = obj["user-urn"]
+  user.addKey(obj["user-pubkeypath"])
+
+  context = Context()
+  context.addUser(user, default = True)
+  context.cf = cf
+  context.project = obj["project"]
+
+  return context
 

@@ -5,33 +5,13 @@ import zipfile
 import sys
 import os
 import os.path
-
-TEMPLATE = """
-from geni.aggregate import FrameworkRegistry
-from geni.aggregate.context import Context
-from geni.aggregate.user import User
-
-def build ():
-  portal = FrameworkRegistry.get("portal")()
-  portal.cert = "%(certpath)s"
-  portal.key = "%(keypath)s"
-
-  user = User()
-  user.name = "%(username)s"
-  user.urn = "%(userurn)s"
-  user.addKey("%(pubkeypath)s")
-
-  context = Context()
-  context.addUser(user, default = True)
-  context.cf = portal
-  context.project = "%(project)s"
-
-  return context
-"""
-
+import argparse
 
 def parse_args ():
-  return None
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--pubkey", dest="pubkey_path", help="Path to public key file", default = None)
+  parser.add_argument("--bundle", dest="bundle_path", help="Path to omni.bundle", default="omni.bundle")
+  return parser.parse_args()
 
 def build_context (opts):
   HOME = os.path.expanduser("~")
@@ -75,17 +55,27 @@ def build_context (opts):
     pass
 
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
-  if not opts.pubkey_path:
+  pkpath = opts.pubkey_path
+  if not pkpath:
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
         zf.extract("ssh/private/id_geni_ssh_rsa", "%s/.ssh/" % (HOME))
     
-    if not os.path.exists("%s/.ssh/id_geni_ssh_rsa.pub" % (HOME)):
+    pkpath = "%s/.ssh/id_geni_ssh_rsa.pub" % (HOME)
+    if not os.path.exists(pkpath):
       zf.extract("ssh/public/id_geni_ssh_rsa.pub", "%s/.ssh/" % (HOME))
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)
 
+  cdata = {}
+  cdata["cert-path"] = "%s/geni_cert.pem" % (DEF_DIR)
+  cdata["key-path"] = "%s/geni_cert.pem" % (DEF_DIR)
+  cdata["user-name"] = uname
+  cdata["user-urn"] = urn
+  cdata["user-pubkeypath"] = pkpath
+  cdata["project"] = project
+  json.dump(cdata, open("%s/context.json", "w+"))
 
 
 if __name__ == '__main__':
