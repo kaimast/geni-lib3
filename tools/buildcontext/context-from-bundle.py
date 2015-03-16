@@ -59,12 +59,12 @@ def build_context (opts):
   if not pkpath:
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
-        with tf as open("%s/.ssh/id_geni_ssh_rsa" % (HOME), "w+"):
+        with open("%s/.ssh/id_geni_ssh_rsa" % (HOME), "w+") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
     
     pkpath = "%s/.ssh/id_geni_ssh_rsa.pub" % (HOME)
     if not os.path.exists(pkpath):
-        with tf as open(pkpath, "w+"):
+        with open(pkpath, "w+") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa.pub").read())
 
   # We write the pem into 'private' space
