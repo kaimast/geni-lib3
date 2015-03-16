@@ -4,6 +4,8 @@ import os
 import os.path
 
 def getDefaultDir ():
+  HOME = os.path.expanduser("~")
+
   if os.name == "posix":
     DEF_DIR = "%s/.bssw/geni/" % (HOME)
     if not os.path.exists(DEF_DIR):
