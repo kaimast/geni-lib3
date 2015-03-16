@@ -36,6 +36,9 @@ class Shell(object):
     import geni.util
     import geni.rspec.pg
     import geni.rspec.vts
+    import geni.rspec.igext
+    import geni.rspec.egext
+    import geni.rspec.igutil
     import geni.aggregate.instageni
     import geni.aggregate.vts
     import geni.aggregate.exogeni
@@ -46,6 +49,9 @@ class Shell(object):
     imports["IGAM"] = geni.aggregate.instageni
     imports["VTSAM"] = geni.aggregate.vts
     imports["EGAM"] = geni.aggregate.exogeni
+    imports["IGX"] = geni.rspec.igext
+    imports["EGX"] = geni.rspec.egext
+    imports["IGUtil"] = geni.rspec.igutil
     imports["context"] = geni.util.loadContext()
 
     code.interact(local=imports)
