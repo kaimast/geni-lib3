@@ -17,11 +17,11 @@ def build_context (opts):
   HOME = os.path.expanduser("~")
 
   # Create the .bssw directories if they don't exist
-  if os.name = "posix":
+  if os.name == "posix":
     DEF_DIR = "%s/.bssw/geni/" % (HOME)
     if not os.path.exists(DEF_DIR):
       os.makedirs(DEF_DIR, 0775)
-  elif os.name = "nt":
+  elif os.name == "nt":
     DEF_DIR = "%s/bssw/geni/" % (HOME)
     if not os.path.exists(DEF_DIR):
       os.makedirs(DEF_DIR, 0775)
