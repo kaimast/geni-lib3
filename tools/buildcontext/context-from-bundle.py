@@ -65,6 +65,7 @@ def build_context (opts):
   zf.extract("geni_cert.pem", DEF_DIR)
 
   cdata = {}
+  cdata["framework"] = "portal"
   cdata["cert-path"] = "%s/geni_cert.pem" % (DEF_DIR)
   cdata["key-path"] = "%s/geni_cert.pem" % (DEF_DIR)
   cdata["user-name"] = uname
