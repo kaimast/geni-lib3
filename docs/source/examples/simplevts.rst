@@ -42,8 +42,8 @@ imports to the relevant ones for ExoGENI.
 
 * Here we also set up the slice name you're going to use, as well as the
   context object that specifies your credential information **(You must
-  replace this code with your own information, as set up in the basic
-  `geni-lib` tutorial)**::
+  replace this code with your own information, as set up in the geni-lib 
+  "Getting Started" tutorial)**::
 
    import mycontext
 
@@ -84,4 +84,12 @@ about the resources we have provisioned - specifically identifying information
 about the local circuits we requested.  We will now use this information to
 request compute resources and connect them to the VTS sliver.
 
+* Initialize a basic GENI compute request::
 
+   igr = PG.Request()
+
+* The VTS Manifest object allows us to iterate over the local circuits that
+  were returned, and we'll make a VM with a single interface and link for
+  each one::
+
+   for idx,circuit in enumerate(manifest.local_circuits)
