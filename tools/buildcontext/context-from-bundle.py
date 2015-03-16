@@ -29,8 +29,7 @@ def build_context (opts):
 
   zf = zipfile.ZipFile(opts.bundle_path)
 
-  if "ssh/public/id_geni_ssh_rsa.pub" not in zf.namelist() and
-    opts.pubkey_path is None:
+  if ("ssh/public/id_geni_ssh_rsa.pub" not in zf.namelist()) and (opts.pubkey_path is None):
     print "Your bundle does not contain an SSH public key.  You must specify one using a command line argument."
     sys.exit()
     
