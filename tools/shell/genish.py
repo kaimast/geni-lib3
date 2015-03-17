@@ -4,8 +4,6 @@ import os
 import os.path
 import code
 
-#import geni._coreutil as GCU
-
 class Shell(object):
   def run (self, options):
     imports = {}
@@ -54,7 +52,7 @@ class Shell(object):
     imports["IGUtil"] = geni.rspec.igutil
     imports["context"] = geni.util.loadContext()
 
-    code.interact(local=imports)
+    code.interact(banner="GENI-Lib Interactive Shell", local=imports)
 
 if __name__ == '__main__':
   s = Shell()
