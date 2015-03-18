@@ -2,6 +2,6 @@ Tutorials
 =========
 
 .. toctree::
-   gettingstarted
+   createcontext
    federationquery
    gettingresources
