@@ -27,7 +27,7 @@ using pip if you prefer.
 ::
 
   $ apt-get install mercurial python-m2crypto python-dateutil python-lxml \
-    libxmlsec1 xmlsec1 libxmlsec1-openssl
+    libxmlsec1 xmlsec1 libxmlsec1-openssl python-setuptools
 
 ============
 Get geni-lib
@@ -35,3 +35,11 @@ Get geni-lib
 ::
 
   $ hg clone http://bitbucket.org/barnstorm/geni-lib
+
+=======
+Install
+=======
+::
+
+  $ cd geni-lib
+  $ python setup.py install

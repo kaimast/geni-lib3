@@ -3,6 +3,8 @@
 import os
 import os.path
 
+WIN32_ATTR_HIDDEN = 0x02
+
 def getDefaultDir ():
   HOME = os.path.expanduser("~")
 
@@ -14,7 +16,10 @@ def getDefaultDir ():
     DEF_DIR = "%s/bssw/geni/" % (HOME)
     if not os.path.exists(DEF_DIR):
       os.makedirs(DEF_DIR, 0775)
-    # TODO: attrib +h somehow
+      import ctypes
+      if (ctypes.windll.kernel32.SetFileAttributesW(unicode(DEF_DIR), WIN32_ATTR_HIDDEN)):
+        raise ctypes.WinError()
+
   return DEF_DIR
 
 
