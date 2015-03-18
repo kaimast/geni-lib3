@@ -24,7 +24,8 @@ Install / Basic Setup
 * Install the above dependencies in their default locations (particularly Python, Omni, and OpenSSL)
 
 .. warning::
-  If you change any of the install locations you may need to edit configuration files
+  If you change any of the install locations you may need to edit configuration files in
+  other dependencies, as well as the ``geni-lib`` installation (particularly ``envsetup.bat``)
 
 * Open a command line (``cmd.exe``) and clone the geni-lib repository::
 
@@ -32,9 +33,10 @@ Install / Basic Setup
    C:\> cd C:\Development
    C:\Development> hg clone http://bitbucket.org/barnstorm/geni-lib
    C:\Development> cd geni-lib
+   C:\Development\geni-lib> python setup.py install
 
 .. note::
-  (The location of ``geni-lib`` can be changed, just alter these paths accordingly)
+  (The location of the ``geni-lib`` clone can be changed, just alter these paths accordingly)
 
 * Run the batch file in the ``support/`` directory that sets up your environment::
 
