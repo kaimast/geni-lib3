@@ -1,10 +1,13 @@
-Getting Started
-===============
+Creating a Custom Context
+=========================
 
 In order to communicate with any federation resource using ``geni-lib`` you need to construct
 a ``Context`` object that contains information about the framework you are using (for example
 ProtoGENI, Emulab, GENI Clearinghouse, etc.), as well as your user information (SSH keys,
-login username, federation urn, etc.).
+login username, federation urn, etc.).  You can use the ``context-from-bundle`` script that
+comes with ``geni-lib`` to create a context from an ``omni.bundle`` provided by the GENI Portal
+as documented in the "Simple Configuration" tutorial, or you can create one using a small
+Python module which allows for more configurability, and we illustrate that method here.
 
 * To start, we will create a new Python file called ``mycontext.py`` and (inside the directory
   containing your ``geni-lib`` clone) import the necessary modules to start building your own
