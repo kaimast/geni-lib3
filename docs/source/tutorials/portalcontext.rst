@@ -5,7 +5,7 @@ In order to communicate with any federation resource using ``geni-lib`` you need
 a ``Context`` object that contains information about the framework you are using (for example
 ProtoGENI, Emulab, GENI Clearinghouse, etc.), as well as your user information (SSH keys,
 login username, federation urn, etc.).  This simple tutorial will walk you through the easiest
-way to create a ``Context`` if you have an account at the GENI Portal.
+way to create a ``Context`` if you have an account at the `GENI Portal <http://portal.geni.net>`_.
 
 ========================
 Download The omni.bundle
