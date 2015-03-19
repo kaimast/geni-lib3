@@ -17,7 +17,7 @@ interface.  Once you log into the GENI Portal you can use the following steps to
 
 * At the top of the Portal home page click on the tab labeled **Profile**
 * In the tabs on the Profile page click on the one labeled **Configure omni**
-* Embedded in the text under the *Option 1: Automatic ``omni`` configuration* header, there
+* Embedded in the text under the **Option 1: Automatic omni configuration** header, there
   is a button labeled **Download your omni data**.  Click this button.
 
 .. note::
