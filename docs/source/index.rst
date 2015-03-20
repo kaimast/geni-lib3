@@ -17,8 +17,6 @@ Contents:
 
    tutorials/index
 
-   examples/index
-
    api/api
 
 Indices and tables
