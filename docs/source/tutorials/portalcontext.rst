@@ -63,11 +63,35 @@ If no arguments are supplied the bundle is assumed to be in the current director
 bundle does not contain an SSH public key you will be required to supply a path to one using
 the ``--pubkey`` argument at the command line.
 
+============
+Test It Out!
+============
+
+Now we can take your newly imported information, instantiate our context, and query an aggregate::
+
+   $ python
+   >>> import geni.util
+   >>> context = geni.util.loadContext()
+   >>> import geni.aggregate.instageni as IG
+   >>> import pprint
+   >>> pprint.pprint(IG.GPO.getversion(context))
+   {'code': {'am_code': 0,
+             'am_type': 'protogeni',
+             'geni_code': 0,
+             'protogeni_error_log': 'urn:publicid:IDN+instageni.gpolab.bbn.com+log+abedbcc20e6defe716eb83b8586c7e08',
+             'protogeni_error_url': 'https://boss.instageni.gpolab.bbn.com/spewlogfile.php3?logfile=abedbcc20e6defe716eb83b8586c7e08'},
+   ...snip...
+
+You should get a large structure of formatted output telling you version and configuration
+information about the GPO InstaGENI aggregate.  If you get any errors read them thorougly and
+review what they may be telling you about any mistakes you may have made.  You can also ask your
+
 =========
 Finished!
 =========
 
-Assuming the import reported no errors, your ``geni-lib`` installation is now set up and
+Assuming you have experience no errors, your ``geni-lib`` installation is now set up and
 can communicate with all aggregates in the federation.  If you have any issues you can
 send a message to the `geni-users <https://groups.google.com/forum/#!forum/geni-users>`_
 google group for help.
+
