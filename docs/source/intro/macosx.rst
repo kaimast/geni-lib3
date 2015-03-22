@@ -52,4 +52,13 @@ You can place the geni-lib repository anywhere on your system that you prefer.
 
   $ hg clone http://bitbucket.org/barnstorm/geni-lib
 
+================
+Install geni-lib
+================
+
+We can now install ``geni-lib`` into your Python environment::
+
+  $ cd geni-lib
+  $ python setup.py install
+
 Congratulations, you are now ready to launch ``python`` and import geni lib modules!
