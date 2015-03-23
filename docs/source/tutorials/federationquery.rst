@@ -46,13 +46,15 @@ which is relatively difficult to work with without a tool.
   We will be using GENI AM API version 2 throughout this tutorial.  Some API call names will be
   different if you elect to interact with aggregates using AM API version 3 in the future.
 
-* Lets start by getting an advertisement from a single aggregate::
+* Lets start by getting an advertisement from a single aggregate.  If you built a custom
+  context using Python code you will need to replace the code below to load your custom
+  context::
 
    $ python
-   >>> import mycontext
-   >>> c = mycontext.buildContext()
-   >>> import geni.aggregate.instageni as IG
-   >>> ad = IG.Illinois.listresources(context)
+   >>> import geni.util
+   >>> context = geni.util.loadContext()
+   >>> import geni.aggregate.instageni as IGAM
+   >>> ad = IGAM.Illinois.listresources(context)
 
   Now of course we have an advertisement (assuming everything went well) stored into a Python object,
   which is reasonably boring!
@@ -60,7 +62,7 @@ which is relatively difficult to work with without a tool.
 .. note::
   If you get timeouts or failures, you may want to try a different InstaGENI aggregate (this one may
   be particularly busy).  You can get a list of (mostly) aggregate objects by using the ``dir()`` command
-  on the IG module - ``dir(IG)``.
+  on the IGAM module - ``dir(IGAM)``.
 
 * We can simply print out the advertisement raw text to see what the
   aggregate sent us::
@@ -148,8 +150,8 @@ Often you will want to inspect a large number of aggregates (particularly if the
 similar type) in order to find those that have availability in the resources that you require.  The aggregate
 modules in ``geni-lib`` provide some convenience methods for assisting in this task::
 
-    >>> import geni.aggregate.instageni as IG
-    >>> for am in IG.aggregates():
+    >>> import geni.aggregate.instageni as IGAM
+    >>> for am in IGAM.aggregates():
     ...     print am.name
     ... 
     ig-cenic
@@ -167,7 +169,7 @@ Using this iterator you can act on each aggregate in a given module with the sam
 * Lets try getting (and saving) the ``getversion`` output from each InstaGENI site::
 
     >>> import json
-    >>> for am in IG.aggregates():
+    >>> for am in IGAM.aggregates():
     ...     print am.name
     ...     verdata = am.getversion(context)
     ...     ver_file = open("%s-version.json" % (am.name), "w+")
