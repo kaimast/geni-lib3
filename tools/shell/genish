@@ -51,7 +51,11 @@ class Shell(object):
     imports["IGX"] = geni.rspec.igext
     imports["EGX"] = geni.rspec.egext
     imports["IGUtil"] = geni.rspec.igutil
-    imports["context"] = geni.util.loadContext()
+
+    try:
+      imports["context"] = geni.util.loadContext()
+    except IOError:
+      pass
 
     code.interact(banner="GENI-Lib Interactive Shell", local=imports)
 
