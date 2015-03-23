@@ -1,7 +1,7 @@
 .. Copyright (c) 2015  Barnstormer Softworks, Ltd.
 
-Basic Single-Site VTS Topology
-==============================
+VTS: Basic Single-Site Topology
+===============================
 
 This example walks through creating a simple VTS topology with one forwarding
 element (an Open vSwitch instance) connected to two virtual machines provided
@@ -41,13 +41,14 @@ imports to the relevant ones for ExoGENI.
    import geni.aggregate.vts as VTSAM
 
 * Here we also set up the slice name you're going to use, as well as the
-  context object that specifies your credential information **(You must
-  replace this code with your own information, as set up in the geni-lib 
-  "Getting Started" tutorial)**::
+  context object that specifies your credential information.  If you set up
+  your ``geni-lib`` using the GENI Portal Import method, the code below will
+  directly work.  If you built a custom context using Python code you will
+  need to replace the code below to load your custom context::
 
-   import mycontext
+   import geni.util
 
-   context = mycontext.buildContext()
+   context = geni.util.loadContext()
    slicename = "my-slice-name"
 
 * VTS reservations are a two-stage process, where the VTS resources must be

@@ -8,3 +8,4 @@ Tutorials / How-Tos
    gettingresources
    singlevm
    simplevts
+   wanvts
