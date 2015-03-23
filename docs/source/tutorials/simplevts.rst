@@ -134,7 +134,7 @@ request compute resources and connect them to the VTS sliver.
    geni.util.printlogininfo(manifest = igm)
 
 .. note::
-  If you are at an in-person tutorial at GEC, etc., please replace ``IG.UtahDDC``
+  If you are at an in-person tutorial at GEC, etc., please replace ``IGAM.UtahDDC``
   with the aggregate you have been given on your tutorial worksheet.
 
 * In a few minutes you should be able to log into your VMs with the info printed
