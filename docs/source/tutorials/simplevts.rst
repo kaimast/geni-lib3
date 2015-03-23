@@ -53,7 +53,11 @@ imports to the relevant ones for ExoGENI.
    import geni.util
 
    context = geni.util.loadContext()
-   SLICENAME = "my-slice-name"
+   SLICENAME = "my-slice-name"  # Change this to be your slice name
+
+.. note::
+  If you do not have a slice available in your project, you may need to go back
+  to the GENI Portal web interface and create a new slice.
 
 * VTS reservations are a two-stage process, where the VTS resources must be
   reserved first and the results used to create the proper compute request::
