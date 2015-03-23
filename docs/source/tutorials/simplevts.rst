@@ -130,7 +130,7 @@ request compute resources and connect them to the VTS sliver.
 
 * Now we just need to make the reservation and wait for our nodes to come up::
 
-   igm = IG.UtahDDC.createsliver(context, SLICENAME, igr)
+   igm = IGAM.UtahDDC.createsliver(context, SLICENAME, igr)
    geni.util.printlogininfo(manifest = igm)
 
 .. note::
