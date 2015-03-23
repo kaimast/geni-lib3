@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -146,6 +146,7 @@ class PGCircuit(Port):
     p.attrib["type"] = "pg-local"
     return p
 
+LocalCircuit = PGCircuit
 
 class VFCircuit(Port):
   def __init__ (self, target):
