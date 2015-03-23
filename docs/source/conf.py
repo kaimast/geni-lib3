@@ -265,4 +265,8 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 # ---- PDF stuff, may not work with RTD
-pdf_break_level = 1
+pdf_break_level = 2
+
+pdf_breakside = 'any'
+
+pdf_inline_footnotes = True
