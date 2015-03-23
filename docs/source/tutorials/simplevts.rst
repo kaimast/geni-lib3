@@ -77,6 +77,10 @@ imports to the relevant ones for ExoGENI.
 
    manifest = VTSAM.UtahDDC.createsliver(context, SLICENAME, vtsr)
 
+.. note::
+  If you are at an in-person tutorial at GEC, etc., please replace ``VTSAM.UtahDDC``
+  with the aggregate you have been given on your tutorial worksheet.
+
 Set up InstaGENI Compute Sliver
 -------------------------------
 
