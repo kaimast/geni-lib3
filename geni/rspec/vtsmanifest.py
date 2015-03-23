@@ -142,6 +142,8 @@ class Manifest(object):
     for elem in elems:
       yield elem.get("shared-lan")
 
+  local_circuits = pg_circuits
+
   @property
   def ports (self):
     elems = self._root.xpath("v:datapath/v:port", namespaces = XPNS)
