@@ -75,7 +75,7 @@ imports to the relevant ones for ExoGENI.
 * Now the request object is complete - we need to contact the aggregate and
   have it build our topology for us::
 
-   manifest = VTSAM.UtahDDC.createsliver(context, slicename, vtsr)
+   manifest = VTSAM.UtahDDC.createsliver(context, SLICENAME, vtsr)
 
 Set up InstaGENI Compute Sliver
 -------------------------------
