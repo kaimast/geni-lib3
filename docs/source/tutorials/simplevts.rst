@@ -49,7 +49,7 @@ imports to the relevant ones for ExoGENI.
    import geni.util
 
    context = geni.util.loadContext()
-   slicename = "my-slice-name"
+   SLICENAME = "my-slice-name"
 
 * VTS reservations are a two-stage process, where the VTS resources must be
   reserved first and the results used to create the proper compute request::
@@ -91,6 +91,44 @@ request compute resources and connect them to the VTS sliver.
 
 * The VTS Manifest object allows us to iterate over the local circuits that
   were returned, and we'll make a VM with a single interface and link for
-  each one::
+  each one, and give them IPs in the same subnet::
 
-   for idx,circuit in enumerate(manifest.local_circuits)
+   IP = "10.50.1.%d"
+
+   for idx,circuit in enumerate(manifest.local_circuits):
+     vm = IGX.XenVM("vm%d" % (idx))
+     intf = vm.addInterface("if0")
+     intf.addAddress(PG.IPv4Address(IP % (idx+1), "255.255.255.0"))
+     igr.addResource(vm)
+
+     lnk = PG.Link()
+     lnk.addInterface(intf)
+     lnk.connectSharedVlan(circuit)
+     igr.addResource(lnk)
+
+  There is a lot of code above, but the workflow is fairly simple:
+
+  * First, we set up a simple string substitution so we can add a small number
+    of IP addresses in the same subnet (otherwise the compute AM will give
+    the interfaces IP addresses in different subnets and you will have to fix
+    them after you log into the nodes).
+  * Next we iterate over all of the circuits returned from the VTS AM that
+    match a certain type ("local"), while using the Python ``enumerate``
+    built-in to maintain a counter.
+  * For each circuit we create a VM object, add an interface to it, give that
+    interface a unique IP address on our chosen subnet, and add that interface
+    to a ``Link`` object, along with the circuit ID (which in this case is a
+    shared VLAN).
+
+* Now we just need to make the reservation and wait for our nodes to come up::
+
+   igm = IG.UtahDDC.createsliver(context, SLICENAME, igr)
+   geni.util.printlogininfo(manifest = igm)
+
+.. note::
+  If you are at an in-person tutorial at GEC, etc., please replace ``IG.UtahDDC``
+  with the aggregate you have been given on your tutorial worksheet.
+
+* In a few minutes you should be able to log into your VMs with the info printed
+  out by the above step and send test traffic (ping, etc.) between the VMs across
+  your VTS topology.
