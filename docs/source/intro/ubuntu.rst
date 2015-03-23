@@ -1,3 +1,9 @@
+.. Copyright (c) 2015  Barnstormer Softworks, Ltd.
+
+.. raw:: latex
+
+  \newpage
+
 Ubuntu 14.04
 ============
 

@@ -1,3 +1,9 @@
+.. Copyright (c) 2015  Barnstormer Softworks, Ltd.
+
+.. raw:: latex
+
+  \newpage
+
 MacOS X 10.8.x / 10.9.x
 =======================
 

@@ -1,3 +1,9 @@
+.. Copyright (c) 2015  Barnstormer Softworks, Ltd.
+
+.. raw:: latex
+
+  \newpage
+
 Windows 7 (32-bit)
 ==================
 
