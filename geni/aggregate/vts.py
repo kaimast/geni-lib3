@@ -15,7 +15,7 @@ class VTS(AM):
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
-Illinois = VTS("vts-illinois", "pc5.instageni.illinois.edu")
+Illinois = VTS("vts-illinois", "uiuc.vts.bsswks.net")
 MAX = VTS("vts-max", "max.vts.bsswks.net")
 GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
 UtahDDC = DDC
