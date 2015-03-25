@@ -33,7 +33,7 @@ using pip if you prefer.
 ::
 
   $ apt-get install mercurial python-m2crypto python-dateutil python-lxml \
-    libxmlsec1 xmlsec1 libxmlsec1-openssl python-setuptools
+    libxmlsec1 xmlsec1 libxmlsec1-openssl python-setuptools python-openssl
 
 ============
 Get geni-lib
