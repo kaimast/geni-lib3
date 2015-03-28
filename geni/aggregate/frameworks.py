@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -63,6 +63,9 @@ class Framework(object):
     args.append(name)
     (txt, res) = oscript.call(args)
     return res
+
+  def _update (self, context):
+    pass
 
 
 class ProtoGENI(Framework):

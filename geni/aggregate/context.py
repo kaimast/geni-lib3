@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -47,7 +47,8 @@ class SliceCredInfo(object):
   def _build (self):
     # This really should probably be a lot more complicated/painful and be based on the "right thing"
     # for your framework - e.g. geni-ch this should contain your project, not your user name, etc.
-    self._path = "%s/%s-%s-scred.xml" % (self.context.datadir, self.context._default_user.name, self.slicename)
+    self._path = "%s/%s-%s-%s-scred.xml" % (self.context.datadir, self.context._default_user.name,
+                                            self.context.project, self.slicename)
     if not os.path.exists(self._path):
       self._downloadCredential()
     else:
