@@ -94,6 +94,14 @@ class CHAPI(Framework):
     (txt, res) = oscript.call(args)
     return res
 
+  def listprojects (self, context, username = None):
+    from ..gcf import oscript
+    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listprojects"]
+    if username:
+      args.append(username)
+    (txt, res) = oscript.call(args)
+    return res
+
 
 class Portal(CHAPI):
   def __init__ (self):
