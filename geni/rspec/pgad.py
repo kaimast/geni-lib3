@@ -22,6 +22,15 @@ class Image(object):
   def __repr__ (self):
     return "<Image: %s, os: '%s', version: '%s', description: '%s', url: '%s'>" % (self.name, self.os, self.version, self.description, self.url)
 
+  def __hash__ (self):
+    return hash("%s-%s" % (self.name, self.url))
+
+  def __eq__ (self, other):
+    return hash(self) == hash(other)
+
+  def __ne__ (self, other):
+    return not (self == other)
+
   @classmethod
   def _fromdom (self, elem):
     i = Image()
@@ -33,6 +42,7 @@ class Image(object):
     i.description = elem.get("description")
     i.url = elem.get("url")
     return i
+
 
 class Location(object):
   def __init__ (self):
@@ -178,6 +188,7 @@ class Advertisement(object):
     elif xml:
       self._root = ET.fromstring(xml)
     self._routable_addresses = None
+    self._images = set()
 
   def _parse_routable (self):
     try:
@@ -191,21 +202,36 @@ class Advertisement(object):
     
   @property
   def routable_addresses (self):
+    """A RoutableAddresses object containing the number of configured and available publicly routable IP addresses at this site."""
     if not self._routable_addresses:
       self._parse_routable()
     return self._routable_addresses
 
   @property
   def nodes (self):
+    """An indexable iterator over the AdNode objects in this advertisement."""
     return XPathXRange(self._root.findall("{%s}node" % (GNS.REQUEST.name)), AdNode)
 
   @property
   def links (self):
+    """An indexable iterator over the AdLink objects in this advertisement."""
     return XPathXRange(self._root.findall("{%s}link" % (GNS.REQUEST.name)), AdLink)
 
   @property
   def shared_vlans (self):
+    """An indexable iterator of the shared vlan names found in this advertisement."""
     return XPathXRange(self._root.xpath('/g:rspec/s:rspec_shared_vlan/s:available', namespaces=_XPNS), AdSharedVLAN)
+
+  @property
+  def images (self):
+    """An iterable of the unique images found in this advertisement."""
+    if not self._images:
+      for node in self.nodes:
+        for image_list in node.images.itervalues():
+          for image in image_list:
+            self._images.add(image)
+    for image in self._images:
+      yield image
 
   @property
   def text (self):
