@@ -105,8 +105,6 @@ class CHAPI(Framework):
   def listSlices (self, context):
     from ..gcf import oscript
     args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listslices"]
-#    if project:
-#      args.extend(["--project", project])
     (txt, res) = oscript.call(args)
     return res
 
