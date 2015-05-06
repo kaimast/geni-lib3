@@ -110,7 +110,8 @@ class AdNode(object):
     htypes = elem.xpath('g:hardware_type', namespaces = _XPNS)
     for htype in htypes:
       nts = htype.xpath('e:node_type', namespaces = _XPNS)
-      node.hardware_types[htype.get("name")] = nts[0].get("type_slots")
+      if nts:
+        node.hardware_types[htype.get("name")] = nts[0].get("type_slots")
 
     fds = elem.xpath('e:fd', namespaces = _XPNS)
     for fd in fds:
