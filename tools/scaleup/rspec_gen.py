@@ -48,6 +48,7 @@ import geni.gcf.geni.config as config
 import site_info
 #import geni.aggregate.exogeni as eg
 import geni.rspec.pg as pg
+import geni.rspec.igext as ig
 from optparse import OptionParser
 
 # Global Variable
@@ -246,7 +247,7 @@ def add_node_to_rspec(config_info, site_dict, link_ifaces, vn, rspec):
         node_in_site = site_dict[site_id]
         for node_id in node_in_site:           
             node = vn.node_dict[node_id]
-            vm = pg.XenVM(node.hostname)
+            vm = ig.XenVM(node.hostname)
             # Nodes are bounded to particular InstaGENI Sites, add component_manager_id to RSpec
             if site_id != 'any':
                 vm.component_manager_id = site_info.ig_site[int(site_id)].component_manager_id
@@ -380,7 +381,7 @@ def dryrun():
     # add link resources
     rspec = add_link_to_rspec(config_info, site_dict, link_ifaces, vn, rspec)
     # write rspec
-    rspec.write(rspec_file)
+    rspec.writeXML(rspec_file)
     return link_ifaces
 
 
@@ -489,7 +490,7 @@ def main(argv=None):
     # add link resources
     rspec = add_link_to_rspec(config_info, site_dict, link_ifaces, vn, rspec, shared_vlan_info)
     # write rspec
-    rspec.write(rspec_file)    
+    rspec.writeXML(rspec_file)    
     print("\nThe generated RSpec has been written to:\n\t %s " % rspec_file)
     
 
