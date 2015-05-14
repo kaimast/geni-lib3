@@ -179,7 +179,7 @@ class Context(object):
           path = f.name
           f.close()
 
-        expires = self._getcredexpires(ucpath)
+        expires = self._getCredExpires(ucpath)
         self._usercred_info = (ucpath, expires)
       else:
         raise NoUserError()
