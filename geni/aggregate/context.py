@@ -84,14 +84,20 @@ class SliceCredInfo(object):
 class Context(object):
   DEFAULT_DIR = os.path.expanduser("~/.bssw/geni")
 
+  class UserCredExpiredError(Exception):
+    def __init__ (self, expires):
+      self.expires = expires
+    def __str__ (self):
+      return "User Credential expired on %s" % (self.expires)
+
   def __init__ (self):
     self._data_dir = None
     self._nick_cache_path = None
     self._default_user = None
     self._users = set()
-    self.cf = None
+    self._cf = None
     self.project = None
-    self._usercred_path = None
+    self._usercred_info = None
     self._slicecreds = {}
     self.debug = False
 
@@ -101,6 +107,24 @@ class Context(object):
       self._slicecreds[sname] = scinfo
 
     return self._slicecreds[sname].path
+
+  def _getCredExpires (self, path):
+    r = ET.parse(path)
+    expstr = r.find("credential/expires").text
+    if expstr[-1] == 'Z':
+      expstr = expstr[:-1]
+    return datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
+    
+  @property
+  def cf (self):
+    return self._cf
+
+  @cf.setter
+  def cf (self, value):
+    # TODO: Calllback into framework here?  Maybe addressed with ISSUE-2
+    # Maybe declare writing the _cf more than once as Unreasonable(tm)?
+    self._cf = value
+    self._usercred_info = None
 
   @property
   def nickCache (self):
@@ -126,14 +150,27 @@ class Context(object):
 
   @property
   def usercred_path (self):
-    # TODO: Need to handle getting new usercred if cached one is expired
-    # TODO: Need to invalidate usercred path if control framework is changed
-    if self._usercred_path is None:
+    # If you only need a user cred, something that works in the next 5 minutes is fine.  If you
+    # are doing something more long term then you need a slice credential anyhow, whose
+    # expiration will stop you as it should not outlast the user credential (and if it does,
+    # some clearinghouse has decided that is allowed).
+    if self._usercred_info is not None:
+      checktime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+      if self._usercred_info[1] < checktime:
+        # Delete the user cred and hope you already renewed it
+        try:
+          os.remove(self._usercred_info[1])
+          self._usercred_info = None
+        except os.OSError, e:
+          # Windows won't let us remove open files
+          # TODO: A place for some debug logging
+          pass
+
+
+    if self._usercred_info is None:
       if self._default_user:
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
-        if os.path.exists(ucpath):
-          self._usercred_path = ucpath
-        else:
+        if not os.path.exists(ucpath):
           cfg = self.cfg_path
           cred = cmd.getusercred(cfg)
 
@@ -141,11 +178,16 @@ class Context(object):
           f.write(cred)
           path = f.name
           f.close()
-          self._usercred_path = ucpath
+
+        expires = self._getcredexpires(ucpath)
+        self._usercred_info = (ucpath, expires)
       else:
         raise NoUserError()
 
-    return self._usercred_path
+    if self._usercred_info[1] < datetime.datetime.now():
+      raise Context.UserCredExpiredError(self._usercred_info[1])
+    
+    return self._usercred_info[0]
 
   @property
   def cfg_path (self):
