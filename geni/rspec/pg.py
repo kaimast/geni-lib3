@@ -10,6 +10,7 @@ from lxml import etree as ET
 import itertools
 import uuid
 import sys
+import functools
 
 
 class Resource(object):
@@ -246,6 +247,8 @@ class StitchedLink(Link):
 
 
 class Node(Resource):
+  EXTENSIONS = []
+
   def __init__ (self, name, ntype, component_id = None, exclusive = None):
     super(Node, self).__init__()
     self.client_id = name
@@ -258,10 +261,21 @@ class Node(Resource):
     self.routable_control_ip = False
     self.component_id = component_id
     self.component_manager_id = None
+    self._ext_children = []
+    for name,ext in Node.EXTENSIONS:
+      self._wrapext(name,ext)
 
   class DuplicateInterfaceName(Exception):
     def __str__ (self):
       return "Duplicate interface names"
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
 
   @property
   def name (self):
@@ -312,6 +326,9 @@ class Node(Resource):
 
     if self.routable_control_ip:
       rc = ET.SubElement(nd, "{%s}routable_control_ip" % (Namespaces.EMULAB.name))
+
+    for obj in self._ext_children:
+      obj._write(nd)
 
     return nd
 
