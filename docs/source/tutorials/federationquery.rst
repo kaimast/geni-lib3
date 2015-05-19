@@ -96,7 +96,7 @@ which is relatively difficult to work with without a tool.
    '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__',
    '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'available', 'capacity', 'configured']
 
-  In general attributes starting with underscores are not useful to us, so we can see 3 attribuets of
+  In general attributes starting with underscores are not useful to us, so we can see 3 attributes of
   value - ``available``, ``capacity``, and ``configured``.  In most cases their meanings should be
   obvious, so just knowing they exist even without documentation is quite helpful.
 
