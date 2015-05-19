@@ -41,6 +41,7 @@ class Shell(object):
     import geni.aggregate.instageni
     import geni.aggregate.vts
     import geni.aggregate.exogeni
+    import geni.aggregate.cloudlab
 
     imports["util"] = geni.util
     imports["PG"] = geni.rspec.pg
@@ -48,6 +49,7 @@ class Shell(object):
     imports["IGAM"] = geni.aggregate.instageni
     imports["VTSAM"] = geni.aggregate.vts
     imports["EGAM"] = geni.aggregate.exogeni
+    imports["CLAM"] = geni.aggregate.cloudlab
     imports["IGX"] = geni.rspec.igext
     imports["EGX"] = geni.rspec.egext
     imports["IGUtil"] = geni.rspec.igutil
