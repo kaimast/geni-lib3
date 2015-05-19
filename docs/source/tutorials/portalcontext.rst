@@ -85,12 +85,13 @@ Now we can take your newly imported information, instantiate our context, and qu
 You should get a large structure of formatted output telling you version and configuration
 information about the GPO InstaGENI aggregate.  If you get any errors read them thorougly and
 review what they may be telling you about any mistakes you may have made.  You can also ask your
+instructor if at an in-person tutorial.
 
 =========
 Finished!
 =========
 
-Assuming you have experience no errors, your ``geni-lib`` installation is now set up and
+Assuming you have experienced no errors, your ``geni-lib`` installation is now set up and
 can communicate with all aggregates in the federation.  If you have any issues you can
 send a message to the `geni-users <https://groups.google.com/forum/#!forum/geni-users>`_
 google group for help.
