@@ -33,8 +33,8 @@ Getting Aggregate Information
 
 Given that we have our previously created ``Context`` object, and a wealth of aggregate objects
 available to us, the GENI federation provides the ability to request two blocks of information
-from each aggregate (provided with are authorized) - the version information (which you have  
-seen briefly in the previous tutorial), and a list of the advertised resources.
+from each aggregate - the version information (which you may have seen briefly in a previous
+tutorial), and a list of the advertised resources.
 
 The result from ``getversion``, as we saw in the previous tutorial, is reasonably concise and
 human readable (but also contains information about API versions and supported request formats
