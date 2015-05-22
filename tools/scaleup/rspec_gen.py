@@ -56,6 +56,7 @@ BOOL = ['yes', 'no', 'y', 'n']
 NO = ['n', 'no']
 YES = ['y', 'yes']
 NODE_PROPERTY = ['node_prefix', 'disk_image', 'install_script', 'execute_cmd', 'node_list']
+OPTIONAL_NODE_PROPERTY = ['routable_control_ip']
 
 
 def check_general_sec(config_info):
@@ -77,7 +78,7 @@ def check_node_type(config_info):
                                "configuration file" % (node_type, node_type, node_type))
             else:
                 node_property = config_info[node_type.strip()].keys()
-                if set(node_property) != set(NODE_PROPERTY):
+                if not( set(node_property) >= set(NODE_PROPERTY) ):
                     node_property.sort()
                     NODE_PROPERTY.sort()
                     raise ValueError("Please check the configuration section for node type [%s]. " \
@@ -86,6 +87,15 @@ def check_node_type(config_info):
                                                                str(NODE_PROPERTY), 
                                                                str(node_property)))
                     
+                elif not( set(node_property) <= (set(OPTIONAL_NODE_PROPERTY) | set(NODE_PROPERTY)) ):
+                    node_property.sort()
+                    NODE_PROPERTY.sort()
+                    raise ValueError("Please check the configuration section for node type [%s]. " \
+                                     "The optional node properties are %s, but your "
+                                     "configuration is %s. " % (node_type, 
+                                                               str(OPTIONAL_NODE_PROPERTY), 
+                                                               str(set(node_property)-set(NODE_PROPERTY))))                  
+
     else:
         raise KeyError("You MUST configure \"node_type\" field in the [general] "\
                        "section!")
@@ -266,6 +276,8 @@ def add_node_to_rspec(config_info, site_dict, link_ifaces, vn, rspec):
                 vm.disk_image = node.disk_image
                 service_list = config_info[node.node_type]['install_script'].split('\n')
                 cmd_list = config_info[node.node_type]['execute_cmd'].split('\n')
+                if config_info[node.node_type].has_key('routable_control_ip'):
+                    vm.routable_control_ip = config_info[node.node_type]['routable_control_ip'] in YES
                 for service in service_list:
                     if service != '':
                         service_url = service.split(',')[0].strip()

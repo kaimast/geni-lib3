@@ -126,6 +126,7 @@ install_script=http://www.gpolab.bbn.com/exp/sysexpr/xorp_autostart.tar.gz,/loca
 execute_cmd=/bin/bash /local/xorp_autostart/start-xorp.sh, sh
 		    /bin/bash /local/install_script/initial_install.sh, sh
 		    sudo sh /gimidev/gimibot.sh, sh
+routable_control_ip=yes
 node_list=ALL
 
 
