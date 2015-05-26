@@ -49,7 +49,7 @@ def build_context (opts):
     pass
 
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
-  pkpath = opts.pubkey_path
+  pkpath = os.path.expanduser(opts.pubkey_path)
   if not pkpath:
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
