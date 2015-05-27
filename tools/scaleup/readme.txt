@@ -251,6 +251,10 @@ In this section, you will provide the general configuration information for your
 		e. node_list
 
 			This field defines the set of node ids that belongs to the particular node type. If there is only one node type, you can simply define "node_list=ALL"
+                f. routable_control_ip
+			This field says the node should be given a publicly routable IP address.  For example, this is useful for nodes that need to run publicly accessible webservers.
+		        To use, add this command to the description of the node:
+			    routable_control_ip=yes
 
 		A full configuration example for node_type "router":
 
@@ -265,6 +269,7 @@ In this section, you will provide the general configuration information for your
 		execute_cmd=/bin/bash /local/xorp_autostart/start-xorp.sh, sh
 				    /bin/bash /local/install_script/initial_install.sh, sh
 				    sudo sh /gimidev/gimibot.sh, sh
+		routable_control_ip=yes
 		node_list=ALL
 
 4. Aggregate Assignment 
