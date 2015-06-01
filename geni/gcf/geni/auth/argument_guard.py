@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #----------------------------------------------------------------------
 # Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
@@ -22,28 +20,28 @@
 # OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS
 # IN THE WORK.
 #----------------------------------------------------------------------
-"""
-RSpec namespaces and schemas.
-"""
 
-PG_2_NAMESPACE = "http://www.protogeni.net/resources/rspec/2"
-PG_2_AD_SCHEMA = "http://www.protogeni.net/resources/rspec/2/ad.xsd"
-PG_2_REQ_SCHEMA = "http://www.protogeni.net/resources/rspec/2/request.xsd"
-PG_2_MAN_SCHEMA = "http://www.protogeni.net/resources/rspec/2/manifest.xsd"
+from __future__ import absolute_import
 
-GENI_3_NAMESPACE = "http://www.geni.net/resources/rspec/3"
-GENI_3_AD_SCHEMA = "http://www.geni.net/resources/rspec/3/ad.xsd"
-GENI_3_REQ_SCHEMA = "http://www.geni.net/resources/rspec/3/request.xsd"
-GENI_3_MAN_SCHEMA = "http://www.geni.net/resources/rspec/3/manifest.xsd"
+# Support for testing arguments/options of an AM call before invoking it
+# Possibly raising an exception, possibly modifying the arguments 
+# before invocation
 
-REQUEST = 'request'
-MANIFEST = 'manifest'
-ADVERTISEMENT = 'advertisement'
+from .base_authorizer import AM_Methods
 
-XSI="http://www.w3.org/2001/XMLSchema-instance"
+# Base class for argument guard
+class Base_Argument_Guard:
 
-PG_CRED_NAMESPACE = "http://www.protogeni.net/resources/credential/ext/policy/1"
-PG_CRED_SCHEMA = "http://www.protogeni.net/resources/credential/ext/policy/1/policy.xsd"
+    # Check the arguments and options presented to the given call
+    # Either return an exception or 
+    # return the (same or modified) arguments and options
+    def validate_arguments(self, method_name, arguments, options):
+        return arguments, options
 
-STITCH_SCHEMA_V1 = 'http://hpn.east.isi.edu/rspec/ext/stitch/0.1/'
-STITCH_SCHEMA_V2 = 'http://www.geni.net/resources/rspec/ext/stitch/2/'
+class TEST_Argument_Guard:
+
+    def validate_arguments(self, method_name, arguments, options):
+
+        options['Test_Entry'] = 'Test_Option_Value'
+        arguments['Test_Argument'] = 'Test_Argument_Value'
+        return arguments, options

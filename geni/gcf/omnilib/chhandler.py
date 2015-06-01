@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 #----------------------------------------------------------------------
-# Copyright (c) 2012-2014 Raytheon BBN Technologies
+# Copyright (c) 2012-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -260,7 +260,7 @@ class CHCallHandler(object):
         Return summary string, new slice expiration (string)
         """
         if len(args) != 2 or args[0] == None or args[0].strip() == "":
-            self._raise_omni_error('renewslice missing or too many args: Supply <slice name> <expiration date>')
+            self._raise_omni_error('renewslice missing args or too many args: Supply <slice name> <expiration date>')
         name = args[0]
         expire_str = args[1]
 
@@ -273,6 +273,10 @@ class CHCallHandler(object):
         try:
             in_expiration = dateutil.parser.parse(expire_str, tzinfos=tzd)
             self.logger.debug("From '%s' parsed requested new expiration %s", expire_str, in_expiration)
+            in_expiration2 = in_expiration.replace(microsecond=0)
+            if (in_expiration2 != in_expiration):
+                self.logger.debug("Trimmed fractional seconds from parsed time.")
+                in_expiration = in_expiration2
         except:
             msg = 'Unable to parse date "%s".\nTry "YYYYMMDDTHH:MM:SSZ" format'
             msg = msg % (expire_str)
@@ -435,8 +439,13 @@ class CHCallHandler(object):
 
         retStr = ""
         projectnames = list()
-        ((projects, samsg), message) = _do_ssl(self.framework, None, "List Projects from Slice Authority", self.framework.list_my_projects, username)
-        if projects is None:
+        projects = None
+        samsg = None
+#        ((projects, samsg), message) = _do_ssl(self.framework, None, "List Projects from Slice Authority", self.framework.list_my_projects, username)
+        (res, message) = _do_ssl(self.framework, None, "List Projects from Slice Authority", self.framework.list_my_projects, username)
+        if res is not None:
+            (projects, samsg) = res
+        if res is None or projects is None:
             # only end up here if call to _do_ssl failed
             projects = []
             self.logger.error("Failed to list projects for user '%s'"%(username))

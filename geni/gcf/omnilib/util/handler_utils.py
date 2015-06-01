@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2012-2014 Raytheon BBN Technologies
+# Copyright (c) 2012-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -99,13 +99,18 @@ def _extractURL(logger, url):
 def _isBetterNick(retNick, nick, logger=None):
     if not nick:
         return False
+    if retNick and retNick == nick:
+        return False
     if not retNick or len(nick) < len(retNick) or \
             (retNick.startswith('ig-') and nick.endswith('-ig')) or \
+            (retNick.startswith('og-') and nick.endswith('-og')) or \
             (retNick.startswith('pg-') and nick.endswith('-pg')) or \
+            (retNick.startswith('clab-') and nick.endswith('-clab')) or \
+            (retNick.startswith('apt-') and nick.endswith('-apt')) or \
             (retNick.startswith('eg-') and nick.endswith('-eg')):
         # Don't flip back to type-site to get something shorter
-        if retNick and retNick.split('-')[-1] in ['ig', 'pg', 'eg'] and \
-                nick.split('-')[-1] not in ['ig', 'pg', 'eg']:
+        if retNick and retNick.split('-')[-1] in ['ig', 'pg', 'eg', 'og', 'clab', 'apt'] and \
+                nick.split('-')[-1] not in ['ig', 'pg', 'eg', 'og', 'clab', 'apt']:
 #            if logger:
 #                logger.debug(" .. but this nickname flips site/type")
             return False
@@ -118,6 +123,7 @@ def _isBetterNick(retNick, nick, logger=None):
 def _lookupAggNick(handler, aggregate_urn_or_url):
     retNick = None
     for nick, (urn, url) in handler.config['aggregate_nicknames'].items():
+        # Case 1
         if aggregate_urn_or_url == urn or aggregate_urn_or_url == url:
 #            handler.logger.debug("For urn/url %s found match: %s=%s,%s", aggregate_urn_or_url, nick, urn, url)
             if _isBetterNick(retNick, nick, handler.logger):
@@ -125,6 +131,7 @@ def _lookupAggNick(handler, aggregate_urn_or_url):
     if retNick is not None:
         return retNick
     for nick, (urn, url) in handler.config['aggregate_nicknames'].items():
+        # Case 2
         if aggregate_urn_or_url.startswith(url):
 #            handler.logger.debug("Queried %s startswith url for nick %s", aggregate_urn_or_url, nick)
             if _isBetterNick(retNick, nick, handler.logger):
@@ -133,6 +140,7 @@ def _lookupAggNick(handler, aggregate_urn_or_url):
         return retNick
     aggregate_urn_or_url = _extractURL(handler.logger, aggregate_urn_or_url)
     for nick, (urn, url) in handler.config['aggregate_nicknames'].items():
+        # Case 3
         if _extractURL(handler.logger,url) == aggregate_urn_or_url:
 #            handler.logger.debug("Queried & trimmed %s is end of url %s for nick %s", aggregate_urn_or_url, url, nick)
             if _isBetterNick(retNick, nick, handler.logger):
@@ -140,25 +148,90 @@ def _lookupAggNick(handler, aggregate_urn_or_url):
     if retNick is not None:
         return retNick
     for nick, (urn, url) in handler.config['aggregate_nicknames'].items():
+        # Case 4
         if aggregate_urn_or_url in urn:
 #            handler.logger.debug("Trimmed %s is in urn for %s=%s,%s", aggregate_urn_or_url, nick, urn, url)
             if _isBetterNick(retNick, nick, handler.logger):
                 retNick = nick
         elif _extractURL(handler.logger, url).startswith(aggregate_urn_or_url):
+            # Case 5
 #            handler.logger.debug("Trimmed %s is in url for %s=%s,%s", aggregate_urn_or_url, nick, urn, url)
             if _isBetterNick(retNick, nick, handler.logger):
                 retNick = nick
+#    if retNick is None:
+#        handler.logger.debug("Found no match for %s", aggregate_urn_or_url)
+#    else:
+#        handler.logger.debug("Returning %s", retNick)
     return retNick
 
 def _lookupAggURNFromURLInNicknames(logger, config, agg_url):
     urn = ""
+    retNick = None
+    # Take exact match else take row where agg_url startswith url in cache else
+    # take row where extractURL exact match extractURL in cache
     nagg_url = _extractURL(logger, agg_url)
-    if nagg_url:
-        for (amURN, amURL) in config['aggregate_nicknames'].values():
+    if agg_url:
+        for nick, (amURN, amURL) in config['aggregate_nicknames'].items():
+            if agg_url.strip() == amURL.strip() and amURN.strip() != '':
+                if _isBetterNick(retNick, nick, logger):
+                    urn = amURN.strip()
+#                    logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches URL %s, nick %s T1)", agg_url, urn, amURL, nick)
+                    retNick = nick
+        if retNick is not None:
+            logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (nick %s T1)", agg_url, urn, retNick)
+            return urn
+
+        for nick, (amURN, amURL) in config['aggregate_nicknames'].items():
+            if agg_url.strip().startswith(amURL.strip()) and amURN.strip() != '':
+                if _isBetterNick(retNick, nick, logger):
+                    urn = amURN.strip()
+#                    logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches %s T2)", agg_url, urn, amURL)
+                    retNick = nick
+        if retNick is not None:
+            logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (nick %s T2)", agg_url, urn, retNick)
+            return urn
+
+        for nick, (amURN, amURL) in config['aggregate_nicknames'].items():
+            if nagg_url == amURL.strip() and amURN.strip() != '':
+                if _isBetterNick(retNick, nick, logger):
+                    urn = amURN.strip()
+#                    logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches %s T3)", agg_url, urn, amURL)
+                    retNick = nick
+        if retNick is not None:
+            logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (nick %s T3)", agg_url, urn, retNick)
+            return urn
+
+        for nick, (amURN, amURL) in config['aggregate_nicknames'].items():
+            extr_nick_url = _extractURL(logger, amURL)
+            if nagg_url == extr_nick_url and amURN.strip() != '':
+                if _isBetterNick(retNick, nick, logger):
+                    urn = amURN.strip()
+#                    logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches %s T4)", agg_url, urn, amURL)
+                    retNick = nick
+        if retNick is not None:
+            logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (nick %s T4)", agg_url, urn, retNick)
+            return urn
+
+        for nick, (amURN, amURL) in config['aggregate_nicknames'].items():
+            extr_nick_url = _extractURL(logger, amURL)
+            if extr_nick_url.startswith(nagg_url) and amURN.strip() != '':
+                if _isBetterNick(retNick, nick, logger):
+                    urn = amURN.strip()
+#                    logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches %s T5)", agg_url, urn, amURL)
+                    retNick = nick
+        if retNick is not None:
+            logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (nick %s T5)", agg_url, urn, retNick)
+            return urn
+
+        for nick, (amURN, amURL) in config['aggregate_nicknames'].items():
             if nagg_url in amURL and amURN.strip() != '':
-                urn = amURN.strip()
-                logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches %s)", agg_url, urn, amURL)
-                break
+                if _isBetterNick(retNick, nick, logger):
+                    urn = amURN.strip()
+#                    logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (matches %s T6)", agg_url, urn, amURL)
+                    retNick = nick
+        if retNick is not None:
+            logger.debug("Supplied AM URL %s is URN %s according to configured aggregate nicknames (nick %s T6)", agg_url, urn, retNick)
+            return urn
     return urn
 
 def _lookupAggNickURLFromURNInNicknames(logger, config, agg_urn):
@@ -177,6 +250,10 @@ def _lookupAggNickURLFromURNInNicknames(logger, config, agg_urn):
                         (len(amURL) < len(url)) or \
                         (len(amNick) < len(nick)) or \
                         (nick.startswith('ig-') and amNick.endswith('-ig')) or \
+                        (nick.startswith('pg-') and amNick.endswith('-pg')) or \
+                        (nick.startswith('og-') and amNick.endswith('-og')) or \
+                        (nick.startswith('clab-') and amNick.endswith('-clab')) or \
+                        (nick.startswith('apt-') and amNick.endswith('-apt')) or \
                         (nick.startswith('eg-') and amNick.endswith('-eg')):
                     url = amURL.strip()
                     nick = amNick.strip()
@@ -263,6 +340,9 @@ def _listaggregates(handler):
             # otherwise it is the url directly
             # Either way, if we have no URN, we fill in 'unspecified_AM_URN'
             url, urn = _derefAggNick(handler, agg)
+            if url is None or urn is None:
+                handler.logger.info("Aggregate '%s' unknown", agg)
+                continue
             url = url.strip()
             urn = urn.strip()
             aggURNAlt = None
@@ -288,11 +368,13 @@ def _listaggregates(handler):
                 handler.logger.debug("Adding aggregate %s (%s) to query list", agg, urn)
                 ret[urn] = url
             else:
-                handler.logger.info("Aggregate %s unknown", agg)
+                handler.logger.info("Aggregate '%s' unknown", agg)
         return (ret, "")
     elif not handler.omni_config.get('aggregates', '').strip() == '':
         aggs = {}
         for url in handler.omni_config['aggregates'].strip().split(','):
+            if url is None:
+                continue
             url = url.strip()
             if url != '':
                 # Try treating that as a nickname
@@ -541,6 +623,8 @@ def _filename_part_from_am_url(url):
         server = server[:(server.index("/openflow/gapi/"))]
     elif server.endswith(":3626/foam/gapi/1"):
         server = server[:(server.index(":3626/foam/gapi/1"))]
+    elif server.endswith(":3626/foam/gapi/2"):
+        server = server[:(server.index(":3626/foam/gapi/2"))]
     elif server.endswith("/gapi"):
         server = server[:(server.index("/gapi"))]
     elif server.endswith(":12346"):
@@ -705,8 +789,13 @@ def _printResults(opts, logger, header, content, filename=None):
     If --tostdout option, then instead of logging, print to STDOUT.
     """
     cstart = 0
+    # If the content is a single quote quoted XML doc then just drop those single quotes
+    if content is not None and content.startswith("'<?xml") and content.endswith("'"):
+        content = content[1:-1]
+        if content.find(">\n"):
+            content = content.replace("\\n", "\n")
     # if content starts with <?xml ..... ?> then put the header after that bit
-    if content is not None and content.find("<?xml") > -1:
+    elif content is not None and content.find("<?xml") > -1 and content.find("'<?xml") < 0:
         cstart = content.find("?>", content.find("<?xml") + len("<?xml"))+2
         # push past any trailing \n
         if content[cstart:cstart+2] == "\\n":
@@ -938,7 +1027,7 @@ def expires_from_rspec(result, logger=None):
     If that fails, try to parse the ExoGENI sliver info extension.
     If those fail, return None.'''
     # SFA and PG use the expires attribute. MAX too. ION soon, but for now it is wrong.
-    # FOAM and EG and GRAM do not. EG however has a sliver_info extension.
+    # FOAM (and AL2S) and EG and GRAM do not. EG however has a sliver_info extension.
     if result is None or str(result).strip() == "":
         return None
     rspec = str(result)
@@ -1018,7 +1107,7 @@ def expires_from_status(status, logger):
     # PG: top-level pg_expires
     # DCN: top-level geni_expires
     # GRAM: per resource geni_expires
-    # FOAM: top level foam_expires
+    # FOAM (and AL2S): top level foam_expires
     # EG: per resource orca_expires
     # SFA: pl_expires (also check sfa_expires to be safe)
 

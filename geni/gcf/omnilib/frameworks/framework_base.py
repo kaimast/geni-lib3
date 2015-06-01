@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2014 Raytheon BBN Technologies
+# Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -348,6 +348,7 @@ class Framework_Base():
 
     # Find all slivers the SA lists for the given slice
     # Return a struct by AM URN containing a struct: sliver_urn = sliver info struct
+    # Compare with list_sliverinfo_urns which only returns the sliver URNs
     def list_sliver_infos_for_slice(self, slice_urn):
         return {}
         
