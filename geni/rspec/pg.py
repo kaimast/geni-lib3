@@ -134,6 +134,8 @@ class Link(Resource):
     self.shared_vlan = None
     self._mac_learning = True
     self._vlan_tagging = False
+    self._link_multiplexing = False
+    self._best_effort = False
     self._ext_children = []
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
@@ -159,8 +161,37 @@ class Link(Resource):
     self._mac_learning = False
 
   def enableVlanTagging (self):
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("Link.enableVlanTagging() is deprecated, please use the Link.vlan_tagging attribute instead.")
+    self.vlan_tagging = True
+
+  @property
+  def vlan_tagging (self):
+    return self._vlan_tagging
+
+  @vlan_tagging.setter
+  def vlan_tagging (self, val):
     self.namespaces.append(Namespaces.EMULAB)
-    self._vlan_tagging = True
+    self._vlan_tagging = val 
+
+  @property
+  def best_effort (self):
+    return self._best_effort
+
+  @best_effort.setter
+  def best_effort (self, val):
+    self.namesapces.append(Namespaces.EMULAB)
+    self._best_effort = val
+
+  @property
+  def link_multiplexing (self):
+    return self._link_multiplexing
+
+  @link_multiplexing.setter
+  def link_multiplexing (self, val):
+    self.namesapces.append(Namespaces.EMULAB)
+    self._link_multiplexing = val
 
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
@@ -189,6 +220,14 @@ class Link(Resource):
 
     if self._vlan_tagging:
       tagging = ET.SubElement(lnk, "{%s}vlan_tagging" % (Namespaces.EMULAB.name))
+      tagging.attrib["enabled"] = "true"
+
+    if self._best_effort:
+      tagging = ET.SubElement(lnk, "{%s}best_effort" % (Namespaces.EMULAB.name))
+      tagging.attrib["enabled"] = "true"
+
+    if self._link_multiplexing:
+      tagging = ET.SubElement(lnk, "{%s}link_multiplexing" % (Namespaces.EMULAB.name))
       tagging.attrib["enabled"] = "true"
 
     for intf in self.interfaces:
