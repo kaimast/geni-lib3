@@ -207,11 +207,12 @@ class Link(Resource):
       sv.attrib["name"] = self.shared_vlan
 
     if self.bandwidth != Link.DEFAULT_BW:
-      for (src,dst) in itertools.permutations(self.interfaces):
-        bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
-        bw.attrib["capacity"] = "%d" % (self.bandwidth)
-        bw.attrib["source_id"] = src.client_id
-        bw.attrib["dest_id"] = dst.client_id
+      if len(self.interfaces) >= 2:
+        for (src,dst) in itertools.permutations(self.interfaces):
+          bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
+          bw.attrib["capacity"] = "%d" % (self.bandwidth)
+          bw.attrib["source_id"] = src.client_id
+          bw.attrib["dest_id"] = dst.client_id
 
     if not self._mac_learning:
       lrnelem = ET.SubElement(lnk, "{%s}link_attribute" % (Namespaces.VTOP.name))
