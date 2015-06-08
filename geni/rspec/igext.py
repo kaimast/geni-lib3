@@ -7,6 +7,7 @@ from lxml import etree as ET
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
 from .pg import Node
+from .pg import Resource
 
 class OFController(object):
   """OpenFlow controller specification to be used on a PG VLAN.
@@ -43,3 +44,30 @@ class XenVM(Node):
     xen.attrib["ram"] = str(self.ram)
     xen.attrib["disk"] = str(self.disk)
     return nd
+
+
+class AddressPool(Resource):
+  """A pool of public dynamic IP addresses belonging to a slice."""
+
+  def __init__(self, name, count=1, type="any"):
+    super(AddressPool, self).__init__()
+    self.client_id = name
+    self.count = count
+    self.type = type
+    self.component_manager_id = None
+
+  @property
+  def name (self):
+    return self.client_id
+  
+  def _write (self, root):
+    pl = ET.SubElement(root, "{%s}routable_pool" % (PGNS.EMULAB.name))
+    pl.attrib["client_id"] = self.client_id
+    if self.component_manager_id:
+      pl.attrib["component_manager_id"] = self.component_manager_id
+
+    pl.attrib["count"] = str(self.count)
+    pl.attrib["type"] = self.type
+
+    return pl
+
