@@ -120,3 +120,77 @@ class RemoteBlockstore(pg.Node):
   @property
   def dataset (self, val):
     self._bs.dataset = val
+
+
+class Firewall(object):
+  class Style:
+    OPEN     = "open"
+    CLOSED   = "closed"
+    BASIC    = "basic"
+
+  class Direction:
+    INCOMING = "incoming"
+    OUTGOING = "outgoing"
+
+  def __init__ (self, style):
+    self.style = style
+    self.exceptions = []
+
+  def addException(self, port, direction, ip = None):
+    self.exceptions.append({"port" : port, "direction" : direction, "ip" : ip});
+
+  def _write (self, node):
+    fw = ET.SubElement(node, "{%s}firewall" % (PGNS.EMULAB))
+    fw.attrib["style"] = self.style
+    for excep in self.exceptions:
+      ex = ET.SubElement(fw, "exception");
+      ex.attrib["port"]      = str(excep["port"])
+      ex.attrib["direction"] = excep["direction"]
+      if excep["ip"]:
+        ex.attrib["ip"] = excep["ip"]
+    return fw
+
+XenVM.EXTENSIONS.append(("Firewall", Firewall))
+
+
+class Tour(object):
+  TEXT = "text"
+  MARKDOWN = "markdown"
+  
+  def __init__ (self):
+    self.description = None
+    # Type can markdown
+    self.description_type = Tour.TEXT
+    self.instructions = None
+    # Type can markdown
+    self.instructions_type = Tour.TEXT
+    pass
+
+  def Description(self, type, desc):
+    self.description_type = type
+    self.description = desc
+    pass
+
+  def Instructions(self, type, inst):
+    self.instructions_type = type
+    self.instructions = inst
+    pass
+
+  def _write (self, root):
+    #
+    # Please do it this way, until some of our JS code is fixed.
+    #
+    td = ET.SubElement(root, "rspec_tour",
+                       nsmap={PGNS.TOUR.prefix : PGNS.TOUR.name})
+    if self.description:
+      desc = ET.SubElement(td, "description")
+      desc.text = self.description
+      desc.attrib["type"] = self.description_type
+      pass
+    if self.instructions:
+      inst = ET.SubElement(td, "instructions")
+      inst.text = self.instructions
+      inst.attrib["type"] = self.instructions_type
+      pass
+    return td
+
