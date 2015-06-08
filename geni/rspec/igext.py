@@ -8,6 +8,8 @@ from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
 from .pg import Node
 from .pg import Resource
+from . import pg
+from .. import urn
 
 class OFController(object):
   """OpenFlow controller specification to be used on a PG VLAN.
@@ -71,3 +73,50 @@ class AddressPool(Resource):
 
     return pl
 
+class Blockstore(object):
+  def __init__ (self, name, mount):
+    """Creates a BlockStore object with the given name (arbitrary) and mountpoint."""
+    self.name = name
+    self.mount = mount
+    self.size = None
+    self.where = "local"    # local|remote
+    self.readonly = False
+    self.placement = "any"  # any|sysvol|nonsysvol
+    self.dataset = None
+
+  def _write (self, element):
+    bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
+    bse.attrib["name"] = self.name
+    bse.attrib["mountpoint"] = self.mount
+    bse.attrib["class"] = self.where
+    if self.size:
+      bse.attrib["size"] = "%dGB" % (self.size)
+    bse.attrib["placement"] = self.placement
+    if self.readonly:
+      bse.attrib["readonly"] = "true"
+    if self.dataset:
+      if isinstance(self.dataset, (str, unicode)):
+        bse.attrib["dataset"] = self.dataset
+      elif isinstance(self.dataset, urn.Base):
+        bse.attrib["dataset"] = str(self.dataset)
+    return bse
+
+pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
+
+
+class RemoteBlockstore(pg.Node):
+  def __init__ (self, *args, **kwargs):
+    super(RemoteBlockstore, self).__init__(*args, **kwargs)
+    self.type = "emulab-blockstore"
+    bs = self.Blockstore("%s-bs" % (self.name), None)
+    bs.where = "remote"
+    self._bs = bs
+    self.interface = self.addInterface("if0")
+
+  @property
+  def mountpoint (self, val):
+    self._bs.mount = val
+
+  @property
+  def dataset (self, val):
+    self._bs.dataset = val
