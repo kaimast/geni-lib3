@@ -196,6 +196,7 @@ class Link(Resource):
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
     lnk.attrib["client_id"] = self.client_id
+
     for intf in self.interfaces:
       ir = ET.SubElement(lnk, "{%s}interface_ref" % (GNS.REQUEST.name))
       ir.attrib["client_id"] = intf.client_id
@@ -205,14 +206,6 @@ class Link(Resource):
     if self.shared_vlan:
       sv = ET.SubElement(lnk, "{%s}link_shared_vlan" % (GNS.SVLAN.name))
       sv.attrib["name"] = self.shared_vlan
-
-    if self.bandwidth != Link.DEFAULT_BW:
-      if len(self.interfaces) >= 2:
-        for (src,dst) in itertools.permutations(self.interfaces):
-          bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
-          bw.attrib["capacity"] = "%d" % (self.bandwidth)
-          bw.attrib["source_id"] = src.client_id
-          bw.attrib["dest_id"] = dst.client_id
 
     if not self._mac_learning:
       lrnelem = ET.SubElement(lnk, "{%s}link_attribute" % (Namespaces.VTOP.name))
@@ -231,6 +224,16 @@ class Link(Resource):
       tagging = ET.SubElement(lnk, "{%s}link_multiplexing" % (Namespaces.EMULAB.name))
       tagging.attrib["enabled"] = "true"
 
+    ################
+    # These are...sortof duplicate (but not quite).  We should sort that out.
+    if self.bandwidth != Link.DEFAULT_BW:
+      if len(self.interfaces) >= 2:
+        for (src,dst) in itertools.permutations(self.interfaces):
+          bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
+          bw.attrib["capacity"] = "%d" % (self.bandwidth)
+          bw.attrib["source_id"] = src.client_id
+          bw.attrib["dest_id"] = dst.client_id
+
     for intf in self.interfaces:
       if intf.bandwidth:
         for other in self.interfaces:
@@ -239,6 +242,7 @@ class Link(Resource):
             prop.attrib["source_id"] = other.name
             prop.attrib["dest_id"] = intf.name
             prop.attrib["capacity"] = str(intf.bandwidth)
+    ################
 
     for obj in self._ext_children:
       obj._write(lnk)
