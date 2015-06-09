@@ -103,7 +103,7 @@ class Hop(object):
     svr.text = "%d" % (self.suggested_vlan)
 
     vt = ET.SubElement(l2scs, "{%s}vlanTranslation" % (STITCHNS))
-    vt.text = str(vlan_translation).lower()
+    vt.text = str(self.vlan_translation).lower()
 
     nh = ET.SubElement(he, "{%s}nextHop" % (STITCHNS))
     if self._next_hop_id:
