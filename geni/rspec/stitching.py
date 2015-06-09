@@ -15,6 +15,7 @@ class StitchInfo(pg.Resource):
   def __init__ (self):
     super(StitchInfo, self).__init__()
     self._paths = []
+    self.addNamespace(STITCHNS)
 
   def addPath (self, path):
     self._paths.append(path)

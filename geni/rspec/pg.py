@@ -17,6 +17,9 @@ class Resource(object):
   def __init__ (self):
     self.namespaces = []
 
+  def addNamespace (self, ns):
+    self.namespaces.append(ns)
+
 
 class NodeType(object):
   XEN = "emulab-xen"
