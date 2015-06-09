@@ -7,7 +7,7 @@ import datetime
 from . import pg
 from .. import namespaces
 
-STITCHNS = Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/")
+STITCHNS = namespaces.Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/")
 
 class StitchInfo(pg.Resource):
   def __init__ (self):
