@@ -9,12 +9,13 @@ from .. import namespaces
 
 STITCHNS = Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/")
 
-class StitchData(pg.Resource):
+class StitchInfo(pg.Resource):
   def __init__ (self):
     self._paths = []
 
   def addPath (self, path):
     self._paths.append(path)
+    return path
 
   def _write (self, element):
     se = ET.SubElement(element, "{%s}stitching" % (STITCHNS))
@@ -24,13 +25,14 @@ class StitchData(pg.Resource):
       path._write(se)
 
 
-class StitchedPath(object):
+class Path(object):
   def __init__ (self, name):
     self.name = name
     self._hops = []
 
   def addHop (self, hop):
     self._hops.append(hop)
+    return hop
 
   def _write (self, element):
     pe = ET.SubElement(element, "{%s}path" % (STITCHNS))
