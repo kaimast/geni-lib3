@@ -95,7 +95,7 @@ class Hop(object):
     l2scs = ET.SubElement(scs, "{%s}switchingCapabilitySpecificInfo_L2sc" % (STITCHNS))
 
     imtu = ET.SubElement(l2scs, "{%s}interfaceMTU" % (STITCHNS))
-    imtu = "1500"
+    imtu.text = "1500"
 
     vra = ET.SubElement(l2scs, "{%s}vlanRangeAvailability" % (STITCHNS))
     vra.text = "%d-%d" % (self.ad_vrange_low, self.ad_vrange_high)
