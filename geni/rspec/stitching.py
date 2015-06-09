@@ -48,8 +48,8 @@ class Path(object):
     # like reordering and deleting until then
     for idx,hop in enumerate(self._hops, start=1):
       hop._id = idx
-      if len(self._hops) == idx:
-        hop._next_hop_id = None
+      if len(self._hops) != idx:
+        hop._next_hop_id = idx+1
 
     for hop in self._hops:
       hop._write(pe)
