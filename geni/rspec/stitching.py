@@ -4,6 +4,8 @@ from __future__ import absolute_import
 
 import datetime
 
+from lxml import etree as ET
+
 from . import pg
 from .. import namespaces
 
