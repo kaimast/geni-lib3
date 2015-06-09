@@ -11,6 +11,7 @@ STITCHNS = namespaces.Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/sti
 
 class StitchInfo(pg.Resource):
   def __init__ (self):
+    super(StitchInfo, self).__init__()
     self._paths = []
 
   def addPath (self, path):
@@ -23,6 +24,8 @@ class StitchInfo(pg.Resource):
 
     for path in self._paths:
       path._write(se)
+
+    return se
 
 
 class Path(object):
