@@ -177,7 +177,6 @@ def builddot (manifests):
           dda("\"%s\" -> \"%s\"" % (port.shared_vlan, port.dpname))
         elif isinstance(port, VTSM.InternalPort):
           dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_dpname))
-          dda("\"%s\" -> \"%s\"" % (port.remote_dpname, port.dpname))
         elif isinstance(port, VTSM.GenericPort):
           pass
         else:
