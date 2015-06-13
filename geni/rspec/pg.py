@@ -184,7 +184,7 @@ class Link(Resource):
 
   @best_effort.setter
   def best_effort (self, val):
-    self.namesapces.append(Namespaces.EMULAB)
+    self.namespaces.append(Namespaces.EMULAB)
     self._best_effort = val
 
   @property

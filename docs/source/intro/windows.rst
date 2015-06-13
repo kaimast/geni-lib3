@@ -39,6 +39,7 @@ Install / Basic Setup
    C:\> cd C:\Development
    C:\Development> hg clone http://bitbucket.org/barnstorm/geni-lib
    C:\Development> cd geni-lib
+   C:\Development\geni-lib> hg update -C 0.9-DEV
    C:\Development\geni-lib> python setup.py install
 
 .. note::
