@@ -12,15 +12,26 @@ class VTS(AM):
     self.host = host
     if url is None:
       url = "https://%s:3626/foam/gapi/2" % (host)
+    self.urlv3 = "%s3" % (url[:-1])
+    self._apiv3 = APIRegistry.get("amapiv3")
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
 
+  def changeController (self, context, sname, url, datapaths):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:change-controller",
+                           options={"controller-url" : url, "datapaths" : datapaths})
+    
+
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
+Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")
+GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
 Illinois = VTS("vts-illinois", "uiuc.vts.bsswks.net")
 MAX = VTS("vts-max", "max.vts.bsswks.net")
-GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
+NPS = VTS("vts-nps", "nps.vts.bsswks.net")
+UKYPKS2 = VTS("vts-ukypks2", "ukypks2.vts.bsswks.net")
 UtahDDC = DDC
 StarLight = VTS("vts-starlight", "starlight.vts.bsswks.net")
 UH = VTS("vts-uh", "uh.vts.bsswks.net")
+UWashington = VTS("vts-uwashington", "uwash.vts.bsswks.net")
 
 
 def aggregates ():
