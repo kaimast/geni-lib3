@@ -19,6 +19,10 @@ class VTS(AM):
   def changeController (self, context, sname, url, datapaths):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:change-controller",
                            options={"controller-url" : url, "datapaths" : datapaths})
+
+  def dumpFlows (self, context, sname, datapaths, show_hidden=False):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
+                           options={"datapaths" : datapaths, "show-hidden" : show_hidden})
     
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
