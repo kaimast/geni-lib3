@@ -181,7 +181,7 @@ class Link(Resource):
 
   @best_effort.setter
   def best_effort (self, val):
-    self.namesapces.append(Namespaces.EMULAB)
+    self.namespaces.append(Namespaces.EMULAB)
     self._best_effort = val
 
   @property
@@ -190,7 +190,7 @@ class Link(Resource):
 
   @link_multiplexing.setter
   def link_multiplexing (self, val):
-    self.namesapces.append(Namespaces.EMULAB)
+    self.namespaces.append(Namespaces.EMULAB)
     self._link_multiplexing = val
 
   def _write (self, root):
@@ -410,6 +410,7 @@ class Namespaces(object):
   EMULAB = GNS.Namespace("emulab", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
   VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
+  JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
 
 
 class Request(geni.rspec.RSpec):
@@ -420,7 +421,6 @@ class Request(geni.rspec.RSpec):
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
-    self.addNamespace(Namespaces.EMULAB)
 
   def addResource (self, rsrc):
     for ns in rsrc.namespaces:
@@ -428,6 +428,8 @@ class Request(geni.rspec.RSpec):
     self.resources.append(rsrc)
 
   def addTour (self, tour):
+    self.addNamespace(Namespaces.EMULAB)
+    self.addNamespace(Namespaces.JACKS)
     self.tour = tour
 
   def writeXML (self, path):

@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014, 2015  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -196,7 +196,7 @@ class Tour(object):
     # Please do it this way, until some of our JS code is fixed.
     #
     td = ET.SubElement(root, "rspec_tour",
-                       nsmap={PGNS.TOUR.prefix : PGNS.TOUR.name})
+                       nsmap={None : PGNS.TOUR.name})
     if self.description:
       desc = ET.SubElement(td, "description")
       desc.text = self.description
@@ -208,4 +208,16 @@ class Tour(object):
       inst.attrib["type"] = self.instructions_type
       pass
     return td
+
+
+class Site(object):
+  def __init__ (self, id):
+    self.id = id
+
+  def _write (self, node):
+    site = ET.SubElement(node, "{%s}site" % (PGNS.JACKS))
+    site.attrib["id"] = self.id
+    return site
+
+pg.Node.EXTENSIONS.append(("Site", Site))
 
