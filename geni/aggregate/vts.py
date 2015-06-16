@@ -16,13 +16,23 @@ class VTS(AM):
     self._apiv3 = APIRegistry.get("amapiv3")
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
 
-  def changeController (self, context, sname, url, datapaths):
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:change-controller",
-                           options={"controller-url" : url, "datapaths" : datapaths})
+  def changeController (self, context, sname, url, datapaths, ofver=None):
+    options={"controller-url" : url, "datapaths" : datapaths}
+    if ofver:
+      options["openflow-version" : ofver]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:change-controller", options)
 
   def dumpFlows (self, context, sname, datapaths, show_hidden=False):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
+
+  def portDown (self, context, sname, client_id):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:port-down",
+                           options={"port-client-id" : client_id})
+
+  def portUp (self, context, sname, client_id):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:port-up",
+                           options={"port-client-id" : client_id})
     
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
