@@ -26,7 +26,7 @@ class AMAPIv3(object):
   def poa (self, context, url, sname, action, options = None):
     from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "poa", sname])
+    arglist.extend(["--slicecredfile", context.slicecreds[sname], "poa", sname, action])
 
     if options:
       tf = tempfile.NamedTemporaryFile(delete=False)
