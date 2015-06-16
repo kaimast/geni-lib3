@@ -20,11 +20,14 @@ class VTS(AM):
     options={"controller-url" : url, "datapaths" : datapaths}
     if ofver:
       options["openflow-version" : ofver]
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:change-controller", options)
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:of:change-controller", options)
 
   def dumpFlows (self, context, sname, datapaths, show_hidden=False):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
+
+  def clearFlows (self, context, sname, datapaths):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:of:clear-flows", options={"datapaths" : datapaths})
 
   def portDown (self, context, sname, client_id):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:port-down",
