@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import sys
 import inspect
 
-from .core import AM
+from .core import AM, APIRegistry
 
 class VTS(AM):
   def __init__ (self, name, host, url = None):

@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import tempfile
+import json
 
 from .core import APIRegistry
 
@@ -34,7 +35,7 @@ class AMAPIv3(object):
       tf.close()
       arglist.extend(["--optionsfile", path])
 
-    text,res = oscript.call(argslist)
+    text,res = oscript.call(arglist)
     if res.values()[0]["code"]["geni_code"] == 0:
       return res.values()[0]["value"]
 
