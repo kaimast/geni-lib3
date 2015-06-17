@@ -36,6 +36,9 @@ class VTS(AM):
   def portUp (self, context, sname, client_id):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:port-up",
                            options={"port-client-id" : client_id})
+
+  def addFlows (self, context, sname, flows):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:of:add-flows", options={"rules" : flows})
     
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
