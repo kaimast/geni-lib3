@@ -7,6 +7,11 @@
 import requests
 import requests.auth
 
+import requests.packages.urllib3
+import requests.packages.urllib3.exceptions
+requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
+                                            requests.packages.urllib3.exceptions.InsecurePlatformWarning))
+
 class Connection(object):
   def __init__ (self):
     self.user = "germadmin"

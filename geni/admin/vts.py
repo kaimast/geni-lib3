@@ -71,3 +71,9 @@ class Connection(germ.Connection):
     d = json.dumps({"type" : "pg-local", "shared-lan" : pgcircuit})
     r = requests.put(url, d, **self.rkwargs)
     return r.json()["value"]
+
+  def addImage (self, image_name):
+    url = "https://%s:%d/core/admin/vts/image" % (self.host, self.port)
+    d = json.dumps({"name" : image_name})
+    r = requests.post(url, d, **self.rkwargs)
+    return r.json()["value"]
