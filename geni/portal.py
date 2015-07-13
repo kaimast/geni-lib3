@@ -100,6 +100,9 @@ class Context (object):
     self._parameters[name] = {'description': description, 'type': type,
         'defaultValue': defaultValue, 'legalValues': legalValues,
         'longDescription': longDescription, 'advanced': advanced }
+    if groupId is not None:
+      self._parameters[name]['groupId'] = groupId
+      pass
     if len(self._parameters) == 1:
       atexit.register(self._checkBind)
 
@@ -254,8 +257,8 @@ class Context (object):
         didFirst = True
       opts = self._parameters[name]
       if opts.has_key('groupId') \
-        and self._parameterGroups.has_key('groupId'):
-        opts['groupName'] = self._parameterGroups['groupId']
+        and self._parameterGroups.has_key(opts['groupId']):
+        opts['groupName'] = self._parameterGroups[opts['groupId']]
       json.dump(name,f)
       f.write(': ')
       json.dump(opts,f)
