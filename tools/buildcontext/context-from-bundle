@@ -76,7 +76,7 @@ def build_context (opts):
   zf.extract("geni_cert.pem", DEF_DIR)
 
   if opts.cert_pkey_path is None:
-    # assume the certificate does not have a private key and put certificate in its place 
+    # assume the certificate private key is inside the .pem 
     ckpath = "%s/geni_cert.pem" % (DEF_DIR)
   else:
     ckpath = opts.cert_pkey_path
