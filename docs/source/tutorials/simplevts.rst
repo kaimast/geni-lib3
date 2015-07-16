@@ -144,3 +144,9 @@ request compute resources and connect them to the VTS sliver.
 * In a few minutes you should be able to log into your VMs with the info printed
   out by the above step and send test traffic (ping, etc.) between the VMs across
   your VTS topology.
+
+* Once you are done using your topology and exploring the tutorial, please delete
+  all the resources you have reserved::
+
+   IGAM.UtahDDC.deletesliver(context, SLICENAME)
+   VTSAM.UtahDDC.deletesliver(context, SLICENAME)

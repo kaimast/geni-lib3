@@ -161,7 +161,7 @@ class Context(object):
         try:
           os.remove(self._usercred_info[1])
           self._usercred_info = None
-        except os.OSError, e:
+        except OSError, e:
           # Windows won't let us remove open files
           # TODO: A place for some debug logging
           pass

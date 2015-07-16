@@ -65,6 +65,7 @@ Install geni-lib
 We can now install ``geni-lib`` into your Python environment::
 
   $ cd geni-lib
+  $ hg update -C 0.9-DEV
   $ python setup.py install
 
 Congratulations, you are now ready to launch ``python`` and import geni lib modules!

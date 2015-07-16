@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2014 Raytheon BBN Technologies
+# Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -68,6 +68,8 @@ from __future__ import absolute_import
        [string (successList, failList)] = omni.py shutdown SLICENAME
        In AM API v3:
        [string dictionary] = omni.py shutdown SLICENAME
+       [string dictionary] = omni.py update SLICENAME RSPEC_FILENAME # Some AM API V3+ AMs only
+       [string dictionary] = omni.py cancel SLICENAME # Some AM API V3+ AMs only
 
        Non-AM API functions exported by aggregates, supported by Omni:
        From ProtoGENI/InstaGENI:
@@ -111,9 +113,9 @@ import inspect
 import logging.config
 import optparse
 import os
+import shutil
 import sys
 import urllib
-import shutil
 
 from .omnilib.util import OmniError, AMAPIError
 from .omnilib.handler import CallHandler
@@ -155,10 +157,18 @@ def load_agg_nick_config(opts, logger):
     Search path:
     - filename from commandline
     """
+    if opts.noCacheFiles:
+        logger.debug("Not loading agg_nick_config per option noCacheFiles")
+        config = {}
+        if not config.has_key('aggregate_nicknames'):
+            config['aggregate_nicknames'] = {}
+        if not config.has_key('omni_defaults'):
+            config['omni_defaults'] = {}
+        return config
 
     # the directory of this file
     curr_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-    parent_dir = curr_dir.rsplit(os.sep,1)[0]
+    parent_dir = curr_dir.rsplit(os.sep,2)[0]
 
     # Load up the config file
     configfiles = [os.path.join(parent_dir, 'agg_nick_cache.base')]
@@ -211,6 +221,7 @@ def load_agg_nick_config(opts, logger):
         raise OmniError, "Failed to read any possible agg_nick_cache file."
 
     config = load_aggregate_nicknames( config, confparser, filename, logger, opts )
+    config = load_omni_defaults( config, confparser, filename, logger, opts )
     return config
 
 def locate_config( opts, logger, config={}):
@@ -262,14 +273,14 @@ def load_config(opts, logger, config={}, filename=None):
     if filename is None:
         filename = locate_config(opts, logger, config)
 
-    logger.info("Loading config file %s", filename)
+    logger.info("Loading config file '%s'", filename)
     
     confparser = ConfigParser.RawConfigParser()
     try:
         confparser.read(filename)
     except ConfigParser.Error as exc:
-        logger.error("Config file %s could not be parsed: %s"% (filename, str(exc)))
-        raise OmniError, "Config file %s could not be parsed: %s"% (filename, str(exc))
+        logger.error("Config file '%s' could not be parsed: %s"% (filename, str(exc)))
+        raise OmniError, "Config file '%s' could not be parsed: %s"% (filename, str(exc))
 
     # Load up the omni options
     config['logger'] = logger
@@ -289,6 +300,7 @@ def load_config(opts, logger, config={}, filename=None):
                     config['users'].append(d)
 
     config = load_aggregate_nicknames( config, confparser, filename, logger, opts )
+    config = load_omni_defaults( config, confparser, filename, logger, opts )
 
     # Find rspec nicknames
     config['rspec_nicknames'] = {}
@@ -309,28 +321,38 @@ def load_config(opts, logger, config={}, filename=None):
 
     # Load up the framework section
     if not opts.framework:
-        opts.framework = config['omni']['default_cf']
+        if config['omni'].has_key('default_cf'):
+            opts.framework = config['omni']['default_cf']
+        else:
+            logger.info("No 'default_cf' defined in omni_config. Using 'portal'")
+            opts.framework = "portal"
 
     # Fill in the project if it is configured
     if hasattr(opts,'project') and not opts.project:
         if config['omni'].has_key('default_project'):
             opts.project = config['omni']['default_project']
 
-    # Config of useslicemembers some value of true sets the option
-    if hasattr(opts,'useslicemembers') and config['omni'].has_key('useslicemembers'):
+    # Config of useslicemembers some value of true or false sets the option
+    if hasattr(opts,'useSliceMembers') and config['omni'].has_key('useslicemembers'):
         usm = config['omni']['useslicemembers'].strip().lower()
         if usm in ('t', 'true', 'y', 'yes', '1', 'on'):
             usm = True
             if not opts.useSliceMembers:
-                logger.info("Setting option useSliceMembers based on omni_config setting")
+                logger.info("Setting option 'useSliceMembers' True based on omni_config setting")
                 opts.useSliceMembers = True
+        elif usm in ('f', 'false', 'n', 'no', '0', 'off'):
+            usm = False
+            if opts.useSliceMembers:
+                logger.info("Un-Setting option 'useSliceMembers' (set False) based on omni_config setting")
+                opts.useSliceMembers = False
+
     # Config of ignoreconfigusers some value of true sets the option
-    if  hasattr(opts,'ignoreconfigusers') and config['omni'].has_key('ignoreconfigusers'):
+    if hasattr(opts,'ignoreConfigUsers') and config['omni'].has_key('ignoreconfigusers'):
         usm = config['omni']['ignoreconfigusers'].strip().lower()
         if usm in ('t', 'true', 'y', 'yes', '1', 'on'):
             usm = True
             if not opts.ignoreConfigUsers:
-                logger.info("Setting option ignoreConfigUsers based on omni_config setting")
+                logger.info("Setting option 'ignoreConfigUsers' based on omni_config setting")
                 opts.ignoreConfigUsers = True
 
     logger.info("Using control framework %s" % opts.framework)
@@ -338,8 +360,8 @@ def load_config(opts, logger, config={}, filename=None):
     # Find the control framework
     cf = opts.framework.strip()
     if not confparser.has_section(cf):
-        logger.error( 'Missing framework %s in configuration file' % cf )
-        raise OmniError, 'Missing framework %s in configuration file' % cf
+        logger.error("Missing framework '%s' in configuration file" % cf )
+        raise OmniError, "Missing framework '%s' in configuration file" % cf
     
     # Copy the control framework into a dictionary
     config['selected_framework'] = {}
@@ -376,7 +398,7 @@ def load_aggregate_nicknames( config, confparser, filename, logger, opts ):
             for i in range(len(temp)):
                 temp[i] = temp[i].strip()
             if len(temp) != 2:
-                logger.warn("Malformed definition of aggregate nickname %s. Should be <URN>,<URL> where URN may be empty. Got: %s", key, val)
+                logger.warn("Malformed definition of aggregate nickname '%s'. Should be <URN>,<URL> where URN may be empty. Got: %s", key, val)
             if len(temp) == 0:
                 continue
             if len(temp) == 1:
@@ -387,7 +409,7 @@ def load_aggregate_nicknames( config, confparser, filename, logger, opts ):
                     temp = ["",t]
                 else:
                     # not a valid URL. Skip it
-                    logger.warn("Skipping aggregate nickname %s: %s doesn't look like a URL", key, temp[0])
+                    logger.warn("Skipping aggregate nickname '%s': '%s' doesn't look like a URL", key, temp[0])
                     continue
 
             # If temp len > 2: try to use it as is
@@ -404,6 +426,34 @@ def load_aggregate_nicknames( config, confparser, filename, logger, opts ):
 #            else:
 #                logger.debug("Loaded aggregate nickname '%s' from file '%s'." % (key, filename))
             config['aggregate_nicknames'][key] = temp
+    return config
+
+def load_omni_defaults( config, confparser, filename, logger, opts ):
+    # Find Omni defaults in the omni_config
+    # These are values that should over-ride any hard coded defaults
+    # But if the incoming config already has a value for this, don't replace that.
+    # In practice this should mean that values in the agg_nick_cache
+    # over-ride values in a user's custom omni_config.
+    # So this should only be used for setup values
+    # That can be over-ridden with other omni_config settings
+    # or commandline options.
+    if not config.has_key('omni_defaults'):
+        config['omni_defaults'] = {}
+    if confparser.has_section('omni_defaults'):
+        for (key,val) in confparser.items('omni_defaults'):
+            val = val.strip()
+            key = key.strip()
+            if config['omni_defaults'].has_key(key):
+                if config['omni_defaults'][key] == val:
+ #                   logger.debug("Ignoring omni_default '%s' from '%s': using earlier identical config setting", key, filename)
+                    continue
+                else:
+                    logger.debug("Ignoring omni_default '%s' from '%s': using earlier different config setting", key, filename)
+                    logger.debug("     Current: %s=%s. Ignored: %s", key, config['omni_defaults'][key], val)
+                    continue
+#            else:
+#                logger.debug("Loaded omni default '%s' from file '%s'." % (key, filename))
+            config['omni_defaults'][key] = val
     return config
 
 def load_framework(config, opts):
@@ -457,6 +507,7 @@ def update_agg_nick_cache( opts, logger ):
             logger.debug("Temp file: '%s'. Exists? %s", tmpcache, os.path.exists(tmpcache))
         if good:
             # On Windows, rename doesn't delete any existing file, so explicitly delete the old one first
+            # And shutil.move also wants the destination to be gone
             try:
                 os.unlink(opts.aggNickCacheName)
             except:
@@ -472,7 +523,40 @@ def update_agg_nick_cache( opts, logger ):
         except:
             pass
 
-def initialize(argv, options=None ):
+# Check if there is a newer version of Omni available.
+# Look for an entry "latest_omni_version" under "omni_defaults" in the omni_config (or really, agg_nick_cache).
+# Expected format is "#,Message" EG: "2.8,Omni 2.8 was release 2/1/2015". No commas in the message.
+# If a newer version is available, log a message at INFO level.
+def checkForUpdates(config, logger):
+    if not config or not config.has_key('omni_defaults') or not config['omni_defaults'].has_key('latest_omni_version') or config['omni_defaults']['latest_omni_version'] is None:
+        logger.debug("No latest Omni version found in config")
+        return False
+    latestStr = str(config['omni_defaults']['latest_omni_version']).strip()
+    latestVals = latestStr.split(',')
+    if len(latestVals) == 0:
+        logger.debug("Failed to find any values in latest_omni_version: %s", latestStr)
+        return False
+
+    if latestVals[0].strip() == GCF_VERSION.strip():
+        logger.debug("Already running latest GCF: %s", GCF_VERSION)
+        return False
+    import re
+    def natSort(s, _nsre=re.compile('([0-9]+)')):
+        return [int(text) if text.isdigit() else text.lower()
+                for text in re.split(_nsre, s)]
+    latest = max(latestVals[0].strip(), GCF_VERSION, key=natSort)
+    if latest == GCF_VERSION.strip():
+        logger.debug("Running a newer version of Omni than the last release. Running %s > %s", GCF_VERSION, latestVals[0])
+        return False
+
+    logger.debug("New Omni version available: %s > %s", latestVals[0], GCF_VERSION)
+    if len(latestVals) > 1:
+        logger.info(latestVals[1])
+    else:
+        logger.info("A new version of Omni is available: Version %s", latestVals[0])
+    return True
+
+def initialize(argv, options=None, dictLoggingConfig=None ):
     """Parse argv (list) into the given optional optparse.Values object options.
     (Supplying an existing options object allows pre-setting certain values not in argv.)
     Then configure logging per those options.
@@ -481,16 +565,21 @@ def initialize(argv, options=None ):
     Return the framework, config, args list, and optparse.Values struct."""
 
     opts, args = parse_args(argv, options)
-    logger = configure_logging(opts)
+    logger = configure_logging(opts, dictLoggingConfig)
+    if "--useSliceMembers" in argv:
+        logger.info("Option --useSliceMembers is no longer necessary and is now deprecated, as that behavior is now the default. This option will be removed in a future release.")
     config = load_agg_nick_config(opts, logger)
+    # Load custom config _after_ system agg_nick_cache,
+    # which also sets omni_defaults
     config = load_config(opts, logger, config)
+    checkForUpdates(config, logger)
     framework = load_framework(config, opts)
     logger.debug('User Cert File: %s', framework.cert)
     return framework, config, args, opts
 
 
 ####
-def call(argv, options=None, verbose=False):
+def call(argv, options=None, verbose=False, dictLoggingConfig=None):
     """Method to use when calling omni as a library
 
     argv is a list ala sys.argv
@@ -498,6 +587,8 @@ def call(argv, options=None, verbose=False):
       Use this to pre-set certain values, or allow your caller to get omni options from its commandline
 
     Verbose option allows printing the command and summary, or suppressing it.
+    dictLoggingConfig is a Python logging configuration dictionary for configuring logging. If
+    not supplied, any logging config filename provided using the option --logconfig will be applied.
     Callers can control omni logs (suppressing console printing for example) using python logging.
 
     Return is a list of 2 items: a human readable string summarizing the result 
@@ -669,7 +760,7 @@ if __name__ == "__main__":
     if argv is None or not type(argv) == list:
         raise OmniError("Invalid argv argument to call: must be a list")
 
-    framework, config, args, opts = initialize(argv, options)
+    framework, config, args, opts = initialize(argv, options, dictLoggingConfig)
     # process the user's call
     return API_call( framework, config, args, opts, verbose=verbose )
 
@@ -776,8 +867,9 @@ def API_call( framework, config, args, opts, verbose=False ):
     
     return retVal, retItem
 
-def configure_logging(opts):
-    """Configure logging. If a log config filename is supplied with the -l option,
+def configure_logging(opts, dictConfig=None):
+    """Configure logging. If a logging config dictionary is supplied, configuring Logging using that.
+    Else, if a log config filename is supplied with the -l option,
     and the file is non-empty, configure logging from that file. For details on this,
     see the applyLogConfig documentation.
 
@@ -815,17 +907,27 @@ def configure_logging(opts):
     # file
     deft['logfilename'] = opts.logoutput
 
-    if opts.logconfig:
-        deft['optlevel'] = optlevel
-        applyLogConfig(opts.logconfig, defaults=deft)
-    else:
-        # Ticket 296: Add timestamps to log messages
+    error = None # error raised configuring from given dictionary
+    if not opts.noLoggingConfiguration:
+        if dictConfig is not None:
+            # Try to configure logging from the given object
+            # Note this raises an exception if it fails (a ValueError, TypeError, AttributeError or ImportError)
+            # Also note this only works in python2.7+
+            logging.config.dictConfig(dictConfig)
+        elif opts.logconfig:
+            deft['optlevel'] = optlevel
+            applyLogConfig(opts.logconfig, defaults=deft)
+        else:
+            # Ticket 296: Add timestamps to log messages
 #        fmt = '%(asctime)s %(levelname)-8s %(name)s: %(message)s'
-        fmt = '%(asctime)s %(levelname)-8s: %(message)s'
-        logging.basicConfig(level=level,format=fmt,datefmt='%H:%M:%S')
+            fmt = '%(asctime)s %(levelname)-8s: %(message)s'
+            logging.basicConfig(level=level,format=fmt,datefmt='%H:%M:%S')
 
     logger = logging.getLogger("omni")
-    
+
+    if dictConfig is not None and not opts.noLoggingConfiguration:
+        logger.debug("Configured logging from dictionary")
+
     return logger
 
 def applyLogConfig(logConfigFilename, defaults={'optlevel': 'INFO'}):
@@ -884,7 +986,7 @@ def getSystemInfo():
 
 def getOmniVersion():
     version ="GENI Omni Command Line Aggregate Manager Tool Version %s" % GCF_VERSION
-    version +="\nCopyright (c) 2014 Raytheon BBN Technologies"
+    version +="\nCopyright (c) 2011-2015 Raytheon BBN Technologies"
     return version
 
 def getParser():
@@ -910,6 +1012,8 @@ def getParser():
  \t\t\t deletesliver <slicename> [AM API V1&2 only] \n\
  \t\t\t delete <slicename> [AM API V3 only] \n\
  \t\t\t shutdown <slicename> \n\
+ \t\t\t update <slicename> <rspec URL, filename, or nickname> [Some AM API V3 AMs only] \n\
+ \t\t\t cancel <slicename> [Some AM API V3 AMs only] \n\
  \t\tNon AM API aggregate functions (supported by some aggregates): \n\
  \t\t\t createimage <slicename> <imagename> [optional: false (keep image private)] -u <sliver urn> [ProtoGENI/InstaGENI only] \n\
  \t\t\t snapshotimage <slicename> <imagename> [optional: false (keep image private)] -u <sliver urn> [ProtoGENI/InstaGENI only] \n\
@@ -968,14 +1072,8 @@ def getParser():
                       help="Specify version of AM API to use (default v%default)")
     basicgroup.add_option("--useSliceAggregates", default=False, action="store_true",
                           help="Perform the slice action at all aggregates the given slice is known to use according to clearinghouse records. Default is %default.")
-    basicgroup.add_option("--useSliceMembers", default=False, action="store_true",
-                          help="Create accounts and install slice members' SSH keys on reserved resources in createsliver, provision or performoperationalaction. Default is %default. " + \
-                              "When true, adds these users and keys to those read from your omni_config (unless --ignoreConfigUsers).")
-    basicgroup.add_option("--ignoreConfigUsers", default=False, action="store_true",
-                          help="Ignore users and SSH keys listed in your omni_config when installing SSH keys on resources in createsliver or provision or " + \
-                              "performoperationalaction. Default is false - your omni_config users are read and used.")
-
     parser.add_option_group( basicgroup )
+
     # AM API v3 specific
     v3group = optparse.OptionGroup( parser, "AM API v3+",
                           "Options used in AM API v3 or later" )
@@ -986,6 +1084,8 @@ def getParser():
                       help="Send credential in given filename with any call that takes a list of credentials")
     v3group.add_option("--end-time", dest='geni_end_time',
                       help="Requested end time for any newly allocated or provisioned slivers - may be ignored by the AM")
+    v3group.add_option("--start-time", dest='geni_start_time',
+                      help="Requested start time for any allocated slivers - NOW if not provided, could be for future reservations")
 # Sample options file content:
 #{
 # "option_name_1": "value",
@@ -998,7 +1098,9 @@ def getParser():
                       help="Supply given URN as user we are speaking for in Speaks For option")
     v3group.add_option("-u", "--sliver-urn", dest="slivers", action="append",
                       help="Sliver URN (not name) on which to act. Supply this option multiple times for multiple slivers, or not at all to apply to the entire slice")
-
+    # For Update. See http://groups.geni.net/geni/wiki/GAPI_AM_API_DRAFT/Adopted#ChangestoDescribe
+    v3group.add_option("--cancelled", action="store_true", default=False,
+                       help="Should Describe show sliver state of only geni_provisioned slivers, ignoring any geni_updating and geni_allocated slivers (default %default)")
     parser.add_option_group( v3group )
 
     # logging levels
@@ -1024,6 +1126,8 @@ def getParser():
                       help="Python logging output file [use %(logfilename)s in logging config file]. Default: '%default'")
     loggroup.add_option("--tostdout", default=False, action="store_true",
                       help="Print results like rspecs to STDOUT instead of to log stream")
+    loggroup.add_option("--noLoggingConfiguration", default=False, action="store_true",
+                        help="Do not configure python logging; for use by other tools.")
     parser.add_option_group( loggroup )
 
     # output to files
@@ -1043,6 +1147,7 @@ def getParser():
                       help="Name of slice credential file to read from if it exists, or save to when running like '--slicecredfile " + 
                          "mySliceCred.xml -o getslicecred mySliceName'. Defaults to value of 'GENI_SLICECRED' environment variable if defined.")
     parser.add_option_group( filegroup )
+
     # GetVersion
     gvgroup = optparse.OptionGroup( parser, "GetVersion Cache",
                           "Control GetVersion Cache" )
@@ -1059,6 +1164,8 @@ def getParser():
     gvgroup.add_option("--GetVersionCacheName", dest='getversionCacheName',
                       default="~/.gcf/get_version_cache.json",
                       help="File where GetVersion info will be cached, default is %default")
+    gvgroup.add_option("--noCacheFiles", default=False, action="store_true",
+                       help="Disable both GetVersion and Aggregate Nickname cache functionality completely; no files are downloaded, saved, or loaded.")
     parser.add_option_group( gvgroup )
 
     # AggNick
@@ -1082,32 +1189,42 @@ def getParser():
                       help="Website with latest agg_nick_cache, default is %default. To force Omni to read this cache, delete your local AggNickCache or use --NoAggNickCache.")
     parser.add_option_group( angroup )
 
-    # Development related
-    devgroup = optparse.OptionGroup( parser, "For Developers",
-                          "Features only needed by developers" )
+    # Development / Advanced
+    devgroup = optparse.OptionGroup( parser, "For Developers / Advanced Users",
+                          "Features only needed by developers or advanced users" )
+    devgroup.add_option("--useSliceMembers", default=True, action="store_true",
+                          help="DEPRECATED - this option no longer has any effect. The option is always true, unless you specify --noSliceMembers.")
+    devgroup.add_option("--noSliceMembers", default=False, action="store_true",
+                          help="Reverse of --useSliceMembers. Do NOT create accounts or install slice members' SSH keys on reserved resources in createsliver, provision or performoperationalaction. Default is %default. " + \
+                              "When specified, only users from your omni_config are used (unless --ignoreConfigUsers).")
+    devgroup.add_option("--ignoreConfigUsers", default=False, action="store_true",
+                          help="Ignore users and SSH keys listed in your omni_config when installing SSH keys on resources in createsliver or provision or " + \
+                              "performoperationalaction. Default is false - your omni_config users are read and used.")
+    devgroup.add_option("--ssltimeout", default=360, action="store", type="float",
+                        help="Seconds to wait before timing out AM and CH calls. Default is %default seconds.")
+    devgroup.add_option("--noExtraCHCalls", default=False, action="store_true",
+                        help="Disable extra Clearinghouse calls like reporting slivers. Default is %default.")
+    devgroup.add_option("--devmode", default=False, action="store_true",
+                      help="Run in developer mode: more verbose, less error checking of inputs")
+    devgroup.add_option("--raise-error-on-v2-amapi-error", dest='raiseErrorOnV2AMAPIError',
+                      default=False, action="store_true",
+                      help="In AM API v2, if an AM returns a non-0 (failure) result code, raise an AMAPIError. Default is %default. For use by scripts.")
+    devgroup.add_option("--maxBusyRetries", default=4, action="store", type="int",
+                      help="Max times to retry AM or CH calls on getting a 'busy' error. Default: %default")
+    devgroup.add_option("--no-compress", dest='geni_compressed', 
+                      default=True, action="store_false",
+                      help="Do not compress returned values")
     devgroup.add_option("--abac", default=False, action="store_true",
                       help="Use ABAC authorization")
     devgroup.add_option("--arbitrary-option", dest='arbitrary_option',
                       default=False, action="store_true",
                       help="Add an arbitrary option to ListResources (for testing purposes)")
-    devgroup.add_option("--devmode", default=False, action="store_true",
-                      help="Run in developer mode: more verbose, less error checking of inputs")
-    devgroup.add_option("--no-compress", dest='geni_compressed', 
-                      default=True, action="store_false",
-                      help="Do not compress returned values")
     devgroup.add_option("--no-ssl", dest="ssl", action="store_false",
                       default=True, help="do not use ssl")
     devgroup.add_option("--no-tz", default=False, action="store_true",
                       help="Do not send timezone on RenewSliver")
     devgroup.add_option("--orca-slice-id", dest="orca_slice_id",
                       help="Use the given Orca slice id")
-    devgroup.add_option("--raise-error-on-v2-amapi-error", dest='raiseErrorOnV2AMAPIError',
-                      default=False, action="store_true",
-                      help="In AM API v2, if an AM returns a non-0 (failure) result code, raise an AMAPIError. Default is %default. For use by scripts.")
-    devgroup.add_option("--ssltimeout", default=360, action="store", type="float",
-                        help="Seconds to wait before timing out AM and CH calls. Default is %default seconds.")
-    devgroup.add_option("--noExtraCHCalls", default=False, action="store_true",
-                        help="Disable extra Clearinghouse calls like reporting slivers. Default is %default.")
     parser.add_option_group( devgroup )
     return parser
 
@@ -1188,6 +1305,11 @@ def parse_args(argv, options=None, parser=None):
         options.usercredfile = os.path.normpath(os.path.normcase(os.path.expanduser(options.usercredfile)))
     if options.slicecredfile:
         options.slicecredfile = os.path.normpath(os.path.normcase(os.path.expanduser(options.slicecredfile)))
+
+    # noSliceMembers forces useSliceMembers to be false
+    # Note you can also force it false with an omni_config setting of useslicemembers=False in the omni section
+    if options.noSliceMembers:
+        options.useSliceMembers = False
 
     return options, args
 

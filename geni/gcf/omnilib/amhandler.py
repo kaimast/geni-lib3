@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 #----------------------------------------------------------------------
-# Copyright (c) 2012-2014 Raytheon BBN Technologies
+# Copyright (c) 2012-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -475,6 +475,9 @@ class AMCallHandler(object):
         #      urn
         #      url
         #      lasterror
+        if self.opts.noCacheFiles:
+            self.logger.debug("Per option noCacheFiles, not saving GetVersion cache")
+            return
         fdir = os.path.dirname(self.opts.getversionCacheName)
         if fdir and fdir != "":
             if not os.path.exists(fdir):
@@ -489,6 +492,9 @@ class AMCallHandler(object):
     def _load_getversion_cache(self):
         '''Load GetVersion cache from JSON encoded file, if any'''
         self.GetVersionCache = {}
+        if self.opts.noCacheFiles:
+            self.logger.debug("Per option noCacheFiles, not loading get version cache")
+            return
         #client url->
         #      timestamp (a datetime.datetime)
         #      version struct, including code/value/etc as appropriate
@@ -1117,13 +1123,8 @@ class AMCallHandler(object):
             else:
                 (cred, message) = self.framework.get_user_cred()
             if cred is None:
-                # Dev mode allow doing the call anyhow
-                self.logger.error('Cannot list resources: Could not get user credential')
-                if not self.opts.devmode:
-                    return (None, "Could not get user credential: %s" % message)
-                else:
-                    self.logger.info('... but continuing')
-                    cred = ""
+                # Per AM API Change Proposal AD, allow no user cred to get an ad
+                self.logger.debug("No user credential, but this is now allowed for getting Ads....")
         else:
             (slicename, urn, cred, retVal, slice_exp) = self._args_to_slicecred(args, 1, "listresources")
             if cred is None or cred == "":
@@ -1427,6 +1428,9 @@ class AMCallHandler(object):
         rspecCtr = 0
         savedFileDesc = ""
         for ((urn,url), rspecStruct) in rspecs.items():
+            amNick = _lookupAggNick(self, urn)
+            if amNick is None:
+                amNick = urn
             self.logger.debug("Getting RSpec items for AM urn %s (%s)", urn, url)
             rspecOnly, message = self._retrieve_value( rspecStruct, message, self.framework)
             if self.opts.api_version < 2:
@@ -1436,7 +1440,9 @@ class AMCallHandler(object):
 
             retVal, filename = _writeRSpec(self.opts, self.logger, rspecOnly, slicename, urn, url, None, len(rspecs))
             if filename:
-                savedFileDesc += "Saved listresources RSpec from '%s' (url '%s') to file %s; " % (urn, url, filename)
+                if not savedFileDesc.endswith(' ') and savedFileDesc != "" and not savedFileDesc.endswith('\n'):
+                    savedFileDesc += " "
+                savedFileDesc += "Saved listresources RSpec from '%s' (url '%s') to file %s; " % (amNick, url, filename)
 
             if rspecOnly and rspecOnly != "":
                 rspecCtr += 1
@@ -1445,11 +1451,13 @@ class AMCallHandler(object):
                     # Use a helper function in handler_utils that can be used elsewhere.
                     manExpires = expires_from_rspec(rspecOnly, self.logger)
                     if manExpires is not None:
-                        prstr = "Reservation at %s in slice %s expires at %s (UTC)." % (urn, slicename, manExpires)
+                        prstr = "Reservation at %s in slice %s expires at %s (UTC)." % (amNick, slicename, manExpires)
                         self.logger.info(prstr)
-                        if not savedFileDesc.endswith('.'):
+                        if not savedFileDesc.endswith('.') and savedFileDesc != "" and not savedFileDesc.endswith('; '):
                             savedFileDesc += '.'
-                        savedFileDesc += " " + prstr
+                        if not savedFileDesc.endswith(' ') and savedFileDesc != '':
+                            savedFileDesc += " "
+                        savedFileDesc += prstr
                     else:
                         self.logger.debug("Got None sliver expiration from manifest")
 
@@ -1471,7 +1479,10 @@ class AMCallHandler(object):
                 if self.opts.output:
                     retVal += "Wrote rspecs from %d aggregate(s)" % numAggs
                     retVal +=" to %d file(s)"% len(rspecs)
-                    retVal += "\n" + savedFileDesc
+                if savedFileDesc != "":
+                    if not retVal.endswith("\n"):
+                        retVal += "\n"
+                    retVal += savedFileDesc
             else:
                 retVal +="No Rspecs succesfully parsed from %d aggregate(s)." % numAggs
             if message:
@@ -1827,7 +1838,7 @@ class AMCallHandler(object):
 #---
 
         msg = "Create Sliver %s at %s" % (urn, client.str)
-        self.logger.debug("Doing createsliver with urn %s, %d creds, rspec of length %d starting '%s...', users struct %s, options %r", urn, len(creds), len(rspec), rspec[:min(100, len(rspec))], slice_users, options)
+        self.logger.debug("Doing createsliver with urn %s, %d creds, rspec of length %d starting '%s...', users struct %s..., options %r", urn, len(creds), len(rspec), rspec[:min(100, len(rspec))], str(slice_users)[:min(180, len(str(slice_users)))], options)
         try:
             ((result, message), client) = self._api_call(client, msg, op,
                                                 args)
@@ -1856,7 +1867,7 @@ class AMCallHandler(object):
                 if manExpires is not None:
                     prstr = "Reservation at %s in slice %s expires at %s (UTC)." % (client.str, slicename, manExpires)
                     self.logger.info(prstr)
-                    if not retVal.endswith('.'):
+                    if not (retVal.endswith('.') or retVal.endswith('. ')):
                         retVal += '.'
                     retVal += " " + prstr
                 else:
@@ -2302,6 +2313,10 @@ class AMCallHandler(object):
                 if rspec and rspec_util.is_rspec_string( rspec, None, None, logger=self.logger ):
                     rspec = rspec_util.getPrettyRSpec(rspec)
                     result['value']['geni_rspec'] = rspec
+                else:
+                    self.logger.debug("No valid RSpec returned!")
+            else:
+                self.logger.debug("Return struct missing geni_rspec element!")
 
             # Pull out the result
             retItem[ client.url ] = result
@@ -2611,16 +2626,47 @@ class AMCallHandler(object):
                     self.logger.warn("Sliver %s reported error: %s", sliver, sliverFails[sliver])
 
                 # Save result
+                ftype = ".json"
                 if isinstance(realresult, dict):
                     prettyResult = json.dumps(realresult, ensure_ascii=True, indent=2)
+                    # Some POAs return a top level geni_credential
+                    # Save it off separately for convenience
+                    if realresult.has_key('geni_credential'):
+                        cred = realresult['geni_credential'].replace("\\n", "\n")
+                        fname = _maybe_save_slicecred(self, slicename + '-sharedlan', cred)
+                        if fname is not None:
+                            prstr = "Saved shared LAN credential to file '%s'" % fname
+                            retVal += prstr + "\n"
+                            self.logger.info(prstr)
                 else:
+                    ftype = ".txt"
                     prettyResult = pprint.pformat(realresult)
+                    # Some POAs return a credential per sliver
+                    # Save those as separate files for readability
+                    if isinstance(realresult, list):
+                        for sliver in realresult:
+                            sliverurn = ''
+                            cred = None
+                            if isinstance(sliver, dict):
+                                if sliver.has_key('geni_sliver_urn'):
+                                    sliverurn = sliver['geni_sliver_urn']
+                                if sliver.has_key('geni_credential'):
+                                    cred = sliver['geni_credential'].replace("\\n", "\n")
+                            if cred is not None:
+                                fname = _maybe_save_slicecred(self, slicename + '-' + sliverurn + '-sharedlan', cred)
+                                if fname is not None:
+                                    prstr = "Saved shared LAN %s credential to file '%s'" % (sliverurn, fname)
+                                    retVal += prstr + "\n"
+                                    self.logger.info(prstr)
+
                 header="PerformOperationalAction result for %s at AM %s:" % (descripMsg, client.str)
                 filename = None
                 if self.opts.output:
-                    filename = _construct_output_filename(self.opts, slicename, client.url, client.urn, "poa-" + action, ".json", numClients)
+                    filename = _construct_output_filename(self.opts, slicename, client.url, client.urn, "poa-" + action, ftype, numClients)
                     #self.logger.info("Writing result of poa %s at AM: %s to file %s", descripMsg, client.url, filename)
+
                 _printResults(self.opts, self.logger, header, prettyResult, filename)
+
                 retVal += "PerformOperationalAction %s was successful." % descripMsg
                 if len(missingSlivers) > 0:
                     retVal += " - with %d missing slivers?!" % len(missingSlivers)
@@ -2700,7 +2746,8 @@ class AMCallHandler(object):
             ds = args[1]
         else:
             ds = None
-        (time, time_with_tz, time_string) = self._datetimeFromString(ds, slice_exp, name)
+        # noSec=True so that fractional seconds are dropped
+        (time, time_with_tz, time_string) = self._datetimeFromString(ds, slice_exp, name, noSec=True)
 
         self.logger.info('Renewing Sliver %s until %s (UTC)' % (name, time_with_tz))
 
@@ -2852,8 +2899,22 @@ class AMCallHandler(object):
                                     for s in streal['geni_resources']:
                                         #self.logger.debug("Got s %s", s)
                                         if s.has_key('geni_urn') and urn_util.is_valid_urn_bytype(s['geni_urn'], 'sliver'):
-                                            if not s['geni_urn'] in sliver_urns:
-                                                sliver_urns.append(s['geni_urn'])
+                                            slice_auth = slice_urn[0 : slice_urn.find('slice+')]
+                                            surn = s['geni_urn']
+                                            if not surn in sliver_urns:
+                                                sliver_urns.append(surn)
+                                        elif s.has_key('geni_urn'):
+                                            surn = s['geni_urn']
+                                            if surn is None:
+                                                surn = ""
+                                            surn = surn.strip()
+                                            if surn.startswith(urn) and agg_urn is not None and agg_urn != "" and ("foam" in agg_urn or "al2s" in agg_urn):
+                                                # Work around a FOAM/AL2S bug producing bad sliver URNs
+                                                # See http://groups.geni.net/geni/ticket/1294
+                                                if not surn in sliver_urns:
+                                                    sliver_urns.append(surn)
+                                                    self.logger.debug("Malformed sliver URN '%s'. Assuming this is OK anyhow at this FOAM based am: %s. See http://groups.geni.net/geni/ticket/1294", surn, agg_urn)
+                                    # End of loop over status return elems
 
                             for sliver_urn in sliver_urns:
                                 self.framework.update_sliver_info(agg_urn, urn, sliver_urn,
@@ -2984,7 +3045,8 @@ class AMCallHandler(object):
             ds = args[1]
         else:
             ds = None
-        (time, time_with_tz, time_string) = self._datetimeFromString(ds, slice_exp, name)
+        # noSec=True so that fractional seconds are dropped
+        (time, time_with_tz, time_string) = self._datetimeFromString(ds, slice_exp, name, noSec=True)
 
         self.logger.info('Renewing Slivers in slice %s until %s (UTC)' % (name, time_with_tz))
 
@@ -3220,7 +3282,7 @@ class AMCallHandler(object):
         # Call SliverStatus on each client
         for client in clientList:
             try:
-                ((status, message), client) = self._api_call(client,
+                ((rawstatus, message), client) = self._api_call(client,
                                                    msg + str(client.url),
                                                    op, args)
             except BadClientException, bce:
@@ -3232,8 +3294,20 @@ class AMCallHandler(object):
                     self._raise_omni_error("\nSliverStatus failed: " + retVal)
                 continue
 
-            # Get the dict status out of the result (accounting for API version diffs, ABAC)
-            (status, message) = self._retrieve_value(status, message, self.framework)
+            rawResult = rawstatus
+            amapiError = None
+            status = None
+            try:
+                # Get the dict status out of the result (accounting for API version diffs, ABAC)
+                (status, message) = self._retrieve_value(rawstatus, message, self.framework)
+            except AMAPIError, amapiError:
+                # Would raise an AMAPIError.
+                # But that loses the side-effect of deleting any sliverinfo records.
+                # So if we're doing those, hold odd on raising the error
+                if self.opts.noExtraCHCalls:
+                    raise amapiError
+                else:
+                    self.logger.debug("Got AMAPIError retrieving value from sliverstatus. Hold it until we do any sliver info processing")
 
             if status:
                 if not isinstance(status, dict):
@@ -3245,7 +3319,12 @@ class AMCallHandler(object):
                     else:
                         prettyResult = pprint.pformat(status)
                 else:
-                    prettyResult = json.dumps(status, ensure_ascii=True, indent=2)
+                    try:
+                        prettyResult = json.dumps(status, ensure_ascii=True, indent=2)
+                    except Exception, jde:
+                        self.logger.debug("Failed to parse status as JSON: %s", jde)
+                        prettyResult = pprint.pformat(status)
+
                     if status.has_key('geni_status'):
                         msg = "Slice %s at AM %s has overall SliverStatus: %s"% (name, client.str, status['geni_status'])
                         self.logger.info(msg)
@@ -3269,6 +3348,118 @@ class AMCallHandler(object):
                         self.logger.info(msg)
                         retVal += msg + ".\n "
 
+                    # #634: Get the sliverinfo
+                    # Then sync these up: create an entry if there isn't one, or update it with the correct expiration
+                    if not self.opts.noExtraCHCalls:
+                        try:
+                            # Get the Agg URN for this client
+                            agg_urn = self._getURNForClient(client)
+                            self.logger.debug("Syncing sliver_info records with CH....")
+                            if urn_util.is_valid_urn(agg_urn):
+                                # Extract sliver_urn / expiration pairs from sliverstatus
+                                # But this is messy. An AM might report a sliver in the top level geni_urn.
+                                # Or it might report multiple geni_resources, and the URN in each geni_urn might be the slivers.
+                                # For PG and GRAM and EG, look for geni_urn under geni_resources
+                                # At DCN, the geni_urn under geni_resources is what I want, although the URN type says 'slice'
+                                poss_slivers = []
+                                if status.has_key('geni_resources'):
+                                    for resource in status['geni_resources']:
+                                        if resource and isinstance(resource, dict) and resource.has_key('geni_urn'):
+                                            gurn = resource['geni_urn']
+                                            if urn_util.is_valid_urn(gurn):
+                                                poss_slivers.append(gurn.strip())
+#                                self.logger.debug("AM poss_slivers: %s", str(poss_slivers))
+
+                                # Grab the first expiration. In APIv2 that's the only real one.
+                                if isinstance(exps, list):
+                                    if len(exps) > 0:
+                                        expI = exps[0]
+                                    else:
+                                        expI = None
+                                else:
+                                    expI = exps
+
+                                # I'd like to be able to tell the SA to delete all slivers registered for
+                                # this slice/AM, but the API says sliver_urn is required
+                                slivers_by_am = self.framework.list_sliver_infos_for_slice(urn)
+                                if slivers_by_am is None or not slivers_by_am.has_key(agg_urn):
+                                    # CH has no slivers. So all slivers the AM reported must be sent to the CH
+
+                                    # FIXME: status should be a list of structs which each has a geni_urn or geni_sliver_urn
+                                    # So it could be status['geni_resources']. Mostly I think that works.
+                                    s_es = []
+                                    if status.has_key('geni_resources'):
+                                        s_es = status['geni_resources']
+                                        self.logger.debug("CH listed 0 sliver_info records, so creating them all from status info")
+                                        # Create an entry
+                                        self.framework.create_sliver_info(None, urn, 
+                                                                          client.url,
+                                                                          expI,
+                                                                          s_es, agg_urn)
+                                    else:
+                                        # No struct of slivers to report
+                                        pass
+                                else:
+                                    # Need to reconcile the CH list and the AM list
+                                    ch_slivers = slivers_by_am[agg_urn]
+                                    self.logger.debug("Reconciling %d CH sliver infos against %d AM reported slivers", len(ch_slivers.keys()), len(poss_slivers))
+                                    # For each CH sliver, if not in poss_slivers, then remove it
+                                    # Else if expirations differ, update it
+                                    for sliver in ch_slivers.keys():
+                                        chexpo = None
+                                        if ch_slivers[sliver].has_key('SLIVER_INFO_EXPIRATION'):
+                                            chexp = ch_slivers[sliver]['SLIVER_INFO_EXPIRATION']
+                                            chexpo = naiveUTC(dateutil.parser.parse(chexp, tzinfos=tzd))
+                                        if sliver not in poss_slivers:
+                                            self.logger.debug("CH lists sliver '%s' that is not in AM list; delete", sliver)
+                                            # CH reported a sliver not reported by the AM. Delete it
+                                            self.framework.delete_sliver_info(sliver)
+                                        else:
+                                            if chexpo is None or (expI is not None and abs(chexpo - expI) > datetime.timedelta.resolution):
+                                                self.logger.debug("CH sliver %s expiration %s != AM exp %s; update at CH", sliver, str(chexpo), str(expI))
+                                                # update the recorded expiration time to be accurate
+                                                self.framework.update_sliver_info(agg_urn, urn, sliver,
+                                                                                  expI)
+                                            else:
+                                                # CH has what we have
+#                                                self.logger.debug("CH agrees about expiration of %s: %s", sliver, expI)
+                                                pass
+
+                                    # Then for each AM sliver, if not in ch_slivers, add it
+                                    sliver_statusstruct = []
+                                    for amsliver in poss_slivers:
+                                        if amsliver not in ch_slivers.keys():
+                                            self.logger.debug("AM lists sliver %s not reported by CH", amsliver)
+                                            # AM reported a sliver not reported by the CH
+                                            if status.has_key('geni_resources'):
+                                                s_es = status['geni_resources']
+                                                for resource in status['geni_resources']:
+                                                    if resource and isinstance(resource, dict) and resource.has_key('geni_urn'):
+                                                        gurn = resource['geni_urn']
+                                                        if gurn.strip() == amsliver:
+                                                            sliver_statusstruct.append(resource)
+                                                            break
+                                    if len(sliver_statusstruct) > 0:
+                                        self.logger.debug("Creating %s sliver records at CH", len(sliver_statusstruct))
+                                        # Create an entry for each sliver that was missing
+                                        self.framework.create_sliver_info(None, urn, 
+                                                                          client.url,
+                                                                          expI,
+                                                                          sliver_statusstruct, agg_urn)
+                                # End of else block to reconcile CH vs AM sliver lists
+                            else:
+                                self.logger.debug("Not syncing slivers with CH - no valid AM URN known")
+                        except NotImplementedError, nie:
+                            self.logger.debug('Framework %s doesnt support recording slivers in SA database', self.config['selected_framework']['type'])
+                        except Exception, e:
+                            # FIXME: info only?
+                            self.logger.warn('Error syncing slivers with SA database')
+                            self.logger.debug(e)
+                    else:
+                        self.logger.debug("Per commandline option, not syncing slivers with clearinghouse")
+                    # End of block to sync sliver_info with CH
+                # End of block to handle status is a dict
+
                 # Save/print out result
                 header="Sliver status for Slice %s at AM %s" % (urn, client.str)
                 filename = None
@@ -3282,6 +3473,49 @@ class AMCallHandler(object):
                 retItem[ client.url ] = status
                 successCnt+=1
             else:
+                # #634:
+                # delete any sliver_infos for this am/slice
+                # However, not all errors mean there are no slivers here.
+                # Based on testing 8/2014, all AMs return code 2 or code 12 if there are no slivers here
+                # so that it's safe to delete any sliver_info records. 
+                # Use code 15 too as that seems reasonable.
+                # SEARCHFAILED (12), EXPIRED (15)
+                # EG uses ERROR (2), but that's too general so avoid that one
+                doDelete = False
+                code = -1
+                if rawResult is not None and isinstance(rawResult, dict) and rawResult.has_key('code') and isinstance(rawResult['code'], dict) and 'geni_code' in rawResult['code']:
+                    code = rawResult['code']['geni_code']
+                if code==12 or code==15:
+                    doDelete=True
+                if doDelete and not self.opts.noExtraCHCalls:
+                    self.logger.debug("SliverStatus failed with an error that suggests no slice at this AM - delete all sliverinfo records: %s", message)
+                    # delete sliver info from SA database
+                    try:
+                        # Get the Agg URN for this client
+                        agg_urn = self._getURNForClient(client)
+                        if urn_util.is_valid_urn(agg_urn):
+                            # I'd like to be able to tell the SA to delete all slivers registered for
+                            # this slice/AM, but the API says sliver_urn is required
+                            sliver_urns = self.framework.list_sliverinfo_urns(urn, agg_urn)
+                            for sliver_urn in sliver_urns:
+                                self.framework.delete_sliver_info(sliver_urn)
+                        else:
+                            self.logger.debug("Not ensuring with CH that AM %s slice %s has no slivers - no valid AM URN known")
+                    except NotImplementedError, nie:
+                        self.logger.debug('Framework %s doesnt support recording slivers in SA database', self.config['selected_framework']['type'])
+                    except Exception, e:
+                        self.logger.info('Error ensuring slice has no slivers recorded in SA database at this AM')
+                        self.logger.debug(e)
+                else:
+                    if self.opts.noExtraCHCalls:
+                        self.logger.debug("Per commandline option, not ensuring clearinghouse lists no slivers for this slice.")
+                    else:
+                        self.logger.debug("Based on return error code, (%d), not deleting any slivers here.", code)
+
+                if amapiError is not None:
+                    self.logger.debug("Having processed the sliverstatus return, now raise the AMAPI Error")
+                    raise amapiError
+
                 # FIXME: Put the message error in retVal?
                 # FIXME: getVersion uses None as the value in this case. Be consistent
                 retItem[ client.url ] = False
@@ -3412,7 +3646,60 @@ class AMCallHandler(object):
             retItem[client.url] = status
             # Get the dict status out of the result (accounting for API version diffs, ABAC)
             (status, message) = self._retrieve_value(status, message, self.framework)
+
             if not status:
+                # #634:
+                # delete any sliver_infos for this am/slice
+                # However, not all errors mean there are no slivers here.
+                # Based on testing 8/2014, all AMs return code 2 or code 12 if there are no slivers here
+                # so that it's safe to delete any sliver_info records. 
+                # Use code 15 too as that seems reasonable.
+                # Use SEARCHFAILED (12), EXPIRED (15)
+                # EG uses ERROR (2), but that will show up in other places. So avoid that one.
+                # Also note that if not geni_best_effort
+                # that a failure may mean only part failed
+                doDelete = False
+                raw = retItem[client.url]
+                code = -1
+                if raw is not None and isinstance(raw, dict) and raw.has_key('code') and isinstance(raw['code'], dict) and 'geni_code' in raw['code']:
+                    code = raw['code']['geni_code']
+                # Technically if geni_best_effort and got this failure, then all slivers are bad
+                # But that's only true if the AM honors geni_best_effort, which it may not
+                # So only assume they're all bad if we didn't request any specific slivers.
+                if len(slivers) == 0:
+                    if code==12 or code==15:
+                        doDelete=True
+                if not self.opts.noExtraCHCalls:
+                    if doDelete:
+                        self.logger.debug("Status failed with an error that suggests no slice at this AM or requested slivers not at this AM - delete all/requested sliverinfo records: %s", message)
+                        # delete sliver info from SA database
+                        try:
+                            if len(slivers) > 0:
+                                self.logger.debug("Status failed - assuming all %d sliver URNs asked about are invalid and not at this AM - delete from CH", len(slivers))
+                                for sliver in slivers:
+                                    self.framework.delete_sliver_info(sliver)
+                            else:
+                                self.logger.debug("Status failed: assuming this slice has 0 slivers at this AM. Ensure CH lists none.")
+                                # Get the Agg URN for this client
+                                agg_urn = self._getURNForClient(client)
+                                if urn_util.is_valid_urn(agg_urn):
+                                    # I'd like to be able to tell the SA to delete all slivers registered for
+                                    # this slice/AM, but the API says sliver_urn is required
+                                    sliver_urns = self.framework.list_sliverinfo_urns(urn, agg_urn)
+                                    for sliver_urn in sliver_urns:
+                                        self.framework.delete_sliver_info(sliver_urn)
+                                else:
+                                    self.logger.debug("Not ensuring with CH that AM %s slice %s has no slivers - no valid AM URN known")
+                        except NotImplementedError, nie:
+                            self.logger.debug('Framework %s doesnt support recording slivers in SA database', self.config['selected_framework']['type'])
+                        except Exception, e:
+                            self.logger.info('Error ensuring slice has no slivers recorded in SA database at this AM')
+                            self.logger.debug(e)
+                    else:
+                        self.logger.debug("Given AM return code (%d) and # requested slivers (%d), not telling CH to not list these slivers.", code, len(slivers))
+                else:
+                    self.logger.debug("Per commandline option, not ensuring clearinghouse lists no slivers for this slice.")
+
                 # FIXME: Put the message error in retVal?
                 # FIXME: getVersion uses None as the value in this case. Be consistent
                 fmt = "\nFailed to get Status on %s at AM %s: %s\n"
@@ -3420,6 +3707,7 @@ class AMCallHandler(object):
                     message = "(no reason given)"
                 retVal += fmt % (descripMsg, client.str, message)
                 continue
+            # End of block to handle got no good status (got an error)
 
             missingSlivers = self._findMissingSlivers(status, slivers)
             if len(missingSlivers) > 0:
@@ -3427,11 +3715,12 @@ class AMCallHandler(object):
                 self.logger.debug("%s", missingSlivers)
 
             # Summarize result
-            if len(slivers) > 0:
-                retct = str(len(slivers) - len(missingSlivers))
+            retcnt = len(slivers) # Num slivers reporting results
+            if retcnt > 0:
+                retcnt = retcnt - len(missingSlivers)
             else:
-                retct = str(len(self._getSliverResultList(status)))
-            retVal += "Retrieved Status on %s slivers in slice %s at %s:\n" % (retct, urn, client.str)
+                retcnt = len(self._getSliverResultList(status))
+            retVal += "Retrieved Status on %d slivers in slice %s at %s:\n" % (retcnt, urn, client.str)
 
             sliverFails = self._didSliversFail(status)
             for sliver in sliverFails.keys():
@@ -3462,13 +3751,13 @@ class AMCallHandler(object):
             # If alloc state includes geni_unallocated, say so
             statusMsg = '  '
             if len(alloc_statuses) == 1:
-                if len(slivers) == 1:
+                if retcnt == 1:
                     statusMsg += "Sliver is "
                 else:
                     statusMsg += "All slivers are "
                 statusMsg += "in allocation state %s.\n" % alloc_statuses.keys()[0]
             else:
-                statusMsg += "  %d slivers have %d different allocation statuses" % (len(slivers), len(alloc_statuses.keys()))
+                statusMsg += "  %d slivers have %d different allocation statuses" % (retcnt, len(alloc_statuses.keys()))
                 if 'geni_unallocated' in alloc_statuses:
                     statusMsg += "; some are geni_unallocated.\n"
                 else:
@@ -3476,13 +3765,13 @@ class AMCallHandler(object):
                         statusMsg += '.'
                     statusMsg += "\n"
             if len(op_statuses) == 1:
-                if len(slivers) == 1:
+                if retcnt == 1:
                     statusMsg += "  Sliver is "
                 else:
                     statusMsg += "  All slivers are "
                 statusMsg += "in operational state %s.\n" % op_statuses.keys()[0]
             else:
-                statusMsg = "  %d slivers have %d different operational statuses" % (len(slivers), len(op_statuses.keys()))
+                statusMsg = "  %d slivers have %d different operational statuses" % (retcnt, len(op_statuses.keys()))
                 if 'geni_failed' in op_statuses:
                     statusMsg += "; some are geni_failed"
                 if 'geni_pending_allocation' in op_statuses:
@@ -3521,6 +3810,152 @@ class AMCallHandler(object):
             retVal += statusMsg
             if len(missingSlivers) == 0 and len(sliverFails.keys()) == 0:
                 successCnt+=1
+
+            # Now sync up slivers with CH
+            if not self.opts.noExtraCHCalls:
+                # ensure have agg_urn
+                agg_urn = self._getURNForClient(client)
+                if urn_util.is_valid_urn(agg_urn):
+                    slivers_by_am = None # Slivers in this slice by AM CH reports
+                    try:
+                        slivers_by_am = self.framework.list_sliver_infos_for_slice(urn)
+
+                        # Gather info on what the AM reported
+                        resultValue = self._getSliverResultList(status)
+                        status_structs = {} # dict by URN of sliver status structs
+                        expirations = {} # dict by URN of sliver expiration string
+                        if len(resultValue) == 0:
+                            self.logger.debug("Result value not a list or empty")
+                        else:
+                            for sliver in resultValue:
+                                if not isinstance(sliver, dict):
+                                    self.logger.debug("entry in result list was not a dict")
+                                    continue
+                                if not sliver.has_key('geni_sliver_urn') or str(sliver['geni_sliver_urn']).strip() == "":
+                                    self.logger.debug("entry in result had no 'geni_sliver_urn'")
+                                else:
+                                    slivurn = sliver['geni_sliver_urn']
+                                    status_structs[slivurn] = sliver
+                                    if not sliver.has_key('geni_expires'):
+                                        self.logger.debug("Sliver %s missing 'geni_expires'", slivurn)
+                                        expirations[slivurn] = slice_exp # Assume sliver expires at slice expiration if not specified
+                                        continue
+                                    expirations[slivurn] = sliver['geni_expires']
+                        # Finished building status_structs and expirations
+
+                        statuses = self._getSliverAllocStates(status) # Dict by URN of sliver alloc state
+                        resultSlivers = statuses.keys()
+
+                        if slivers_by_am is None or not slivers_by_am.has_key(agg_urn):
+                            # CH has no slivers. So all
+                            # slivers the AM reported must be sent
+                            # to the CH
+                            if len(resultSlivers) > 0:
+                                self.logger.debug("CH missing %d slivers at AM - report those that are provisioned", len(resultSlivers))
+                            for sliver in resultSlivers:
+                                if not statuses.has_key(sliver):
+                                    self.logger.debug("No %s key in statuses? %s", sliver, statuses)
+                                elif statuses[sliver] == 'geni_provisioned':
+                                    if not expirations.has_key(sliver):
+                                        self.logger.debug("No %s key in expirations? %s", sliver, expirations)
+                                        expO = None
+                                    else:
+                                        expO = self._datetimeFromString(expirations[sliver])[1]
+                                    if not status_structs.has_key(sliver):
+                                        self.logger.debug("status_structs missing %s: %s", sliver, status_structs)
+                                    else:
+                                    # self.logger.debug("Will create sliver. slice: %s, AMURL: %s, expiration: %s, status_struct: %s, AMURN: %s", urn, client.url, expO, status_structs[sliver], agg_urn)
+                                        self.framework.create_sliver_info(None, urn, 
+                                                                          client.url,
+                                                                          expO,
+                                                                          [status_structs[sliver]], agg_urn)
+                                # else this sliver should not (yet) be recorded at the CH
+                        else:
+                            # Need to reconcile the CH list and the AM list
+                            ch_slivers = slivers_by_am[agg_urn]
+
+                            # missingSlivers: delete CH record for each
+                            # FIXME: If self.opts.geni_best_effort could an AM not return an entry for a sliver
+                            # you don't have permission to see or something? I don't think I'll
+                            # worry about this now.
+                            if len(missingSlivers) > 0:
+                                self.logger.debug("Ensure %d missing slivers not reported by CH", len(missingSlivers))
+                            for missing in missingSlivers:
+                                if missing in ch_slivers.keys():
+                                    self.framework.delete_sliver_info(missing)
+                                # Else AM didn't list it and neither did CH
+
+                            # sliverFails: If the failed sliver says it is provisioned, it should be at the CH
+                            # If the failed sliver is not provisioned, then it should not be at the CH (yet)
+                            for fail in sliverFails:
+                                if statuses[fail] == 'geni_provisioned' and fail not in ch_slivers.keys():
+                                    expO = self._datetimeFromString(expirations[fail])[1]
+                                    self.logger.debug("Recording failed but provisioned sliver %s at CH (error: %s)", fail, sliverFails[fail])
+                                    self.framework.create_sliver_info(None, urn, 
+                                                                      client.url,
+                                                                      expO,
+                                                                      [status_structs[fail]], agg_urn)
+                                elif statuses[fail] != 'geni_provisioned' and fail in ch_slivers.keys():
+                                    # The AM says the sliver is gone or not yet provisioned: Delete
+                                    self.logger.debug("Deleting CH record of failed and not provisioned sliver %s (error: %s, expiration: %s)", fail, sliverFails[fail], expirations[fail])
+                                    self.framework.delete_sliver_info(fail)
+                                else:
+                                    # Do nothing with this failed sliver - just note it
+                                    if fail in ch_slivers.keys():
+                                        self.logger.debug("Not changing existing CH record of sliver %s that failed: %s", fail, sliverFails[fail])
+                                    else:
+                                        self.logger.debug("Not adding new CH record of sliver %s that failed: %s", fail, sliverFails[fail])
+                            # End of block to handle failed slivers (had a geni_error)
+
+                            # Any in CH not in result (and if we asked for slivers, also in list
+                            # we asked for) - Delete
+                            # Plus any in CH and result that are not geni_provisioned, delete
+                            for ch_sliver in ch_slivers.keys():
+                                if ch_sliver not in resultSlivers:
+                                    if len(slivers) == 0 or ch_sliver in slivers:
+                                        self.logger.debug("Deleting CH record of sliver not at AM: %s", ch_sliver)
+                                        self.framework.delete_sliver_info(ch_sliver)
+                                elif statuses[ch_sliver] != 'geni_provisioned':
+                                    self.logger.debug("Deleting CH record of not provisioned sliver %s (expiration: %s)", ch_sliver, expirations[ch_sliver])
+                                    self.framework.delete_sliver_info(ch_sliver)
+
+                            # All other slivers in result (not in sliverFails):
+                            for sliver in resultSlivers:
+                                if statuses[sliver] == 'geni_provisioned' and sliver not in sliverFails.keys():
+                                    if sliver not in ch_slivers.keys():
+                                        expO = self._datetimeFromString(expirations[sliver])[1]
+                                        self.logger.debug("Recording AM reported sliver %s at CH", sliver)
+                                        self.framework.create_sliver_info(None, urn, 
+                                                                          client.url,
+                                                                          expO,
+                                                                          [status_structs[sliver]], agg_urn)
+                                    else:
+                                        # Now dealing with slivers listed by AM and CH, and provisioned at AM, and not failed
+                                        chexpo = None
+                                        if ch_slivers[sliver].has_key('SLIVER_INFO_EXPIRATION'):
+                                            chexp = ch_slivers[sliver]['SLIVER_INFO_EXPIRATION']
+                                            chexpo = naiveUTC(dateutil.parser.parse(chexp, tzinfos=tzd))
+
+                                        expO, expT, _ = self._datetimeFromString(expirations[sliver])
+                                        if chexpo is None or (expO is not None and abs(chexpo - expO) > datetime.timedelta.resolution):
+                                            self.logger.debug("CH sliver %s expiration %s != AM exp %s; update at CH", sliver, str(chexpo), str(expO))
+                                            # update the recorded expiration time to be accurate
+                                            self.framework.update_sliver_info(agg_urn, urn, sliver,
+                                                                              expT)
+                                        # else CH/AM agree on the time. Nothing to do
+                                # Else the sliver is not yet provisioned or failed. Should already have been handled
+                            # End of loop over slivers in result
+                        # End of block where CH lists slivers in the slice for this AM
+                    except NotImplementedError, nie:
+                        self.logger.debug('Framework %s doesnt support recording slivers in SA database', self.config['selected_framework']['type'])
+                    except Exception, e:
+                        self.logger.info('Error ensuring CH lists same slivers as at this AM')
+                        self.logger.debug(e)
+                else:
+                    self.logger.debug("Not syncing slivers with CH - no valid AM URN known")
+            else:
+                self.logger.debug("Per commandline option, not syncing slivers with clearinghouse.")
+
         # End of loop over clients
 
         # FIXME: Return the status if there was only 1 client?
@@ -3597,7 +4032,7 @@ class AMCallHandler(object):
         ## where you still have resources.
         for client in clientList:
             try:
-                ((res, message), client) = self._api_call(client,
+                ((rawres, message), client) = self._api_call(client,
                                                    msg + str(client.url),
                                                    op, args)
             except BadClientException, bce:
@@ -3609,8 +4044,19 @@ class AMCallHandler(object):
                     self._raise_omni_error("\nDeleteSliver failed: " + retVal)
                 continue
 
-            # Get the boolean result out of the result (accounting for API version diffs, ABAC)
-            (res, message) = self._retrieve_value(res, message, self.framework)
+            amapiError = None
+            res = None
+            try:
+                # Get the boolean result out of the result (accounting for API version diffs, ABAC)
+                (res, message) = self._retrieve_value(rawres, message, self.framework)
+            except AMAPIError, amapiError:
+                # Would raise an AMAPIError.
+                # But that loses the side-effect of deleting any sliverinfo records.
+                # So if we're doing those, hold odd on raising the error
+                if self.opts.noExtraCHCalls:
+                    raise amapiError
+                else:
+                    self.logger.debug("Got AMAPIError retrieving value from deletesliver. Hold it until we do any sliver info processing")
 
             if res:
                 prStr = "Deleted sliver %s at %s" % (urn,
@@ -3644,6 +4090,41 @@ class AMCallHandler(object):
                 successCnt += 1
                 successList.append( client.url )
             else:
+                doDelete = False
+                code = -1
+                if rawres is not None and isinstance(rawres, dict) and rawres.has_key('code') and isinstance(rawres['code'], dict) and 'geni_code' in rawres['code']:
+                    code = rawres['code']['geni_code']
+                if code==12 or code==15:
+                    doDelete=True
+                if doDelete and not self.opts.noExtraCHCalls:
+                    self.logger.debug("DeleteSliver failed with an error that suggests no slice at this AM - delete all sliverinfo records: %s", message)
+                    # delete sliver info from SA database
+                    try:
+                        # Get the Agg URN for this client
+                        agg_urn = self._getURNForClient(client)
+                        if urn_util.is_valid_urn(agg_urn):
+                            # I'd like to be able to tell the SA to delete all slivers registered for
+                            # this slice/AM, but the API says sliver_urn is required
+                            sliver_urns = self.framework.list_sliverinfo_urns(urn, agg_urn)
+                            for sliver_urn in sliver_urns:
+                                self.framework.delete_sliver_info(sliver_urn)
+                        else:
+                            self.logger.debug("Not ensuring with CH that AM %s slice %s has no slivers - no valid AM URN known")
+                    except NotImplementedError, nie:
+                        self.logger.debug('Framework %s doesnt support recording slivers in SA database', self.config['selected_framework']['type'])
+                    except Exception, e:
+                        self.logger.info('Error ensuring slice has no slivers recorded in SA database at this AM')
+                        self.logger.debug(e)
+                else:
+                    if self.opts.noExtraCHCalls:
+                        self.logger.debug("Per commandline option, not ensuring clearinghouse lists no slivers for this slice.")
+                    else:
+                        self.logger.debug("Based on return error code, (%d), not deleting any sliver infos here.", code)
+
+                if amapiError is not None:
+                    self.logger.debug("Having processed the deletesliver return, now raise the AMAPI Error")
+                    raise amapiError
+
                 prStr = "Failed to delete sliver %s at %s (got result '%s')" % (urn, (client.str if client.nick else client.urn), res)
                 if message is None or message.strip() == "":
                     message = "(no reason given)"
@@ -3805,8 +4286,8 @@ class AMCallHandler(object):
                 if not self.opts.noExtraCHCalls:
                     # record results in SA database
                     try:
-                        slivers = self._getSliverResultList(realres)
-                        for sliver in slivers:
+                        sliversDict = self._getSliverResultList(realres)
+                        for sliver in sliversDict:
                             if isinstance(sliver, dict) and \
                                     sliver.has_key('geni_sliver_urn'):
                                 # Note that the sliver may not be in the DB if you delete after allocate
@@ -3875,6 +4356,48 @@ class AMCallHandler(object):
                 if len(sliverFails.keys()) == 0:
                     successCnt += 1
             else:
+                doDelete = False
+                raw = retItem[client.url]
+                code = -1
+                if raw is not None and isinstance(raw, dict) and raw.has_key('code') and isinstance(raw['code'], dict) and 'geni_code' in raw['code']:
+                    code = raw['code']['geni_code']
+                # Technically if geni_best_effort and got this failure, then all slivers are bad
+                # But that's only true if the AM honors geni_best_effort, which it may not
+                # So only assume they're all bad if we didn't request any specific slivers.
+                if len(slivers) == 0:
+                    if code==12 or code==15:
+                        doDelete=True
+                if not self.opts.noExtraCHCalls:
+                    if doDelete:
+                        self.logger.debug("Delete failed with an error that suggests no slice at this AM or requested slivers not at this AM - delete all/requested sliverinfo records: %s", message)
+                        # delete sliver info from SA database
+                        try:
+                            if len(slivers) > 0:
+                                self.logger.debug("Delete failed - assuming all %d sliver URNs asked about are invalid and not at this AM - delete from CH", len(slivers))
+                                for sliver in slivers:
+                                    self.framework.delete_sliver_info(sliver)
+                            else:
+                                self.logger.debug("Delete failed: assuming this slice has 0 slivers at this AM. Ensure CH lists none.")
+                                # Get the Agg URN for this client
+                                agg_urn = self._getURNForClient(client)
+                                if urn_util.is_valid_urn(agg_urn):
+                                    # I'd like to be able to tell the SA to delete all slivers registered for
+                                    # this slice/AM, but the API says sliver_urn is required
+                                    sliver_urns = self.framework.list_sliverinfo_urns(urn, agg_urn)
+                                    for sliver_urn in sliver_urns:
+                                        self.framework.delete_sliver_info(sliver_urn)
+                                else:
+                                    self.logger.debug("Not ensuring with CH that AM %s slice %s has no slivers - no valid AM URN known")
+                        except NotImplementedError, nie:
+                            self.logger.debug('Framework %s doesnt support recording slivers in SA database', self.config['selected_framework']['type'])
+                        except Exception, e:
+                            self.logger.info('Error ensuring slice has no slivers recorded in SA database at this AM')
+                            self.logger.debug(e)
+                    else:
+                        self.logger.debug("Given AM return code (%d) and # requested slivers (%d), not telling CH to not list these slivers.", code, len(slivers))
+                else:
+                    self.logger.debug("Per commandline option, not ensuring clearinghouse lists no slivers for this slice.")
+
                 if message is None or message.strip() == "":
                     message = "(no reason given)"
                 prStr = "Failed to delete %s at %s: %s" % (descripMsg, (client.str if client.nick else client.urn), message)
@@ -3981,6 +4504,506 @@ class AMCallHandler(object):
         else:
             return retVal, retItem
     # End of shutdown
+
+    def update(self, args):
+        """
+        GENI AM API Update <slice name> <rspec file name>
+        For use with AM API v3+ only, and only at some AMs. 
+        Technically adopted for AM API v4, but may be implemented by v3 AMs. See http://groups.geni.net/geni/wiki/GAPI_AM_API_DRAFT/Adopted#ChangeSetC:Update
+
+        Update resources as described in a request RSpec argument in a slice with 
+        the named URN. Update the named slivers if specified, or all slivers in the slice at the aggregate.
+        On success, new resources in the RSpec will be allocated in new slivers, existing resources in the RSpec will
+        be updated, and slivers requested but missing in the RSpec will be deleted.
+
+        Return a string summarizing results, and a dictionary by AM URL of the return value from the AM.
+
+        After update, slivers that were geni_allocated remain geni_allocated (unless they were left
+        out of the RSpec, indicating they should be deleted, which is then immediate). Slivers that were 
+        geni_provisioned or geni_updating will be geni_updating.
+        Clients must Renew or Provision any new (geni_updating) slivers before the expiration time
+        (given in the return struct), or the aggregate will automatically revert the changes 
+        (delete new slivers or revert changed slivers to their original state). 
+        Slivers that were geni_provisioned that you do not include in the RSpec will be deleted, 
+        but only after calling Provision.
+        Slivers that were geni_allocated or geni_updating are immediately changed.
+
+        Slice name could be a full URN, but is usually just the slice name portion.
+        Note that PLC Web UI lists slices as <site name>_<slice name>
+        (e.g. bbn_myslice), and we want only the slice name part here (e.g. myslice).
+
+        Slice credential is usually retrieved from the Slice Authority. But
+        with the --slicecredfile option it is read from that file, if it exists.
+
+        Aggregates queried:
+        - If `--useSliceAggregates`, each aggregate recorded at the clearinghouse as having resources for the given slice,
+          '''and''' any aggregates specified with the `-a` option.
+         - Only supported at some clearinghouses, and the list of aggregates is only advisory
+        - Each URL given in an -a argument or URL listed under that given
+        nickname in omni_config, if provided, ELSE
+        - List of URLs given in omni_config aggregates option, if provided, ELSE
+        - List of URNs and URLs provided by the selected clearinghouse
+        Note that if multiple aggregates are supplied, the same RSpec will be submitted to each.
+        Aggregates should ignore parts of the Rspec requesting specific non-local resources (bound requests), but each 
+        aggregate should attempt to satisfy all unbound requests. 
+
+        --sliver-urn / -u option: each specifies a sliver URN to update. If specified, 
+        only the listed slivers will be updated. Otherwise, all slivers in the slice will be updated.
+        --best-effort: If supplied, slivers that can be updated, will be; some slivers 
+        may not be updated, in which case check the geni_error return for that sliver.
+        If not supplied, then if any slivers cannot be updated, the whole call fails
+        and sliver states do not change.
+
+        Note that some aggregates may require updating all slivers in the same state at the same 
+        time, per the geni_single_allocation GetVersion return.
+
+        --end-time: Request that new slivers expire at the given time.
+        The aggregates may update the resources, but not be able to grant the requested
+        expiration time.
+        Note that per the AM API expiration times will be timezone aware.
+        Unqualified times are assumed to be in UTC.
+        Note that the expiration time cannot be past your slice expiration
+        time (see renewslice).
+
+        Output directing options:
+        -o Save result in per-Aggregate files
+        -p (used with -o) Prefix for resulting files
+        --outputfile If supplied, use this output file name: substitute the AM for any %a,
+        and %s for any slicename
+        If not saving results to a file, they are logged.
+        If --tostdout option, then instead of logging, print to STDOUT.
+
+        File names will indicate the slice name, file format, and
+        which aggregate is represented.
+        e.g.: myprefix-myslice-update-localhost-8001.json
+
+        -V# API Version #
+        --devmode: Continue on error if possible
+        -l to specify a logging config file
+        --logoutput <filename> to specify a logging output filename
+
+        Sample usage:
+        Basic update of resources at 1 AM into myslice
+        omni.py -V3 -a http://myaggregate/url update myslice my-request-rspec.xml
+
+        Update resources in 2 AMs, requesting a specific sliver end time, save results into specificly named files that include an AM name calculated from the AM URL,
+        using the slice credential saved in the given file
+        omni.py -V3 -a http://myaggregate/url -a http://myother/aggregate --end-time 20120909 -o --outputfile myslice-manifest-%a.json --slicecredfile mysaved-myslice-slicecred.xml update myslice my-update-rspec.xml
+        """
+        if self.opts.api_version < 3:
+            if self.opts.devmode:
+                self.logger.warn("Trying Update with AM API v%d...", self.opts.api_version)
+            else:
+                self._raise_omni_error("Update is only available in AM API v3+. Specify -V3 to use AM API v3.")
+
+        (slicename, urn, slice_cred, retVal, slice_exp) = self._args_to_slicecred(args, 2,
+                                                      "Update",
+                                                      "and a request rspec filename")
+        # Load up the user's request rspec
+        rspecfile = None
+        if not (self.opts.devmode and len(args) < 2):
+            rspecfile = args[1]
+        if rspecfile is None: # FIXME: If file type arg, check the file exists: os.path.isfile(rspecfile) 
+            # Dev mode should allow missing RSpec
+            msg = 'File of resources to request missing: %s' % rspecfile
+            if self.opts.devmode:
+                self.logger.warn(msg)
+            else:
+                self._raise_omni_error(msg)
+
+        try:
+            # read the rspec into a string, and add it to the rspecs dict
+            rspec = _derefRSpecNick(self, rspecfile)
+        except Exception, exc:
+            msg = "Unable to read rspec file '%s': %s" % (rspecfile, str(exc))
+            if self.opts.devmode:
+                rspec = ""
+                self.logger.warn(msg)
+            else:
+                self._raise_omni_error(msg)
+
+        # Test if the rspec is really json containing an RSpec, and
+        # pull out the right thing
+        rspec = self._maybeGetRSpecFromStruct(rspec)
+
+        # Build args
+        op = 'Update'
+        options = self._build_options(op, slicename, None)
+        urnsarg, slivers = self._build_urns(urn)
+        creds = _maybe_add_abac_creds(self.framework, slice_cred)
+        creds = self._maybe_add_creds_from_files(creds)
+        args = [urnsarg, creds, rspec, options]
+        descripMsg = "slivers in slice %s" % urn
+        if len(slivers) > 0:
+            descripMsg = "%d slivers in slice %s" % (len(slivers), urn)
+        self.logger.debug("Doing Update with urns %s, %d creds, rspec starting: \'%s...\', and options %s", urnsarg, len(creds), rspec[:min(40, len(rspec))], options)
+
+        successCnt = 0
+        retItem = dict()
+        (clientList, message) = self._getclients()
+        numClients = len(clientList)
+        if numClients == 0:
+            msg = "No aggregate specified to submit update request to. Use the -a argument."
+            if self.opts.devmode:
+                #  warn
+                self.logger.warn(msg)
+            else:
+                self._raise_omni_error(msg)
+        elif numClients > 1:
+            #  info - mention unbound bits will be repeated
+            self.logger.info("Multiple aggregates will get the same request RSpec; unbound requests will be attempted at multiple aggregates.")
+            if len(slivers) > 0:
+                # All slivers will go to all AMs. If not best effort, AM may fail the request if its
+                # not a local sliver.
+                #  # FIXME: Could partition slivers by AM URN?
+                msg = "Will do %s %s at all %d AMs - some aggregates may fail the request if given slivers not from that aggregate." % (op, descripMsg, numClients)
+                if self.opts.geni_best_effort:
+                    self.logger.info(msg)
+                else:
+                    self.logger.warn(msg + " Consider running with --best-effort in future.")
+
+        # Do the command for each client
+        for client in clientList:
+            self.logger.info("%s %s at %s:", op, descripMsg, client.str)
+            try:
+                ((result, message), client) = self._api_call(client,
+                                    ("%s %s at %s" % (op, descripMsg, client.url)),
+                                    op,
+                                    args)
+            except BadClientException, bce:
+                if bce.validMsg and bce.validMsg != '':
+                    retVal += bce.validMsg + ". "
+                else:
+                    retVal += "Skipped aggregate %s. (Unreachable? Doesn't speak AM API v%d? Check the log messages, and try calling 'getversion' to check AM status and API versions supported.).\n" % (client.str, self.opts.api_version)
+                if numClients == 1:
+                    self._raise_omni_error("\nUpdate failed: " + retVal)
+                continue
+
+            # Make the RSpec more pretty-printed
+            rspec = None
+            if result and isinstance(result, dict) and result.has_key('value') and isinstance(result['value'], dict) and result['value'].has_key('geni_rspec'):
+                rspec = result['value']['geni_rspec']
+                if rspec and rspec_util.is_rspec_string( rspec, None, None, logger=self.logger ):
+                    rspec = rspec_util.getPrettyRSpec(rspec)
+                    result['value']['geni_rspec'] = rspec
+                else:
+                    self.logger.debug("No valid RSpec returned!")
+            else:
+                self.logger.debug("Return struct missing geni_rspec element!")
+
+            # Pull out the result and check it
+            retItem[ client.url ] = result
+            (realresult, message) = self._retrieve_value(result, message, self.framework)
+
+            if realresult:
+                # Success (maybe partial?)
+
+                missingSlivers = self._findMissingSlivers(realresult, slivers)
+                if len(missingSlivers) > 0:
+                    self.logger.warn("%d slivers from request missing in result?!", len(missingSlivers))
+                    self.logger.debug("Slivers requested missing in result: %s", missingSlivers)
+
+                sliverFails = self._didSliversFail(realresult)
+                for sliver in sliverFails.keys():
+                    self.logger.warn("Sliver %s reported error: %s", sliver, sliverFails[sliver])
+
+                (header, rspeccontent, rVal) = _getRSpecOutput(self.logger, rspec, slicename, client.urn, client.url, message)
+                self.logger.debug(rVal)
+                if realresult and isinstance(realresult, dict) and realresult.has_key('geni_rspec') and rspec and rspeccontent:
+                    realresult['geni_rspec'] = rspeccontent
+                if isinstance(realresult, dict):
+                    # Hmm. The rspec content looks OK here. But the
+                    # json.dumps seems to screw it up? Quotes get
+                    # double escaped.
+                    prettyResult = json.dumps(realresult, ensure_ascii=True, indent=2)
+                else:
+                    prettyResult = pprint.pformat(realresult)
+
+                # Save out the result
+#                header="<!-- Update %s at AM URL %s -->" % (descripMsg, client.url)
+                filename = None
+
+                if self.opts.output:
+                    filename = _construct_output_filename(self.opts, slicename, client.url, client.urn, "update", ".json", numClients)
+                    #self.logger.info("Writing result of update for slice: %s at AM: %s to file %s", slicename, client.url, filename)
+                _printResults(self.opts, self.logger, header, prettyResult, filename)
+                if filename:
+                    retVal += "Saved update of %s at AM %s to file %s. \n" % (descripMsg, client.str, filename)
+                else:
+                    retVal += "Updated %s at %s. \n" % (descripMsg, client.str)
+
+                if len(missingSlivers) > 0:
+                    retVal += " - but with %d slivers from request missing in result?! \n" % len(missingSlivers)
+                if len(sliverFails.keys()) > 0:
+                    retVal += " = but with %d slivers reporting errors. \n" % len(sliverFails.keys())
+
+                # Check the new sliver expirations
+                (orderedDates, sliverExps) = self._getSliverExpirations(realresult)
+                # None case
+                if len(orderedDates) == 1:
+                    self.logger.info("All slivers expire on %r", orderedDates[0].isoformat())
+                elif len(orderedDates) == 2:
+                    self.logger.info("%d slivers expire on %r, the rest (%d) on %r", len(sliverExps[orderedDates[0]]), orderedDates[0].isoformat(), len(sliverExps[orderedDates[0]]), orderedDates[1].isoformat())
+                elif len(orderedDates) == 0:
+                    msg = " 0 Slivers reported updated!"
+                    self.logger.warn(msg)
+                    retVal += msg
+                else:
+                    self.logger.info("%d slivers expire on %r, %d on %r, and others later", len(sliverExps[orderedDates[0]]), orderedDates[0].isoformat(), len(sliverExps[orderedDates[0]]), orderedDates[1].isoformat())
+                if len(orderedDates) > 0:
+                    if len(orderedDates) == 1:
+                        retVal += " All slivers expire on: %s" % orderedDates[0].isoformat()
+                    else:
+                        retVal += " First sliver expiration: %s" % orderedDates[0].isoformat()
+
+                self.logger.debug("Update %s result: %s" %  (descripMsg, prettyResult))
+                if len(missingSlivers) == 0 and len(sliverFails.keys()) == 0:
+                    successCnt += 1
+            else:
+                # Failure
+                if message is None or message.strip() == "":
+                    message = "(no reason given)"
+                retVal += "Update of %s at %s failed: %s.\n" % (descripMsg, client.str, message)
+                self.logger.warn(retVal)
+                # FIXME: Better message?
+        # Done with update call loop over clients
+
+        if numClients == 0:
+            retVal += "No aggregates at which to update %s. %s\n" % (descripMsg, message)
+        elif numClients > 1:
+            retVal += "Updated %s at %d out of %d aggregates.\n" % (descripMsg, successCnt, self.numOrigClients)
+        elif successCnt == 0:
+            retVal += "Update %s failed at %s" % (descripMsg, clientList[0].url)
+        self.logger.debug("Update Return: \n%s", json.dumps(retItem, indent=2))
+        return retVal, retItem
+    # end of update
+
+# Cancel(urns, creds, options)
+# return (like for Describe - see how that is handled):
+#   rspec
+#   slice urn
+#   slivers list
+#     urn
+#     expires
+#     alloc status
+#     op status
+#     error
+# options may include geni_best_effort
+    def cancel(self, args):
+        """
+        GENI AM API Cancel <slice name>
+        For use with AM API v3+ only, and only at some AMs. 
+        Technically adopted for AM API v4, but may be implemented by v3 AMs. See http://groups.geni.net/geni/wiki/GAPI_AM_API_DRAFT/Adopted#ChangeSetC:Update
+
+        Cancel an Update or Allocate of what is reserved in this slice. For geni_allocated slivers,
+        this method acts like Delete. For geni_updating slivers, returns the slivers to the geni_provisioned state and
+        the operational state and properties from before the call to Update.
+
+        Return a string summarizing results, and a dictionary by AM URL of the return value from the AM.
+
+        Slice name could be a full URN, but is usually just the slice name portion.
+        Note that PLC Web UI lists slices as <site name>_<slice name>
+        (e.g. bbn_myslice), and we want only the slice name part here (e.g. myslice).
+
+        Slice credential is usually retrieved from the Slice Authority. But
+        with the --slicecredfile option it is read from that file, if it exists.
+
+        Aggregates queried:
+        - If `--useSliceAggregates`, each aggregate recorded at the clearinghouse as having resources for the given slice,
+          '''and''' any aggregates specified with the `-a` option.
+         - Only supported at some clearinghouses, and the list of aggregates is only advisory
+        - Each URL given in an -a argument or URL listed under that given
+        nickname in omni_config, if provided, ELSE
+        - List of URLs given in omni_config aggregates option, if provided, ELSE
+        - List of URNs and URLs provided by the selected clearinghouse
+
+        --sliver-urn / -u option: each specifies a sliver URN whose update or allocate to cancel. If specified, 
+        only the listed slivers will be cancelled. Otherwise, all slivers in the slice will be cancelled.
+        --best-effort: If supplied, slivers whose update or allocation can be cancelled, will be; some sliver 
+        changes may not be cancelled, in which case check the geni_error return for that sliver.
+        If not supplied, then if any slivers cannot be cancelled, the whole call fails
+        and sliver states do not change.
+
+        Note that some aggregates may require updating all slivers in the same state at the same 
+        time, per the geni_single_allocation GetVersion return.
+
+        Output directing options:
+        -o Save result in per-Aggregate files
+        -p (used with -o) Prefix for resulting files
+        --outputfile If supplied, use this output file name: substitute the AM for any %a,
+        and %s for any slicename
+        If not saving results to a file, they are logged.
+        If --tostdout option, then instead of logging, print to STDOUT.
+
+        File names will indicate the slice name, file format, and
+        which aggregate is represented.
+        e.g.: myprefix-myslice-update-localhost-8001.json
+
+        -V# API Version #
+        --devmode: Continue on error if possible
+        -l to specify a logging config file
+        --logoutput <filename> to specify a logging output filename
+
+        Sample usage:
+        Basic cancel of changes at 1 AM in myslice
+        omni.py -V3 -a http://myaggregate/url cancel myslice
+
+        Cancel changes in 2 AMs, save results into specificly named files that include an AM name calculated from the AM URL,
+        using the slice credential saved in the given file
+        omni.py -V3 -a http://myaggregate/url -a http://myother/aggregate -o --outputfile myslice-status-%a.json --slicecredfile mysaved-myslice-slicecred.xml cancel myslice
+        """
+        if self.opts.api_version < 3:
+            if self.opts.devmode:
+                self.logger.warn("Trying Cancel with AM API v%d...", self.opts.api_version)
+            else:
+                self._raise_omni_error("Cancel is only available in AM API v3+. Specify -V3 to use AM API v3.")
+
+        (slicename, urn, slice_cred, retVal, slice_exp) = self._args_to_slicecred(args, 1,
+                                                                                  "Cancel")
+
+        creds = _maybe_add_abac_creds(self.framework, slice_cred)
+        creds = self._maybe_add_creds_from_files(creds)
+
+        urnsarg, slivers = self._build_urns(urn)
+
+        descripMsg = "changes in slice %s" % urn
+        if len(slivers) > 0:
+            descripMsg = "changes in %d slivers in slice %s" % (len(slivers), urn)
+
+        args = [urnsarg, creds]
+        # Add the options dict
+        options = self._build_options('Delete', slicename, None)
+        args.append(options)
+
+        self.logger.debug("Doing cancel with urns %s, %d creds, options %r",
+                          urnsarg, len(creds), options)
+
+        successCnt = 0
+        (clientList, message) = self._getclients()
+        numClients = len(clientList)
+
+        # Connect to each available GENI AM
+        ## The AM API does not cleanly state how to deal with
+        ## aggregates which do not have a sliver in this slice.  We
+        ## know at least one aggregate (PG) returns an Exception in
+        ## this case.
+        ## FIX ME: May need to look at handling of this more in the future.
+        ## Also, if the user supplied the aggregate list, a failure is
+        ## more interesting.  We can figure out what the error strings
+        ## are at the various aggregates if they don't know about the
+        ## slice and make those more quiet.  Finally, we can try
+        ## to call status at places where it fails to indicate places
+        ## where you still have resources.
+        op = 'Cancel'
+        msg = "Cancel of %s at " % (descripMsg)
+        retItem = {}
+        for client in clientList:
+            try:
+                ((result, message), client) = self._api_call(client,
+                                                   msg + str(client.url),
+                                                   op, args)
+            except BadClientException, bce:
+                if bce.validMsg and bce.validMsg != '':
+                    retVal += bce.validMsg + ". "
+                else:
+                    retVal += "Skipped aggregate %s. (Unreachable? Doesn't speak AM API v%d? Check the log messages, and try calling 'getversion' to check AM status and API versions supported.).\n" % (client.str, self.opts.api_version)
+                if numClients == 1:
+                    self._raise_omni_error("\nCancel failed: " + retVal)
+                continue
+
+# FIXME: Factor this next chunk into helper method?
+            # Decompress the RSpec before sticking it in retItem
+            rspec = None
+            if result and isinstance(result, dict) and result.has_key('value') and isinstance(result['value'], dict) and result['value'].has_key('geni_rspec'):
+                rspec = self._maybeDecompressRSpec(options, result['value']['geni_rspec'])
+                if rspec and rspec != result['value']['geni_rspec']:
+                    self.logger.debug("Decompressed RSpec")
+                if rspec and rspec_util.is_rspec_string( rspec, None, None, logger=self.logger ):
+                    rspec = rspec_util.getPrettyRSpec(rspec)
+                else:
+                    self.logger.warn("Didn't get a valid RSpec!")
+                result['value']['geni_rspec'] = rspec
+            else:
+                self.logger.warn("Got no results from AM %s", client.str)
+                self.logger.debug("Return struct missing geni_rspec element!")
+
+            # Return for tools is the full code/value/output triple
+            retItem[client.url] = result
+
+            # Get the dict cancel result out of the result (accounting for API version diffs, ABAC)
+            (result, message) = self._retrieve_value(result, message, self.framework)
+            if not result:
+                fmt = "\nFailed to Cancel %s at AM %s: %s\n"
+                if message is None or message.strip() == "":
+                    message = "(no reason given)"
+                retVal += fmt % (descripMsg, client.str, message)
+                continue # go to next AM
+            else:
+                retVal += "\nCancelled %s at AM %s" % (descripMsg, client.str)
+
+            sliverStateErrors = 0
+            # FIXME: geni_unallocated or geni_provisioned are both possible new alloc states
+            # So querying sliver alloc states would have to get all states and then complain if any are not
+            # either of those states.
+            sliverStates = self._getSliverAllocStates(result)
+            for sliver in sliverStates.keys():
+#                self.logger.debug("Sliver %s state: %s", sliver, sliverStates[sliver])
+                if sliverStates[sliver] not in ['geni_unallocated', 'geni_provisioned']:
+                    self.logger.warn("Sliver %s in wrong state! Expected %s, got %s?!", sliver, 'geni_unallocated ir geni_provisioned', sliverStates[sliver])
+                    # FIXME: This really might be a case where sliver in wrong state means the call failed?!
+                    sliverStateErrors += 1
+
+            missingSlivers = self._findMissingSlivers(result, slivers)
+            if len(missingSlivers) > 0:
+                self.logger.warn("%d slivers from request missing in result", len(missingSlivers))
+                self.logger.debug("%s", missingSlivers)
+
+            sliverFails = self._didSliversFail(result)
+            for sliver in sliverFails.keys():
+                self.logger.warn("Sliver %s reported error: %s", sliver, sliverFails[sliver])
+
+            (header, rspeccontent, rVal) = _getRSpecOutput(self.logger, rspec, slicename, client.urn, client.url, message, slivers)
+            self.logger.debug(rVal)
+            if result and isinstance(result, dict) and result.has_key('geni_rspec') and rspec and rspeccontent:
+                result['geni_rspec'] = rspeccontent
+
+            if not isinstance(result, dict):
+                # malformed cancel return
+                self.logger.warn('Malformed cancel result from AM %s. Expected struct, got type %s.' % (client.str, result.__class__.__name__))
+                # FIXME: Add something to retVal that the result was malformed?
+                if isinstance(result, str):
+                    prettyResult = str(result)
+                else:
+                    prettyResult = pprint.pformat(result)
+            else:
+                prettyResult = json.dumps(result, ensure_ascii=True, indent=2)
+
+            #header="<!-- Cancel %s at AM URL %s -->" % (descripMsg, client.url)
+            filename = None
+
+            if self.opts.output:
+                filename = _construct_output_filename(self.opts, slicename, client.url, client.urn, "cancel", ".json", numClients)
+                #self.logger.info("Writing result of cancel for slice: %s at AM: %s to file %s", slicename, client.url, filename)
+            else:
+                self.logger.info("Result of Cancel: ")
+            _printResults(self.opts, self.logger, header, prettyResult, filename)
+            if filename:
+                retVal += "Saved result of cancel %s at AM %s to file %s. \n" % (descripMsg, client.str, filename)
+            # Only count it as success if no slivers were missing
+            if len(missingSlivers) == 0 and len(sliverFails.keys()) == 0 and sliverStateErrors == 0:
+                successCnt+=1
+            else:
+                retVal += " - with %d sliver(s) missing and %d sliver(s) with errors and %d sliver(s) in wrong state. \n" % (len(missingSlivers), len(sliverFails.keys()), sliverStateErrors)
+
+        # loop over all clients
+
+        if numClients == 0:
+            retVal = "No aggregates specified at which to cancel changes. %s" % message
+        elif numClients > 1:
+            retVal = "Cancelled changes at %d out of a possible %d aggregates" % (successCnt, self.numOrigClients)
+        self.logger.debug("Cancel result: " + json.dumps(retItem, indent=2))
+        return retVal, retItem
+    # End of cancel
 
     # End of AM API operations
     #######
@@ -4723,11 +5746,16 @@ class AMCallHandler(object):
     def _maybeGetRSpecFromStruct(self, rspec):
         '''RSpec might be string of JSON, in which case extract the
         XML out of the struct.'''
+        if rspec is None:
+            self._raise_omni_error("RSpec is empty")
+
         if "'geni_rspec'" in rspec or "\"geni_rspec\"" in rspec or '"geni_rspec"' in rspec:
             try:
                 rspecStruct = json.loads(rspec, encoding='ascii', cls=DateTimeAwareJSONDecoder, strict=False)
                 if rspecStruct and isinstance(rspecStruct, dict) and rspecStruct.has_key('geni_rspec'):
                     rspec = rspecStruct['geni_rspec']
+                    if rspec is None:
+                        self._raise_omni_error("Malformed RSpec: 'geni_rspec' empty in JSON struct")
             except Exception, e:
                 import traceback
                 msg = "Failed to read RSpec from JSON text %s: %s" % (rspec[:min(60, len(rspec))], e)
@@ -4844,7 +5872,7 @@ class AMCallHandler(object):
                     uStr = ""
                     if user.has_key('urn'):
                         uStr = "User %s " % user['urn']
-                    self.logger.debug("%sNewkeys: %r", uStr, newkeys)
+                    self.logger.debug("%sNewkeys: %r...", uStr, str(newkeys)[:min(160, len(str(newkeys)))])
 
                 # Now merge this into the list from above
                 found = False
@@ -5139,19 +6167,20 @@ class AMCallHandler(object):
 
     # slicename included just to pass on to datetimeFromString
     def _build_options(self, op, slicename, options):
-        '''Add geni_best_effort and geni_end_time to options if supplied, applicable'''
+        '''Add geni_best_effort and geni_end_time and geni_start_time to options if supplied, applicable'''
         if self.opts.api_version == 1 and op != 'ListResources':
             return None
         if not options or options is None:
             options = {}
 
         if self.opts.api_version >= 3 and self.opts.geni_end_time:
-            if op in ('Allocate', 'Provision') or self.opts.devmode:
-                if self.opts.devmode and not op in ('Allocate', 'Provision'):
+            if op in ('Allocate', 'Provision', 'Update') or self.opts.devmode:
+                if self.opts.devmode and not op in ('Allocate', 'Provision', 'Update'):
                     self.logger.warn("Got geni_end_time for method %s but using anyhow", op)
                 time = datetime.datetime.max
                 try:
-                    (time, time_with_tz, time_string) = self._datetimeFromString(self.opts.geni_end_time, name=slicename)
+                    # noSec=True so that fractional seconds are dropped
+                    (time, time_with_tz, time_string) = self._datetimeFromString(self.opts.geni_end_time, name=slicename, noSec=True)
                     options["geni_end_time"] = time_string
                 except Exception, exc:
                     msg = 'Couldnt parse geni_end_time from %s: %r' % (self.opts.geni_end_time, exc)
@@ -5160,14 +6189,36 @@ class AMCallHandler(object):
                         self.logger.info(" ... passing raw geni_end_time")
                         options["geni_end_time"] = self.opts.geni_end_time
 
+        if self.opts.api_version >= 3 and self.opts.geni_start_time:
+            if op in ('Allocate') or self.opts.devmode:
+                if self.opts.devmode and not op in ('Allocate'):
+                    self.logger.warn("Got geni_start_time for method %s but using anyhow", op)
+                time = datetime.datetime.min
+                try:
+                    # noSec=True so that fractional seconds are dropped
+                    (time, time_with_tz, time_string) = self._datetimeFromString(self.opts.geni_start_time, name=slicename, noSec=True)
+                    options['geni_start_time'] = time_string
+                except Exception, exc:
+                    msg = 'Couldnt parse geni_start_time from %s: %r' % (self.opts.geni_start_time, exc)
+                    self.logger.warn(msg)
+                    if self.opts.devmode:
+                        self.logger.info(" ... passing raw geni_start_time")
+                        options["geni_start_time"] = self.opts.geni_start_time
 
         if self.opts.api_version >= 3 and self.opts.geni_best_effort:
             # FIXME: What about Describe? Status?
-            if op in ('Provision', 'Renew', 'Delete', 'PerformOperationalAction'):
+            if op in ('Provision', 'Renew', 'Delete', 'PerformOperationalAction', 'Cancel'):
                 options["geni_best_effort"] = self.opts.geni_best_effort
             elif self.opts.devmode:
                 self.logger.warn("Got geni_best_effort for method %s but using anyhow", op)
                 options["geni_best_effort"] = self.opts.geni_best_effort
+
+        # For Update. See http://groups.geni.net/geni/wiki/GAPI_AM_API_DRAFT/Adopted#ChangestoDescribe
+        if self.opts.api_version >= 3 and self.opts.cancelled and op == 'Describe':
+            options["geni_cancelled"] = self.opts.cancelled
+        elif self.opts.devmode and self.opts.cancelled:
+            self.logger.warn("Got cancelled option for method %s but using anhow", op)
+            options["geni_cancelled"] = self.opts.cancelled
 
         # To support Speaks For, allow specifying the URN of the user
         # the tool is speaking for. 
@@ -5254,7 +6305,7 @@ class AMCallHandler(object):
                 self.logger.debug("entry in result list was not a dict")
                 continue
             if not sliver.has_key('geni_sliver_urn') or str(sliver['geni_sliver_urn']).strip() == "":
-                self.logger.debug("entry in result had no 'geni_sliver'urn'")
+                self.logger.debug("entry in result had no 'geni_sliver_urn'")
             else:
                 sliverUrn = sliver['geni_sliver_urn']
             if not sliver.has_key('geni_allocation_status') or str(sliver['geni_allocation_status']).strip() == "":
@@ -5295,7 +6346,7 @@ class AMCallHandler(object):
                 self.logger.debug("entry in result list was not a dict")
                 continue
             if not sliver.has_key('geni_sliver_urn') or str(sliver['geni_sliver_urn']).strip() == "":
-                self.logger.debug("entry in result had no 'geni_sliver'urn'")
+                self.logger.debug("entry in result had no 'geni_sliver_urn'")
                 continue
 #            sliver['geni_error'] = 'testing' # TESTING CODE
             if sliver.has_key('geni_error') and sliver['geni_error'] is not None and str(sliver['geni_error']).strip() != "":
@@ -5327,12 +6378,12 @@ class AMCallHandler(object):
                 self.logger.debug("entry in result list was not a dict")
                 continue
             if not sliver.has_key('geni_sliver_urn') or str(sliver['geni_sliver_urn']).strip() == "":
-                self.logger.debug("entry in result had no 'geni_sliver'urn'")
+                self.logger.debug("entry in result had no 'geni_sliver_urn'")
                 continue
             retSlivers.append(sliver['geni_sliver_urn'])
 
         for request in requestedSlivers:
-            if not request or request.strip() == "":
+            if not request or str(request).strip() == "":
                 continue
             # if request not in resultValue, then add it to the return
             if request not in retSlivers:
@@ -5391,7 +6442,7 @@ class AMCallHandler(object):
                 self.logger.debug("entry in result list was not a dict")
                 continue
             if not sliver.has_key('geni_sliver_urn') or str(sliver['geni_sliver_urn']).strip() == "":
-                self.logger.debug("entry in result had no 'geni_sliver'urn'")
+                self.logger.debug("entry in result had no 'geni_sliver_urn'")
                 continue
             if not sliver.has_key('geni_expires'):
                 self.logger.debug("Sliver %s missing 'geni_expires'", sliver['geni_sliver_urn'])
@@ -5434,7 +6485,7 @@ class AMCallHandler(object):
                 self.logger.debug("entry in result list was not a dict")
                 continue
             if not sliver.has_key('geni_sliver_urn') or str(sliver['geni_sliver_urn']).strip() == "":
-                self.logger.debug("entry in result had no 'geni_sliver'urn'")
+                self.logger.debug("entry in result had no 'geni_sliver_urn'")
                 continue
             if not sliver.has_key('geni_allocation_status'):
                 self.logger.debug("Sliver %s missing 'geni_allocation_status'", sliver['geni_sliver_urn'])
@@ -5447,7 +6498,8 @@ class AMCallHandler(object):
     # name arg: if present then we assume you are trying to
     # renew/create slivers with the given time - so raise an error if
     # the time is invalid
-    def _datetimeFromString(self, dateString, slice_exp = None, name=None):
+    # When noSec is true, fractional seconds are trimmed from the parsed time. Avoid problems at PG servers.
+    def _datetimeFromString(self, dateString, slice_exp = None, name=None, noSec=False):
         '''Get time, time_with_tz, time_string from the given string. Log/etc appropriately
         if given a slice expiration to limit by.
         If given a slice name or slice expiration, insist that the given time is a valid
@@ -5457,6 +6509,11 @@ class AMCallHandler(object):
         try:
             if dateString is not None or self.opts.devmode:
                 time = dateutil.parser.parse(dateString, tzinfos=tzd)
+                if noSec:
+                    time2 = time.replace(microsecond=0)
+                    if (time2 != time):
+                        self.logger.debug("Trimmed fractional seconds from %s to get %s", dateString, time2)
+                        time = time2
         except Exception, exc:
             msg = "Couldn't parse time from '%s': %s" % (dateString, exc)
             if self.opts.devmode:
@@ -5587,10 +6644,10 @@ def _maybe_add_abac_creds(framework, cred):
     as supplied, as normal.'''
     if is_ABAC_framework(framework):
         creds = get_abac_creds(framework.abac_dir)
-        # FIXME: wrap in JSON as needed?
-        creds.append(cred)
     else:
-        creds = [cred]
+        creds = []
+    if cred:
+        creds.append(cred)
     return creds
 
 # FIXME: Use this frequently in experimenter mode, for all API calls
@@ -5630,17 +6687,21 @@ def _append_geni_error_output(retStruct, message):
     # If return is a dict
     if isinstance(retStruct, dict) and retStruct.has_key('code'):
         message2 = ""
-        if retStruct['code'].has_key('geni_code') and retStruct['code']['geni_code'] != 0:
-            message2 = "Error from Aggregate: code " + str(retStruct['code']['geni_code'])
-        amType = ""
-        if retStruct['code'].has_key('am_type'):
-            amType = retStruct['code']['am_type']
-        if retStruct['code'].has_key('am_code') and retStruct['code']['am_code'] != 0 and retStruct['code']['am_code'] is not None and str(retStruct['code']['am_code']).strip() != "":
-            if message2 != "":
-                if not message2.endswith('.'):
-                    message2 += '.'
-                message2 += " "
-            message2 += "%s AM code: %s" % (amType, str(retStruct['code']['am_code']))
+        if isinstance(retStruct['code'], int):
+            if retStruct['code'] != 0:
+                message2 = "Malformed error from Aggregate: code " + str(retStruct['code'])
+        elif isinstance(retStruct['code'], dict):
+            if retStruct['code'].has_key('geni_code') and retStruct['code']['geni_code'] != 0:
+                message2 = "Error from Aggregate: code " + str(retStruct['code']['geni_code'])
+            amType = ""
+            if retStruct['code'].has_key('am_type'):
+                amType = retStruct['code']['am_type']
+            if retStruct['code'].has_key('am_code') and retStruct['code']['am_code'] != 0 and retStruct['code']['am_code'] is not None and str(retStruct['code']['am_code']).strip() != "":
+                if message2 != "":
+                    if not message2.endswith('.'):
+                        message2 += '.'
+                    message2 += " "
+                message2 += "%s AM code: %s" % (amType, str(retStruct['code']['am_code']))
         if retStruct.has_key('output') and retStruct['output'] is not None and str(retStruct['output']).strip() != "":
             message2 += ": %s" % retStruct['output']
 
@@ -5662,7 +6723,7 @@ def _append_geni_error_output(retStruct, message):
 def _get_pg_log(retStruct):
     '''Pull out the PG log URN and URL, if present'''
     msg = ""
-    if retStruct.has_key('code') and retStruct['code'].has_key('am_type') and retStruct['code']['am_type'] == 'protogeni':
+    if retStruct.has_key('code') and isinstance(retStruct['code'], dict) and retStruct['code'].has_key('am_type') and retStruct['code']['am_type'] == 'protogeni':
         if retStruct['code'].has_key('protogeni_error_url'):
             msg += " (PG log url - look here for details on any failures: %s)" % retStruct['code']['protogeni_error_url']
         elif retStruct['code'].has_key('protogeni_error_log'):

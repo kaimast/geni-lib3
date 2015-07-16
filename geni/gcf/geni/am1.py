@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2011-2014 Raytheon BBN Technologies
+# Copyright (c) 2011-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -327,6 +327,12 @@ class ReferenceAggregateManager(object):
         then only report available resources. And if geni_compressed
         option is specified, then compress the result.'''
         self.logger.info('ListResources(%r)' % (options))
+
+        slice_urn = None
+
+        if options and 'geni_slice_urn' in options:
+            slice_urn = options['geni_slice_urn']
+
         # Note this list of privileges is really the name of an operation
         # from the privilege_table in sfa/trust/rights.py
         # Credentials will specify a list of privileges, each of which
@@ -336,6 +342,7 @@ class ReferenceAggregateManager(object):
 
         # could require list or listnodes?
         privileges = ()
+
         # Note that verify throws an exception on failure.
         # Use the client PEM format cert as retrieved
         # from the https connection by the SecureXMLRPCServer
@@ -343,7 +350,7 @@ class ReferenceAggregateManager(object):
         try:
             self._cred_verifier.verify_from_strings(self._server.pem_cert,
                                                     credentials,
-                                                    None,
+                                                    slice_urn,
                                                     privileges)
         except Exception, e:
             raise xmlrpclib.Fault('Insufficient privileges', str(e))

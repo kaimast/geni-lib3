@@ -17,6 +17,9 @@ class Resource(object):
   def __init__ (self):
     self.namespaces = []
 
+  def addNamespace (self, ns):
+    self.namespaces.append(ns)
+
 
 class NodeType(object):
   XEN = "emulab-xen"
@@ -134,6 +137,8 @@ class Link(Resource):
     self.shared_vlan = None
     self._mac_learning = True
     self._vlan_tagging = False
+    self._link_multiplexing = False
+    self._best_effort = False
     self._ext_children = []
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
@@ -159,12 +164,42 @@ class Link(Resource):
     self._mac_learning = False
 
   def enableVlanTagging (self):
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("Link.enableVlanTagging() is deprecated, please use the Link.vlan_tagging attribute instead.")
+    self.vlan_tagging = True
+
+  @property
+  def vlan_tagging (self):
+    return self._vlan_tagging
+
+  @vlan_tagging.setter
+  def vlan_tagging (self, val):
     self.namespaces.append(Namespaces.EMULAB)
-    self._vlan_tagging = True
+    self._vlan_tagging = val 
+
+  @property
+  def best_effort (self):
+    return self._best_effort
+
+  @best_effort.setter
+  def best_effort (self, val):
+    self.namespaces.append(Namespaces.EMULAB)
+    self._best_effort = val
+
+  @property
+  def link_multiplexing (self):
+    return self._link_multiplexing
+
+  @link_multiplexing.setter
+  def link_multiplexing (self, val):
+    self.namesapces.append(Namespaces.EMULAB)
+    self._link_multiplexing = val
 
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
     lnk.attrib["client_id"] = self.client_id
+
     for intf in self.interfaces:
       ir = ET.SubElement(lnk, "{%s}interface_ref" % (GNS.REQUEST.name))
       ir.attrib["client_id"] = intf.client_id
@@ -175,13 +210,6 @@ class Link(Resource):
       sv = ET.SubElement(lnk, "{%s}link_shared_vlan" % (GNS.SVLAN.name))
       sv.attrib["name"] = self.shared_vlan
 
-    if self.bandwidth != Link.DEFAULT_BW:
-      for (src,dst) in itertools.permutations(self.interfaces):
-        bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
-        bw.attrib["capacity"] = "%d" % (self.bandwidth)
-        bw.attrib["source_id"] = src.client_id
-        bw.attrib["dest_id"] = dst.client_id
-
     if not self._mac_learning:
       lrnelem = ET.SubElement(lnk, "{%s}link_attribute" % (Namespaces.VTOP.name))
       lrnelem.attrib["key"] = "nomac_learning"
@@ -191,6 +219,24 @@ class Link(Resource):
       tagging = ET.SubElement(lnk, "{%s}vlan_tagging" % (Namespaces.EMULAB.name))
       tagging.attrib["enabled"] = "true"
 
+    if self._best_effort:
+      tagging = ET.SubElement(lnk, "{%s}best_effort" % (Namespaces.EMULAB.name))
+      tagging.attrib["enabled"] = "true"
+
+    if self._link_multiplexing:
+      tagging = ET.SubElement(lnk, "{%s}link_multiplexing" % (Namespaces.EMULAB.name))
+      tagging.attrib["enabled"] = "true"
+
+    ################
+    # These are...sortof duplicate (but not quite).  We should sort that out.
+    if self.bandwidth != Link.DEFAULT_BW:
+      if len(self.interfaces) >= 2:
+        for (src,dst) in itertools.permutations(self.interfaces):
+          bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
+          bw.attrib["capacity"] = "%d" % (self.bandwidth)
+          bw.attrib["source_id"] = src.client_id
+          bw.attrib["dest_id"] = dst.client_id
+
     for intf in self.interfaces:
       if intf.bandwidth:
         for other in self.interfaces:
@@ -199,6 +245,7 @@ class Link(Resource):
             prop.attrib["source_id"] = other.name
             prop.attrib["dest_id"] = intf.name
             prop.attrib["capacity"] = str(intf.bandwidth)
+    ################
 
     for obj in self._ext_children:
       obj._write(lnk)

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2014 Raytheon BBN Technologies
+# Copyright (c) 2014-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -33,11 +33,18 @@ import tempfile
 from xml.dom.minidom import *
 from StringIO import StringIO
 
-from ...sfa.trust.abac_credential import ABACCredential, ABACElement
-from ...sfa.trust.certificate import Certificate
-from ...sfa.trust.credential import Credential, signature_template, HAVELXML
-from ...sfa.trust.credential_factory import CredentialFactory
-from ...sfa.trust.gid import GID
+try:
+    from ...sfa.trust.abac_credential import ABACCredential, ABACElement
+    from ...sfa.trust.certificate import Certificate
+    from ...sfa.trust.credential import Credential, signature_template, HAVELXML
+    from ...sfa.trust.credential_factory import CredentialFactory
+    from ...sfa.trust.gid import GID
+except:
+    from gcf.sfa.trust.abac_credential import ABACCredential, ABACElement
+    from gcf.sfa.trust.certificate import Certificate
+    from gcf.sfa.trust.credential import Credential, signature_template, HAVELXML
+    from gcf.sfa.trust.credential_factory import CredentialFactory
+    from gcf.sfa.trust.gid import GID
 
 # Routine to validate that a speaks-for credential 
 # says what it claims to say:

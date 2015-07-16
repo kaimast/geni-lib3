@@ -22,11 +22,19 @@ def build_context (opts):
   # Create the .bssw directories if they don't exist
   DEF_DIR = GCU.getDefaultDir()
 
-  zf = zipfile.ZipFile(opts.bundle_path)
+  zf = zipfile.ZipFile(os.path.expanduser(opts.bundle_path))
 
-  if ("ssh/public/id_geni_ssh_rsa.pub" not in zf.namelist()) and (opts.pubkey_path is None):
-    print "Your bundle does not contain an SSH public key.  You must specify one using a command line argument."
-    sys.exit()
+  zip_pubkey_path = None
+  if opts.pubkey_path is None:
+    # search for pubkey-like file in zip
+    for fname in zf.namelist():
+      if fname.startswith("ssh/public/") and fname.endswith(".pub"):
+        zip_pubkey_path = fname
+        break
+
+    if not zip_pubkey_path:
+      print "Your bundle does not appear to contain an SSH public key.  You must specify one using a command line argument."
+      sys.exit()
     
 
   # Get URN/Project/username from omni_config
@@ -49,17 +57,19 @@ def build_context (opts):
     pass
 
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
-  pkpath = os.path.expanduser(opts.pubkey_path)
+  pkpath = opts.pubkey_path
   if not pkpath:
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
         with open("%s/.ssh/id_geni_ssh_rsa" % (HOME), "w+") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
     
-    pkpath = "%s/.ssh/id_geni_ssh_rsa.pub" % (HOME)
+    pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
     if not os.path.exists(pkpath):
         with open(pkpath, "w+") as tf:
-          tf.write(zf.open("ssh/public/id_geni_ssh_rsa.pub").read())
+          tf.write(zf.open(zip_pubkey_path).read())
+  else:
+    pkpath = os.path.expanduser(opts.pubkey_path)
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)

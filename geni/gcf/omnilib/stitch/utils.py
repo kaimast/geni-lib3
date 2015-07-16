@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# Copyright (c) 2013-2014 Raytheon BBN Technologies
+# Copyright (c) 2013-2015 Raytheon BBN Technologies
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -71,6 +71,10 @@ class StitchingServiceFailedError(StitchingError):
                 message2 += ": %s" % retStruct['output']
             message += "%s" % message2
         return message
+    pass
+
+class StitchingStoppedError(StitchingError):
+    '''Not really an error: user asked us to stop here'''
     pass
 
 def stripBlankLines(strWithBlanks):
