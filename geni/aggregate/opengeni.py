@@ -15,6 +15,7 @@ class OGCompute(AM):
 
 GPO_OG = OGCompute("gpo-og", "bbn-cam-ctrl-1.gpolab.bbn.com", "urn:publicid:IDN+bbn-cam-ctrl-1.gpolab.bbn.com+authority+am")
 CLEMSON_OG = OGCompute("clemson-og", "clemson-clemson-control-1.clemson.edu", "urn:publicid:IDN+clemson-clemson-control-1.clemson.edu+authority+am")
+UKL_OG = OGCompute("ukl-og", "glab077.e4.ukl.german-lab.de", "urn:publicid:IDN+glab077.e4.ukl.german-lab.de:gcf+authority+am")
 
 def aggregates ():
   module = sys.modules[__name__]
