@@ -11,6 +11,13 @@ import requests.packages.urllib3.exceptions
 requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
                                             requests.packages.urllib3.exceptions.InsecurePlatformWarning))
 
+class Link(object):
+  def __init__ (self, item):
+    self.rel = item["rel"]
+    self.href = item["href"]
+    self.type = item["type"]
+
+
 class ResourceDiscovery(object):
   def __init__ (self, name, host, port = 443, url = None):
     self.name = name
@@ -21,6 +28,7 @@ class ResourceDiscovery(object):
     self._uid = None
     self._version = None
     self._release = None
+    self._links = {}
 
   def _populate (self):
     r = requests.get(self.url, **self.rkwargs)
@@ -28,6 +36,8 @@ class ResourceDiscovery(object):
     self._uid = data["uid"]
     self._version = data["version"]
     self._release = data["release"]
+    for item in data["links"]:
+      self._links[item["rel"]] = Link(item)
 
   @property
   def rkwargs (self):
@@ -58,4 +68,27 @@ class ResourceDiscovery(object):
     if not self._release:
       self._populate()
     return self._release
+
+  @property
+  def sites (self):
+    if not self._links:
+      self._populate()
+    shref = self._links["sites"].href
+    r = requests.get("%s%s" % (self.url, shref), **self.rkwargs)
+    data = r.json()
+    for site in data["items"]:
+      yield Site(site)
+
+
+class Site(object):
+  def __init__ (self, item):
+    self._links = {}
+    self.description = item["description"]
+    self.name = item["name"]
+    self.uid = item["uid"]
+    self.location = item["location"]
+    self.latitude = item["latitude"]
+    self.longitude = item["longitude"]
+    for ldata in item["links"]:
+      self._links[ldata["rel"]] = Link(ldata)
 
