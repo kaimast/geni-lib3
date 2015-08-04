@@ -6,6 +6,11 @@ import requests
 
 import geni._coreutil as GCU
 
+import requests.packages.urllib3
+import requests.packages.urllib3.exceptions
+requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
+                                            requests.packages.urllib3.exceptions.InsecurePlatformWarning))
+
 class ResourceDiscovery(object):
   def __init__ (self, name, host, port = 443, url = None):
     self.name = name
@@ -27,7 +32,7 @@ class ResourceDiscovery(object):
   @property
   def rkwargs (self):
     d = {"headers" : self.headers,
-         "verify" : True}
+         "verify" : False}
     return d
 
   @property
