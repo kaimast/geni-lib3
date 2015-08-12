@@ -8,11 +8,17 @@ import geni.namespaces as GNS
 class RSpec (object):
   def __init__ (self, rtype):
     self.NSMAP = {}
+    self._nsnames = set()
     self._loclist = []
     self.addNamespace(GNS.XSNS)
     self.type = rtype
 
   def addNamespace (self, ns, prefix = ""):
+    if ns.name in self._nsnames:
+      return
+
+    self._nsnames.add(ns.name)
+
     if prefix != "":
       self.NSMAP[prefix] = ns.name
     else:

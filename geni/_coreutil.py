@@ -23,6 +23,18 @@ def getDefaultDir ():
 
   return DEF_DIR
 
+def getOSName ():
+  if os.name == "posix":
+    return "%s-%s" % (os.uname()[0], os.uname()[4])
+  elif os.name == "nt":
+    import platform
+    return "%s-%s" % (platform.platform(), platform.architecture()[0])
+  else:
+    return "unknown"
+
+def defaultHeaders ():
+  d = {"User-Agent" : "GENI-LIB (%s)" % (getOSName())}
+  return d
 
 def getDefaultContextPath ():
   ddir = getDefaultDir()

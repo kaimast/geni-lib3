@@ -42,6 +42,7 @@ class Shell(object):
     import geni.aggregate.vts
     import geni.aggregate.exogeni
     import geni.aggregate.cloudlab
+    import pprint
 
     imports["util"] = geni.util
     imports["PG"] = geni.rspec.pg
@@ -53,6 +54,7 @@ class Shell(object):
     imports["IGX"] = geni.rspec.igext
     imports["EGX"] = geni.rspec.egext
     imports["IGUtil"] = geni.rspec.igutil
+    imports["PP"] = pprint.pprint
 
     try:
       imports["context"] = geni.util.loadContext()

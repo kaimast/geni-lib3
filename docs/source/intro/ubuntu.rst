@@ -48,4 +48,5 @@ Install
 ::
 
   $ cd geni-lib
+  $ hg update -C 0.9-DEV
   $ python setup.py install
