@@ -12,6 +12,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
+from .. import _coreutil as GCU
+
 # We need to suppress warnings that assume we want a level of security we aren't actually asking for
 import requests.packages.urllib3
 import requests.packages.urllib3.exceptions
@@ -23,12 +25,15 @@ class TLS1HttpAdapter(HTTPAdapter):
     self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
                                    block = block, ssl_version = ssl.PROTOCOL_TLSv1)
 
+def headers ():
+  return GCU.defaultHeaders()
+  
 
 def getversion (url, root_bundle, cert, key):
   req_data = xmlrpclib.dumps((), methodname="GetVersion")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle)
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
 def listresources (url, root_bundle, cert, key, cred_strings, sliceurn = None):
@@ -41,8 +46,15 @@ def listresources (url, root_bundle, cert, key, cred_strings, sliceurn = None):
 
   req_data = xmlrpclib.dumps((cred_strings, options), methodname="ListResources")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter(root_bundle))
-  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle)
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def listimages (url, root_bundle, cert, key, cred_strings, owner_urn):
+  req_data = xmlrpclib.dumps((owner_urn, cred_strings, {}), methodname="ListImages")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
 def sliverstatus (url, roots, cert, key, cred_strings, sliceurn):

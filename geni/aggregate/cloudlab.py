@@ -21,6 +21,7 @@ class CloudLabAM(AM):
       url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
     super(CloudLabAM, self).__init__(name, url, "amapiv2", "pg", cmid)
 
+
 Clemson = CloudLabAM("cl-clemson", "boss.clemson.cloudlab.us", "urn:publicid:IDN+clemson.cloudlab.us+authority+cm")
 Utah = CloudLabAM("cl-utah", "boss.utah.cloudlab.us", "urn:publicid:IDN+utah.cloudlab.us+authority+cm")
 Wisconsin = CloudLabAM("cl-wisconsin", "www.wisc.cloudlab.us", "urn:publicid:IDN+wisc.cloudlab.us+authority+cm")

@@ -108,6 +108,14 @@ class CHAPI(Framework):
     (txt, res) = oscript.call(args)
     return res
 
+  def getCredentials (self, context, owner_urn):
+    from ..minigcf import chapi2
+    res = chapi2.get_credentials(self._ma, False, context.cert, context.key, owner_urn)
+    if res["code"] == 0:
+      return res["value"][0]["geni_value"]
+    else:
+      return res
+
 
 class Portal(CHAPI):
   def __init__ (self):
@@ -129,6 +137,14 @@ class Portal(CHAPI):
     l.append("key = %s" % (self.key))
     return l
 
+class EmulabCH2(CHAPI):
+  def __init__ (self):
+    super(EmulabCH2, self).__init__("emulab-ch2")
+    self._authority = ""
+    self._ch = "https://www.emulab.net:12370/protogeni/pubxmlrpc/sr"
+    self._ma = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-ma"
+    self._sa = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa"
 
 FrameworkRegistry.register("portal", Portal)
 FrameworkRegistry.register("pg", ProtoGENI)
+FrameworkRegistry.register("emulab-ch2", EmulabCH2)
