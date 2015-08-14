@@ -29,29 +29,32 @@ def headers ():
   return GCU.defaultHeaders()
   
 
-def getversion (url, root_bundle, cert, key):
-  req_data = xmlrpclib.dumps((), methodname="GetVersion")
+def getversion (url, root_bundle, cert, key, options = {}):
+  req_data = xmlrpclib.dumps(options, methodname="GetVersion")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
-def listresources (url, root_bundle, cert, key, cred_strings, sliceurn = None):
-  options = {"geni_rspec_version" : {"version" : 3, "type" : "GENI"},
+def listresources (url, root_bundle, cert, key, cred_strings, options = {}, sliceurn = None):
+  opts = {"geni_rspec_version" : {"version" : 3, "type" : "GENI"},
              "geni_available" : False,
              "geni_compressed" : False}
 
   if sliceurn:
-    options["geni_slice_urn"] = sliceurn
+    opts["geni_slice_urn"] = sliceurn
 
-  req_data = xmlrpclib.dumps((cred_strings, options), methodname="ListResources")
+  # Allow all options to be overridden by the caller
+  opts.update(options)
+
+  req_data = xmlrpclib.dumps((cred_strings, opts), methodname="ListResources")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
-def listimages (url, root_bundle, cert, key, cred_strings, owner_urn):
-  req_data = xmlrpclib.dumps((owner_urn, cred_strings, {}), methodname="ListImages")
+def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = {}):
+  req_data = xmlrpclib.dumps((owner_urn, cred_strings, options), methodname="ListImages")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
