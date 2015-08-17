@@ -17,6 +17,8 @@ import requests.packages.urllib3.exceptions
 requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
                                             requests.packages.urllib3.exceptions.InsecurePlatformWarning))
 
+DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
+
 class TLS1HttpAdapter(HTTPAdapter):
   def init_poolmanager(self, connections, maxsize, block=False):
     self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
@@ -31,4 +33,64 @@ def get_credentials (url, root_bundle, cert, key, owner_urn):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
-  
+
+def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc = None):
+  fields = {}
+  fields["PROJECT_EXPIRATION"] = exp.strftime(DATE_FMT)
+  fields["PROJECT_NAME"] = name
+  if desc is not None:
+    fields["PROJECT_DESC"] = desc
+
+  req_data = xmlrpclib.dumps(("PROJECT", cred_strings, {"fields" : fields}), methodname = "create")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
+  """Delete project by URN
+  .. note:
+    You may or may not be able to delete projects as a matter of policy for the given authority."""
+
+  options = {}
+
+  req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "delete")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_projects (url, root_bundle, cert, key, cred_strings, urn = None, uid = None, expired = None):
+  options = {}
+  if urn is not None:
+    options["PROJECT_URN"] = urn
+  if uid is not None:
+    options["PROJECT_UID"] = uid
+  if expired is not None:
+    options["PROJECT_EXPIRED"] = expired
+
+  req_data = xmlrpclib.dumps(("PROJECT", cred_strings, options), methodname = "lookup")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
+  options = {}
+
+  req_data = xmlrpclib.dumps(("PROJECT", member_urn, cred_strings, options), methodname = "lookup_for_member")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_urn):
+  options = {}
+
+  req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "lookup_members")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
