@@ -193,7 +193,7 @@ class Link(Resource):
 
   @link_multiplexing.setter
   def link_multiplexing (self, val):
-    self.namesapces.append(Namespaces.EMULAB)
+    self.namespaces.append(Namespaces.EMULAB)
     self._link_multiplexing = val
 
   def _write (self, root):
@@ -417,12 +417,15 @@ class Namespaces(object):
   RS = GNS.Namespace("rs", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
   EMULAB = GNS.Namespace("emulab", "http://www.protogeni.net/resources/rspec/ext/emulab/1")
   VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
+  TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
+  JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
 
 
 class Request(geni.rspec.RSpec):
   def __init__ (self):
     super(Request, self).__init__("request")
     self.resources = []
+    self.tour = None
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
@@ -431,6 +434,11 @@ class Request(geni.rspec.RSpec):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
     self.resources.append(rsrc)
+
+  def addTour (self, tour):
+    self.addNamespace(Namespaces.EMULAB)
+    self.addNamespace(Namespaces.JACKS)
+    self.tour = tour
 
   def writeXML (self, path):
     """Write the current request contents as an XML file that represents an rspec
@@ -442,6 +450,9 @@ class Request(geni.rspec.RSpec):
       f = open(path, "w+")
 
     rspec = self.getDOM()
+
+    if self.tour:
+      self.tour._write(rspec)
 
     for resource in self.resources:
       resource._write(rspec)
@@ -456,6 +467,9 @@ class Request(geni.rspec.RSpec):
     in the GENIv3 format."""
 
     rspec = self.getDOM()
+
+    if self.tour:
+      self.tour._write(rspec)
 
     for resource in self.resources:
       resource._write(rspec)
