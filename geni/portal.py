@@ -234,11 +234,17 @@ class Context (object):
     for name in self._parameterOrder:
       opts = self._parameters[name]
       val = paramValues.get(name, opts['defaultValue'])
+      try:
+        val = ParameterType.argparsemap[opts['type']](val)
+        pass
+      except:
+        sys.exit("ERROR: Could not coerce value '%s' to '%s'" % (val, opts['type']))
+        pass
       if opts['legalValues'] and val not in Context._legalList(opts['legalValues']):
         # TODO: Not 100% sure what the right thing is to do here, need to get 
         # the error back in a nice machine-parsable form
         sys.exit("ERROR: Illegal value '%s' for option '%s'" % (val, name))
-      setattr(namespace, name, ParameterType.argparsemap[opts['type']](val))
+      setattr(namespace, name, val)
     return namespace
 
   def _dumpParamsJSON (self):
