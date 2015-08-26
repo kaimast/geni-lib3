@@ -196,13 +196,13 @@ class Context (object):
     json.dump(ea,sys.stderr,cls=PortalJSONEncoder)
 
     #
-    # Exit with a count of errors and (fatal) warnings, multiplied by -100 ...
+    # Exit with a count of errors and (fatal) warnings, added to 100 ...
     # try to distinguish ourselves meaningfully!
     #
     retcode = len(self._parameterErrors)
     if self._parameterWarningsAreFatal:
       retcode += len(self._parameterWarnings)
-    sys.exit(-100*retcode)
+    sys.exit(100+retcode)
     pass
   
   @staticmethod
@@ -234,11 +234,22 @@ class Context (object):
     for name in self._parameterOrder:
       opts = self._parameters[name]
       val = paramValues.get(name, opts['defaultValue'])
-      if opts['legalValues'] and val not in Context._legalList(opts['legalValues']):
-        # TODO: Not 100% sure what the right thing is to do here, need to get 
-        # the error back in a nice machine-parsable form
-        sys.exit("ERROR: Illegal value '%s' for option '%s'" % (val, name))
-      setattr(namespace, name, ParameterType.argparsemap[opts['type']](val))
+      try:
+        val = ParameterType.argparsemap[opts['type']](val)
+      except:
+        self.reportError(ParameterError("Could not coerce '%s' to '%s'" %
+                                        (val, opts['type']), [name]))
+        continue
+      if opts['legalValues'] and \
+         val not in Context._legalList(opts['legalValues']):
+        self.reportError(ParameterError("Illegal value '%s'" % (val,),
+                                        [name]))
+      else:
+        setattr(namespace, name, val)
+        pass
+      pass
+    # This might not return. 
+    self.verifyParameters()
     return namespace
 
   def _dumpParamsJSON (self):
