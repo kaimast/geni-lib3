@@ -48,8 +48,8 @@ class AM(object):
       self._type = AMTypeRegistry.get(self._typestr)
     return self._type
 
-  def listresources (self, context, slice = None):
-    rspec_data = self.api.listresources(context, self.url, slice)
+  def listresources (self, context, slice = None, available = False):
+    rspec_data = self.api.listresources(context, self.url, slice, {"geni_available" : available})
     if slice is None:
       return self.amtype.parseAdvertisement(rspec_data)
     else:

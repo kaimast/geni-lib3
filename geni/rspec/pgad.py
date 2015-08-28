@@ -1,15 +1,17 @@
-# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
 from lxml import etree as ET
 
-import geni.namespaces as GNS
-from geni.rspec.pg import Namespaces as PGNS
-from geni.rspec import pg
-from geni.model.util import XPathXRange
+from .. import namespaces as GNS
+from .pg import Namespaces as PGNS
+from . import pg
+from . import stitching
+from ..model.util import XPathXRange
 
-_XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
+_XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name,
+         'e' : PGNS.EMULAB.name, 't' : stitching.STITCHNS.name}
 
 class Image(object):
   def __init__ (self):
@@ -233,6 +235,12 @@ class Advertisement(object):
             self._images.add(image)
     for image in self._images:
       yield image
+
+  @property
+  def stitchinfo (self):
+    """Reference to the stitching info in the manifest, if present."""
+    elem = self._root.xpath('/g:rspec/t:stitching', namespaces=_XPNS)[0]
+    return stitching.AdInfo(elem)
 
   @property
   def text (self):

@@ -27,10 +27,14 @@ class ExoGENI(AMType):
     super(ExoGENI, self).__init__ (name)
 
   def parseAdvertisement (self, data):
-    return data
+    from ..rspec import pgad
+    ad = pgad.Advertisement(xml=data["value"])
+    return ad
 
   def parseManifest (self, data):
-    return data
+    from ..rspec import pgmanifest
+    manifest = pgmanifest.Manifest(xml = data["value"])
+    return manifest
 
 
 class ProtoGENI(AMType):
@@ -39,12 +43,14 @@ class ProtoGENI(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import pgad
-    ad = pgad.Advertisement(xml=data)
+    ad = pgad.Advertisement(xml=data["value"])
+    ad.error_url = data["code"]["protogeni_error_url"]
     return ad
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    manifest = pgmanifest.Manifest(xml = data)
+    manifest = pgmanifest.Manifest(xml = data["value"])
+    manifest.error_url = data["code"]["protogeni_error_url"]
     return manifest
 
 
@@ -54,12 +60,12 @@ class FOAM(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import ofad
-    ad = ofad.Advertisement(xml=data)
+    ad = ofad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import ofmanifest
-    manifest = ofmanifest.Manifest(xml = data)
+    manifest = ofmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -69,12 +75,12 @@ class OpenGENI(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import pgad
-    ad = pgad.Advertisement(xml=data)
+    ad = pgad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    manifest = pgmanifest.Manifest(xml = data)
+    manifest = pgmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -84,12 +90,12 @@ class VTS(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import vtsad
-    ad = vtsad.Advertisement(xml=data)
+    ad = vtsad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import vtsmanifest
-    manifest = vtsmanifest.Manifest(xml = data)
+    manifest = vtsmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -99,12 +105,12 @@ class OESS(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import oessad
-    ad = oessad.Advertisement(xml=data)
+    ad = oessad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import oessmanifest
-    manifest = oessmanifest.Manifest(xml = data)
+    manifest = oessmanifest.Manifest(xml = data["value"])
     return manifest
 
 

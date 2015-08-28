@@ -11,6 +11,8 @@ from .. import namespaces
 
 STITCHNS = namespaces.Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/")
 
+_XPNS = {'t' : STITCHNS.name}
+
 class StitchInfo(pg.Resource):
   def __init__ (self):
     super(StitchInfo, self).__init__()
@@ -113,3 +115,46 @@ class Hop(object):
       nh.text = "null"
 
     return he
+
+def coerceBool (text):
+  if text.lower() == "false":
+    return False
+  elif text.lower() == "true":
+    return True
+  else:
+    return None
+
+class AdInfo(object):
+  def __init__ (self, elem):
+    self._root = elem
+    self._aggregates = {}
+
+  @property
+  def aggregates (self):
+    if not self._aggregates:
+      for elem in self._root.xpath('t:aggregate', namespaces=_XPNS):
+        info = AggInfo(elem)
+        self._aggregates[info.urn] = info
+    return self._aggregates
+    
+
+class AggInfo(object):
+  def __init__ (self, elem):
+    self._root = elem
+    self.urn = elem.get("id")
+    self.url = elem.get("url")
+
+  @property
+  def mode (self):
+    return self._root.find("stitchingmode").text
+
+  @property
+  def scheduledservices (self):
+    t = self._root.find("scheduledservices").text
+    return coerceBool(t)
+
+  @property
+  def negotiatedservices (self):
+    t = self._root.find("negotiatedservices").text
+    return coerceBool(t)
+

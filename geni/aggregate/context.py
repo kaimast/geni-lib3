@@ -43,6 +43,7 @@ class SliceCredInfo(object):
     self._path = None
     self.expires = None
     self._build()
+    self.urn = None
 
   def _build (self):
     # This really should probably be a lot more complicated/painful and be based on the "right thing"
@@ -52,7 +53,7 @@ class SliceCredInfo(object):
     if not os.path.exists(self._path):
       self._downloadCredential()
     else:
-      self._setExpires()
+      self._parseInfo()
 
   def _downloadCredential (self):
     (text, cred) = cmd.getslicecred(self.context, self.slicename)
@@ -61,20 +62,26 @@ class SliceCredInfo(object):
     f = open(self._path, "w+")
     f.write(cred)
     f.close()
-    self._setExpires()
+    self._parseInfo()
 
-  def _setExpires (self):
+  def _parseInfo (self):
     r = ET.parse(self._path)
+
+    # Expiration
     expstr = r.find("credential/expires").text
     if expstr[-1] == 'Z':
       expstr = expstr[:-1]
     self.expires = datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
+
+    # URN
+    self.urn = r.find("credential/target_urn").text
 
   @property
   def path (self):
     checktime = datetime.datetime.now() + datetime.timedelta(days=6)
     if self.expires < checktime:
       # We expire in the next 6 days
+      # TODO: Log something
       self._downloadCredential()
       if self.expires < datetime.datetime.now():
         raise SliceCredInfo.CredentialExpiredError(self.slicename, self.expires)
@@ -224,4 +231,7 @@ class Context(object):
   @property
   def slicecreds (self):
     return SlicecredProxy(self)
+
+  def getSliceInfo (self, sname):
+    return self._slicecreds[sname]
 

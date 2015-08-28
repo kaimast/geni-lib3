@@ -47,21 +47,34 @@ class AMAPIv2(object):
     else:
       return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
 
-  def listresources (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
+  def listresources (self, context, url, sname, options = {}):
+#    from ..gcf import oscript
+#    arglist = self._getDefaultArgs(context, url)
+#
+#    if sname:
+#      arglist.extend(["--slicecredfile", context.slicecreds[sname], "listresources", sname])
+#    else:
+#      arglist.append("listresources")
+#
+#    text,res = oscript.call(arglist)
+#    if res.values()[0]["code"]["geni_code"] == 0:
+#      rspec = res.values()[0]["value"]
+#      return rspec
+#    else:
+#      raise ListResourcesError(text)
+    from ..minigcf import amapi2 as AM2
+    creds = []
+    creds.append(open(context.usercred_path, "rb").read())
 
+    surn = None
     if sname:
-      arglist.extend(["--slicecredfile", context.slicecreds[sname], "listresources", sname])
-    else:
-      arglist.append("listresources")
+      sinfo = context.getSliceInfo(sname)
+      surn = sinfo.urn
+      creds.append(open(sinfo.path, "rb").read())
 
-    text,res = oscript.call(arglist)
-    if res.values()[0]["code"]["geni_code"] == 0:
-      rspec = res.values()[0]["value"]
-      return rspec
-    else:
-      raise ListResourcesError(text)
+    res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
+    return res
+    
 
   def createsliver (self, context, url, sname, rspec):
     from ..gcf import oscript
