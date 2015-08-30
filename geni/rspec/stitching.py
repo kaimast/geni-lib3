@@ -8,6 +8,7 @@ from lxml import etree as ET
 
 from . import pg
 from .. import namespaces
+from ..model.util import XPathXRange
 
 STITCHNS = namespaces.Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/")
 
@@ -146,15 +147,51 @@ class AggInfo(object):
 
   @property
   def mode (self):
-    return self._root.find("stitchingmode").text
+    return self._root.xpath("t:stitchingmode", namespaces=_XPNS)[0].text
 
   @property
   def scheduledservices (self):
-    t = self._root.find("scheduledservices").text
+    t = self._root.xpath("t:scheduledservices", namespaces=_XPNS)[0].text
     return coerceBool(t)
 
   @property
   def negotiatedservices (self):
-    t = self._root.find("negotiatedservices").text
+    t = self._root.xpath("t:negotiatedservices", namespaces=_XPNS)[0].text
     return coerceBool(t)
+
+  @property
+  def nodes (self):
+    n = self._root.xpath("t:node", namespaces=_XPNS)
+    return XPathXRange(n, AggNode)
+
+
+class AggNode(object):
+  def __init__ (self):
+    self.id = None
+    self._root = None
+
+  @property
+  def ports (self):
+    p = self._root.xpath("t:port", namespaces=_XPNS)
+    return XPathXRange(p, AggPort)
+
+  @classmethod
+  def _fromdom (cls, elem):
+    node = AggNode()
+    node._root = elem
+    node.id = elem.get("id")
+    return node
+
+
+class AggPort(object):
+  def __init__ (self):
+    self.id = None
+    self._root = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    port = AggPort()
+    port._root = elem
+    port.id = elem.get("id")
+    return port
 

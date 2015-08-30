@@ -37,6 +37,7 @@ class Framework(object):
     tf = tempfile.NamedTemporaryFile(delete=False)
     path = tf.name
     tf.close()
+    ### TODO: WARN IF OPENSSL IS NOT PRESENT
     if os.name == "nt":
       nullf = open("NUL")
       binp = os.path.normpath("C:/OpenSSL-Win32/bin/openssl")
@@ -82,25 +83,41 @@ class Emulab(ProtoGENI):
     self._ca = "https://www.emulab.net:443/protogeni/xmlrpc/sa"
 
 
-class CHAPI(Framework):
-  def __init__ (self, name = "chapi"):
-    super(CHAPI, self).__init__(name)
-    self._type = "chapi"
+class CHAPI1(Framework):
+  def __init__ (self, name = "chapi1"):
+    super(CHAPI2, self).__init__(name)
+    self._type = "chapi1"
 
-  def listProjectMembers (self, context, project):
-    from ..gcf import oscript
-    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listprojectmembers"]
-    args.append(project)
-    (txt, res) = oscript.call(args)
-    return res
 
-  def listProjects (self, context, username = None):
-    from ..gcf import oscript
-    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listprojects"]
-    if username:
-      args.append(username)
-    (txt, res) = oscript.call(args)
-    return res
+class CHAPI2(Framework):
+  def __init__ (self, name = "chapi2"):
+    super(CHAPI2, self).__init__(name)
+    self._type = "chapi2"
+
+  def listProjectMembers (self, context, project_urn):
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+    res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [ucred], project_urn)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      # TODO: Exception
+      return res
+
+  def listProjects (self, context, own = True):
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+
+    if not own:
+      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [ucred])
+    else:
+      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key, [ucred], context.userurn)
+
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      # TODO: Exception
+      return res
 
   def listSlices (self, context):
     from ..gcf import oscript
@@ -110,14 +127,14 @@ class CHAPI(Framework):
 
   def getCredentials (self, context, owner_urn):
     from ..minigcf import chapi2
-    res = chapi2.get_credentials(self._ma, False, context.cert, context.key, owner_urn)
+    res = chapi2.get_credentials(self._ma, False, self.cert, self.key, owner_urn)
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
       return res
 
 
-class Portal(CHAPI):
+class Portal(CHAPI2):
   def __init__ (self):
     super(Portal, self).__init__("portal")
     self._authority = "ch.geni.net"
@@ -137,7 +154,8 @@ class Portal(CHAPI):
     l.append("key = %s" % (self.key))
     return l
 
-class EmulabCH2(CHAPI):
+
+class EmulabCH2(CHAPI1):
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
     self._authority = ""
