@@ -34,6 +34,28 @@ def get_credentials (url, root_bundle, cert, key, owner_urn):
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
+def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp = None, desc = None):
+  fields = {}
+  fields["SLICE_NAME"] = name
+  fields["SLICE_PROJECT_URN"] = proj_urn
+  if exp: fields["SLICE_EXPIRATION"] = exp.strftime(DATE_FMT)
+  if desc: fields["SLICE_DESCRIPTION"] = desc
+
+  req_data = xmlrpclib.dumps(("SLICE", cred_strings, {"fields" : fields}), methodname = "create")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
+  options = {}
+
+  req_data = xmlrpclib.dumps(("SLICE", member_urn, cred_strings, options), methodname = "lookup_for_member")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
 def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc = None):
   fields = {}
   fields["PROJECT_EXPIRATION"] = exp.strftime(DATE_FMT)
@@ -59,6 +81,14 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
+
+#def _update_project (url, root_bundle, cert, key, cred_strings, project_urn):
+#  options = {"fields" : {}}
+#  req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "update")
+#  s = requests.Session()
+#  s.mount(url, TLS1HttpAdapter())
+#  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+#  return xmlrpclib.loads(resp.content)[0][0]
 
 
 def lookup_projects (url, root_bundle, cert, key, cred_strings, urn = None, uid = None, expired = None):

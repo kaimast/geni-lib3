@@ -103,7 +103,8 @@ class Context(object):
     self._default_user = None
     self._users = set()
     self._cf = None
-    self.project = None
+    self._project = None
+    self._project_urn = None
     self._usercred_info = None  # (path, expires, urn)
     self._slicecreds = {}
     self.debug = False
@@ -128,6 +129,21 @@ class Context(object):
   @property
   def userurn (self):
     return self._ucred_info[2]
+
+  @property
+  def project (self):
+    return self._project
+
+  @project.setter
+  def project (self, val):
+    self._project = val
+    self._project_urn = None
+
+  @property
+  def project_urn (self):
+    if self._project_urn is None:
+      pass
+    return self._project_urn
 
   @property
   def cf (self):

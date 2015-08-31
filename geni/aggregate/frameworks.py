@@ -38,6 +38,7 @@ class Framework(object):
     path = tf.name
     tf.close()
     ### TODO: WARN IF OPENSSL IS NOT PRESENT
+    ### TODO: Make ssl binary paths configurable
     if os.name == "nt":
       nullf = open("NUL")
       binp = os.path.normpath("C:/OpenSSL-Win32/bin/openssl")
@@ -58,12 +59,12 @@ class Framework(object):
   def cert (self, val):
     self._cert = val
 
-  def createslice (self, context, name):
-    from ..gcf import oscript
-    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "createslice"]
-    args.append(name)
-    (txt, res) = oscript.call(args)
-    return res
+#  def createslice (self, context, name):
+#    from ..gcf import oscript
+#    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "createslice"]
+#    args.append(name)
+#    (txt, res) = oscript.call(args)
+#    return res
 
   def _update (self, context):
     pass
@@ -93,6 +94,10 @@ class CHAPI2(Framework):
   def __init__ (self, name = "chapi2"):
     super(CHAPI2, self).__init__(name)
     self._type = "chapi2"
+
+  def projectNameToURN (self, name):
+    ### TODO: Exception
+    return None
 
   def listProjectMembers (self, context, project_urn):
     from ..minigcf import chapi2
@@ -133,6 +138,20 @@ class CHAPI2(Framework):
     else:
       return res
 
+  def createSlice (self, context, slicename, project_urn = None, exp = None, desc = None):
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+
+    if project_urn is None:
+      project_urn = self.projectNameToURN(context.project)
+
+    res = chapi2.create_slice(self._sa, False, self.cert, self.key, [ucred], slicename, project_urn, exp, desc)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      # TODO: Exception
+      return res
+
 
 class Portal(CHAPI2):
   def __init__ (self):
@@ -141,6 +160,9 @@ class Portal(CHAPI2):
     self._ch = "https://ch.geni.net:8444/CH"
     self._ma = "https://ch.geni.net:443/MA"
     self._sa = "https://ch.geni.net:443/SA"
+
+  def projectNameToURN (self, name):
+    return "urn:publicid:IDN+ch.geni.net+project+%s" % (name)
 
   def getConfig (self):
     l = []
