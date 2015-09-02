@@ -37,7 +37,7 @@ def getversion (url, root_bundle, cert, key, options = {}):
   return xmlrpclib.loads(resp.content)[0][0]
 
 def listresources (url, root_bundle, cert, key, cred_strings, options = {}, sliceurn = None):
-  opts = {"geni_rspec_version" : {"version" : 3, "type" : "GENI"},
+  opts = {"geni_rspec_version" : {"version" : "3", "type" : "GENI"},
              "geni_available" : False,
              "geni_compressed" : False}
 
