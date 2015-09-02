@@ -85,15 +85,15 @@ class Emulab(ProtoGENI):
 
 
 class CHAPI1(Framework):
-  def __init__ (self, name = "chapi1"):
+  def __init__ (self, name = "chapi"):
     super(CHAPI2, self).__init__(name)
-    self._type = "chapi1"
+    self._type = "chapi"
 
 
 class CHAPI2(Framework):
-  def __init__ (self, name = "chapi2"):
+  def __init__ (self, name = "chapi"):
     super(CHAPI2, self).__init__(name)
-    self._type = "chapi2"
+    self._type = "chapi"
 
   def projectNameToURN (self, name):
     ### TODO: Exception
