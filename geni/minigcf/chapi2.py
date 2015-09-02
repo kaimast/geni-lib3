@@ -27,8 +27,8 @@ class TLS1HttpAdapter(HTTPAdapter):
 def headers ():
   return GCU.defaultHeaders()
   
-def get_credentials (url, root_bundle, cert, key, owner_urn):
-  req_data = xmlrpclib.dumps((owner_urn, [], {}), methodname="get_credentials")
+def get_credentials (url, root_bundle, cert, key, creds, target_urn):
+  req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())

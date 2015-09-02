@@ -9,7 +9,6 @@ import datetime
 
 import lxml.etree as ET
 
-from . import cmd
 from ..exceptions import NoUserError, SliceCredError
 
 class SlicecredProxy(object):
@@ -56,9 +55,15 @@ class SliceCredInfo(object):
       self._parseInfo()
 
   def _downloadCredential (self):
-    (text, cred) = cmd.getslicecred(self.context, self.slicename)
-    if not cred:
-      raise SliceCredError(text)
+    creds = self.context.cf.getSliceCredentials(self.context, self.slicename)
+
+    if len(creds) > 1:
+      ### TODO: Exception
+      print "WARNING: Multiple slice credentials received for slice (%s)" % (self.slicename)
+
+    cred = creds[0]
+#      raise SliceCredError(text)
+
     f = open(self._path, "w+")
     f.write(cred)
     f.close()
@@ -182,7 +187,11 @@ class Context(object):
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
         if not os.path.exists(ucpath):
           cfg = self.cfg_path
-          cred = cmd.getusercred(cfg)
+          creds = self.cf.getUserCredentials(self)
+          if len(creds) > 1:
+            ### TODO: Exception or something
+            print "WARNING: More than one credential returned for user from member authority"
+          cred = creds[0]
 
           f = open(ucpath, "w+")
           f.write(cred)
