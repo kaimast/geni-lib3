@@ -110,11 +110,8 @@ class Context(object):
     self.debug = False
 
   def _getSliceCred (self, sname):
-    if not self._slicecreds.has_key(sname):
-      scinfo = SliceCredInfo(self, sname)
-      self._slicecreds[sname] = scinfo
-
-    return self._slicecreds[sname].path
+    info = self.getSliceInfo(sname)
+    return info.path
 
   def _getCredInfo(self, path):
     r = ET.parse(path)
@@ -257,5 +254,8 @@ class Context(object):
     return SlicecredProxy(self)
 
   def getSliceInfo (self, sname):
+    if not self._slicecreds.has_key(sname):
+      scinfo = SliceCredInfo(self, sname)
+      self._slicecreds[sname] = scinfo
     return self._slicecreds[sname]
 
