@@ -41,8 +41,8 @@ class SliceCredInfo(object):
     self.context = context
     self._path = None
     self.expires = None
-    self._build()
     self.urn = None
+    self._build()
 
   def _build (self):
     # This really should probably be a lot more complicated/painful and be based on the "right thing"
