@@ -192,6 +192,10 @@ class Context(object):
           if len(creds) > 1:
             ### TODO: Exception or something
             print "WARNING: More than one credential returned for user from member authority"
+            print "-----------"
+            print creds
+            print "-----------"
+            print
           cred = creds[0]
 
           f = open(ucpath, "w+")
