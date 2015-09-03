@@ -180,6 +180,7 @@ class Context(object):
       os.makedirs(nval)
     self._data_dir = nval
 
+### TODO: User credentials need to belong to Users, or fix up this profile nonsense
   @property
   def _ucred_info (self):
     if self._usercred_info is None:
