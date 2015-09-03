@@ -99,6 +99,10 @@ class CHAPI2(Framework):
     ### TODO: Exception
     return None
 
+  def sliceNameToURN (self, project, name):
+    ### TODO: Exception
+    return None
+
   def listProjectMembers (self, context, project_urn):
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
@@ -130,9 +134,21 @@ class CHAPI2(Framework):
     (txt, res) = oscript.call(args)
     return res
 
-  def getCredentials (self, context, owner_urn):
+  def getUserCredentials (self, context):
     from ..minigcf import chapi2
-    res = chapi2.get_credentials(self._ma, False, self.cert, self.key, owner_urn)
+    res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], context.userurn)
+    if res["code"] == 0:
+      return res["value"][0]["geni_value"]
+    else:
+      return res
+
+  def getSliceCredentials (self, context, slicename):
+    from ..minigcf import chapi2
+
+    ucred = open(context.usercred_path, "r").read()
+    slice_urn = self.sliceNameToURN(context.project, slicename)
+
+    res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [ucred], slice_urn)
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
@@ -163,6 +179,9 @@ class Portal(CHAPI2):
 
   def projectNameToURN (self, name):
     return "urn:publicid:IDN+ch.geni.net+project+%s" % (name)
+
+  def sliceNameToURN (self, project, name):
+    return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
 
   def getConfig (self):
     l = []
