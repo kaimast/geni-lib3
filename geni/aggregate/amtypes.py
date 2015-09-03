@@ -43,14 +43,12 @@ class ProtoGENI(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import pgad
-    print data
     ad = pgad.Advertisement(xml=data["value"])
     ad.error_url = data["code"]["protogeni_error_url"]
     return ad
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    print data
     manifest = pgmanifest.Manifest(xml = data["value"])
     manifest.error_url = data["code"]["protogeni_error_url"]
     return manifest
