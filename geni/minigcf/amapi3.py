@@ -28,7 +28,6 @@ class TLS1HttpAdapter(HTTPAdapter):
 def headers ():
   return GCU.defaultHeaders()
   
-
 def getversion (url, root_bundle, cert, key, options = {}):
   req_data = xmlrpclib.dumps(options, methodname="GetVersion")
   s = requests.Session()
