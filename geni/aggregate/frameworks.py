@@ -137,7 +137,6 @@ class CHAPI2(Framework):
   def getUserCredentials (self, context, owner_urn):
     from ..minigcf import chapi2
     res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], owner_urn)
-    print res
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:

@@ -188,12 +188,7 @@ class Context(object):
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
         if not os.path.exists(ucpath):
           cfg = self.cfg_path
-          creds = self.cf.getUserCredentials(self, self._default_user.urn)
-          if len(creds) > 1:
-            ### TODO: Exception or something
-            print "WARNING: More than one credential returned for user from member authority"
-            print "Count: %d" % (len(creds))
-          cred = creds[0]
+          cred = self.cf.getUserCredentials(self, self._default_user.urn)
 
           f = open(ucpath, "w+")
           f.write(cred)
