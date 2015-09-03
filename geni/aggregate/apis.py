@@ -64,13 +64,14 @@ class AMAPIv2(object):
 #      raise ListResourcesError(text)
     from ..minigcf import amapi2 as AM2
     creds = []
-    creds.append(open(context.usercred_path, "rb").read())
 
     surn = None
     if sname:
       sinfo = context.getSliceInfo(sname)
       surn = sinfo.urn
       creds.append(open(sinfo.path, "rb").read())
+
+    creds.append(open(context.usercred_path, "rb").read())
 
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
     return res

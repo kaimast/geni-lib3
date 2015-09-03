@@ -41,8 +41,8 @@ class SliceCredInfo(object):
     self.context = context
     self._path = None
     self.expires = None
-    self._build()
     self.urn = None
+    self._build()
 
   def _build (self):
     # This really should probably be a lot more complicated/painful and be based on the "right thing"
@@ -55,13 +55,8 @@ class SliceCredInfo(object):
       self._parseInfo()
 
   def _downloadCredential (self):
-    creds = self.context.cf.getSliceCredentials(self.context, self.slicename)
+    cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
 
-    if len(creds) > 1:
-      ### TODO: Exception
-      print "WARNING: Multiple slice credentials received for slice (%s)" % (self.slicename)
-
-    cred = creds[0]
 #      raise SliceCredError(text)
 
     f = open(self._path, "w+")
@@ -180,6 +175,7 @@ class Context(object):
       os.makedirs(nval)
     self._data_dir = nval
 
+### TODO: User credentials need to belong to Users, or fix up this profile nonsense
   @property
   def _ucred_info (self):
     if self._usercred_info is None:
@@ -187,11 +183,7 @@ class Context(object):
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
         if not os.path.exists(ucpath):
           cfg = self.cfg_path
-          creds = self.cf.getUserCredentials(self)
-          if len(creds) > 1:
-            ### TODO: Exception or something
-            print "WARNING: More than one credential returned for user from member authority"
-          cred = creds[0]
+          cred = self.cf.getUserCredentials(self, self._default_user.urn)
 
           f = open(ucpath, "w+")
           f.write(cred)
