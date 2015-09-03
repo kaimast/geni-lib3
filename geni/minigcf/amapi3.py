@@ -1,6 +1,6 @@
 # Copyright (c) 2015  Barnstormer Softworks, Ltd.
 
-# Streamlined implementation of xmlrpc calls to AM API v2-compliant aggregates
+# Streamlined implementation of xmlrpc calls to AM API v3-compliant aggregates
 # Only uses python requests module, without a ton of extra SSL dependencies
 
 from __future__ import absolute_import
@@ -35,28 +35,3 @@ def getversion (url, root_bundle, cert, key, options = {}):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
-
-def listresources (url, root_bundle, cert, key, cred_strings, options = {}, sliceurn = None):
-  opts = {"geni_rspec_version" : {"version" : "3", "type" : "GENI"},
-             "geni_available" : False,
-             "geni_compressed" : False}
-
-  if sliceurn:
-    opts["geni_slice_urn"] = sliceurn
-
-  # Allow all options to be overridden by the caller
-  opts.update(options)
-
-  req_data = xmlrpclib.dumps((cred_strings, opts), methodname="ListResources")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
-  return xmlrpclib.loads(resp.content)[0][0]
-
-def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = {}):
-  req_data = xmlrpclib.dumps((owner_urn, cred_strings, options), methodname="ListImages")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
-  return xmlrpclib.loads(resp.content)[0][0]
-
