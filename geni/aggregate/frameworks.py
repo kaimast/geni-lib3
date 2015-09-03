@@ -134,9 +134,9 @@ class CHAPI2(Framework):
     (txt, res) = oscript.call(args)
     return res
 
-  def getUserCredentials (self, context):
+  def getUserCredentials (self, context, owner_urn):
     from ..minigcf import chapi2
-    res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], context.userurn)
+    res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], owner_urn)
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
