@@ -55,13 +55,8 @@ class SliceCredInfo(object):
       self._parseInfo()
 
   def _downloadCredential (self):
-    creds = self.context.cf.getSliceCredentials(self.context, self.slicename)
+    cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
 
-    if len(creds) > 1:
-      ### TODO: Exception
-      print "WARNING: Multiple slice credentials received for slice (%s)" % (self.slicename)
-
-    cred = creds[0]
 #      raise SliceCredError(text)
 
     f = open(self._path, "w+")
