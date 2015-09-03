@@ -72,6 +72,8 @@ class AMAPIv2(object):
       surn = sinfo.urn
       creds.append(open(sinfo.path, "rb").read())
 
+    print "Slice URN: " % (surn)
+
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
     return res
     
