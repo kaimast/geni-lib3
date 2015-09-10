@@ -26,6 +26,10 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
 
+  def dumpMACs (self, context, sname, datapaths):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:dump-macs",
+                           options={"datapaths" : datapaths})
+
   def clearFlows (self, context, sname, datapaths):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:clear-flows", options={"datapaths" : datapaths})
 

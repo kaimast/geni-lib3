@@ -17,7 +17,7 @@ class Namespaces(object):
 # Datapath Images #
 ###################
 
-class DatapathImage(object):
+class Image(object):
   def __init__ (self, name):
     self.name = name
     self._features = []
@@ -28,6 +28,9 @@ class DatapathImage(object):
     for feature in self._features:
       feature._write(i)
     return i
+
+class DatapathImage(Image):
+  pass
 
 class OVSImage(DatapathImage):
   def __init__ (self, name):
@@ -119,6 +122,30 @@ class Datapath(Resource):
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}datapath" % (Namespaces.VTS.name))
+    d.attrib["client_id"] = self.name
+    self.image._write(d)
+    for port in self.ports:
+      port._write(d)
+    return d
+
+
+class Container(Resource):
+  def __init__ (self, image, name):
+    super(Container, self).__init__()
+    self.image = image
+    self.ports =[]
+    self.name = name
+
+  def attachPort (self, port):
+    if port.name is None:
+      port.clientid = "%s:%d" % (self.name, len(self.ports))
+    else:
+      port.clientid = "%s:%s" % (self.name, port.name)
+    self.ports.append(port)
+    return port
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
     self.image._write(d)
     for port in self.ports:

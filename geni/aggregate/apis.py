@@ -8,8 +8,9 @@ import json
 from .core import APIRegistry
 
 class AMError(Exception):
-  def __init__ (self, text):
+  def __init__ (self, text, data = None):
     self.text = text
+    self.data = data
   def __str__ (self):
     return self.text
   
@@ -74,7 +75,10 @@ class AMAPIv2(object):
     creds.append(open(context.usercred_path, "rb").read())
 
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
-    return res
+    if res["code"]["geni_code"] == 0:
+      return res
+
+    raise ListResourcesError(res["output"], res)
     
 
   def createsliver (self, context, url, sname, rspec):
