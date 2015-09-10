@@ -8,6 +8,12 @@ import os.path
 
 from .core import FrameworkRegistry
 
+class ClearinghouseError(Exception):
+  def __init__ (self, text, data = None):
+    self.text = text
+    self.data = data
+  def __str__ (self):
+    return self.text
 
 class Framework(object):
   class KeyPathError(Exception):
@@ -110,8 +116,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       return res["value"]
     else:
-      # TODO: Exception
-      return res
+      raise ClearinghouseError(res["output"], res)
 
   def listProjects (self, context, own = True):
     from ..minigcf import chapi2
@@ -125,8 +130,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       return res["value"]
     else:
-      # TODO: Exception
-      return res
+      raise ClearinghouseError(res["output"], res)
 
   def listSlices (self, context):
     from ..gcf import oscript
@@ -140,7 +144,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
-      return res
+      raise ClearinghouseError(res["output"], res)
 
   def getSliceCredentials (self, context, slicename):
     from ..minigcf import chapi2
@@ -152,7 +156,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
-      return res
+      raise ClearinghouseError(res["output"], res)
 
   def createSlice (self, context, slicename, project_urn = None, exp = None, desc = None):
     from ..minigcf import chapi2
@@ -165,8 +169,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       return res["value"]
     else:
-      # TODO: Exception
-      return res
+      raise ClearinghouseError(res["output"], res)
 
 
 class Portal(CHAPI2):
