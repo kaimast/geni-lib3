@@ -74,7 +74,10 @@ class AMAPIv2(object):
     creds.append(open(context.usercred_path, "rb").read())
 
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
-    return res
+    if res["code"]["geni_code"] == 0:
+      return res
+
+    raise ListResourcesError(res["output"])
     
 
   def createsliver (self, context, url, sname, rspec):

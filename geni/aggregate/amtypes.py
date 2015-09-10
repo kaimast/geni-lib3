@@ -53,7 +53,6 @@ class ProtoGENI(AMType):
     manifest.error_url = data["code"]["protogeni_error_url"]
     return manifest
 
-
 class FOAM(AMType):
   def __init__ (self, name="foam"):
     super(FOAM, self).__init__(name)
