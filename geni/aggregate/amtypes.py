@@ -49,8 +49,11 @@ class ProtoGENI(AMType):
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    manifest = pgmanifest.Manifest(xml = data["value"])
-    manifest.error_url = data["code"]["protogeni_error_url"]
+    if isinstance(data, (str, unicode)):
+      manifest = pgmanifest.Manifest(xml = data)
+    else:
+      manifest = pgmanifest.Manifest(xml = data["value"])
+      manifest.error_url = data["code"]["protogeni_error_url"]
     return manifest
 
 class FOAM(AMType):
@@ -94,7 +97,10 @@ class VTS(AMType):
 
   def parseManifest (self, data):
     from ..rspec import vtsmanifest
-    manifest = vtsmanifest.Manifest(xml = data["value"])
+    if isinstance(data, (str, unicode)):
+      manifest = vtsmanifest.Manifest(xml = data)
+    else:
+      manifest = vtsmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -109,7 +115,10 @@ class OESS(AMType):
 
   def parseManifest (self, data):
     from ..rspec import oessmanifest
-    manifest = oessmanifest.Manifest(xml = data["value"])
+    if isinstance(data, (str, unicode)):
+      manifest = oessmanifest.Manifest(xml = data)
+    else:
+      manifest = oessmanifest.Manifest(xml = data["value"])
     return manifest
 
 
