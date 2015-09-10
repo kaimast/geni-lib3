@@ -126,6 +126,30 @@ class Datapath(Resource):
     return d
 
 
+class Container(Resource):
+  def __init__ (self, image, name):
+    super(Container, self).__init__()
+    self.image = image
+    self.ports =[]
+    self.name = name
+
+  def attachPort (self, port):
+    if port.name is None:
+      port.clientid = "%s:%d" % (self.name, len(self.ports))
+    else:
+      port.clientid = "%s:%s" % (self.name, port.name)
+    self.ports.append(port)
+    return port
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
+    d.attrib["client_id"] = self.name
+    self.image._write(d)
+    for port in self.ports:
+      port._write(d)
+    return d
+
+
 class Port(object):
   def __init__ (self, name = None):
     self.clientid = None
