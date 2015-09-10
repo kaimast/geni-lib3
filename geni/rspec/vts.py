@@ -17,7 +17,7 @@ class Namespaces(object):
 # Datapath Images #
 ###################
 
-class DatapathImage(object):
+class Image(object):
   def __init__ (self, name):
     self.name = name
     self._features = []
@@ -28,6 +28,9 @@ class DatapathImage(object):
     for feature in self._features:
       feature._write(i)
     return i
+
+class DatapathImage(Image):
+  pass
 
 class OVSImage(DatapathImage):
   def __init__ (self, name):
