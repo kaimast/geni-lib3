@@ -198,7 +198,7 @@ class InternalCircuit(Port):
     p = super(InternalCircuit, self)._write(element)
     p.attrib["type"] = "internal"
     if self.vlan:
-      p.attrib["vlan"] = str(self.vlan)
+      p.attrib["vlan-id"] = str(self.vlan)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
