@@ -189,8 +189,9 @@ class VFCircuit(Port):
 
 
 class InternalCircuit(Port):
-  def __init__ (self, target):
+  def __init__ (self, target, vlan = None):
     super(InternalCircuit, self).__init__()
+    self.vlan = vlan
     self.target = target
 
   def _write (self, element):
@@ -198,6 +199,8 @@ class InternalCircuit(Port):
     p.attrib["type"] = "internal"
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
+    if self.vlan:
+      t.attrib["vlan"] = str(self.vlan)
     return p
 
 
@@ -256,9 +259,22 @@ class Request(geni.rspec.RSpec):
 #############
 
 def connectInternalCircuit (dp1, dp2):
-  sp = InternalCircuit(None)
-  dp = InternalCircuit(None)
+  dp1v = None
+  dp2v = None
+
+  if isinstance(dp1, tuple):
+    dp1v = dp1[1]
+    dp1 = dp1[0]
+
+  if isinstance(dp2, tuple):
+    dp2v = dp2[1]
+    dp2 = dp2[0]
+
+  sp = InternalCircuit(None, dp1v)
+  dp = InternalCircuit(None, dp2v)
+
   dp1.attachPort(sp)
   dp2.attachPort(dp)
+
   sp.target = dp.clientid
   dp.target = sp.clientid
