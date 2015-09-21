@@ -90,7 +90,6 @@ slowest site returns (or times out)."""
       data = open(mpath).read()
       mf = am.amtype.parseManifest(data)
       d.setdefault(slc, {})[sitemap[site]] = mf
-      #d.setdefault(slc, {})[site] = mf
 
   return d
 
