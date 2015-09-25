@@ -15,7 +15,7 @@ class AptAM(AM):
     super(AptAM, self).__init__(name, url, "amapiv2", "pg", cmid)
 
 
-Apt = AptAM("apt", "boss.apt.emulab.net", "urn:publicid:IDN+boss.apt.emulab.net+authority+cm")
+Apt = AptAM("apt", "boss.apt.emulab.net", "urn:publicid:IDN+apt.emulab.net+authority+cm")
 
 def aggregates ():
   module = sys.modules[__name__]
