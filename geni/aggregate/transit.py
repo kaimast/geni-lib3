@@ -21,6 +21,9 @@ ION = Transit("i2-ion", "pg", "urn:publicid:IDN+ion.internet2.edu+authority+am",
 MAX = Transit("dcn-max", "pg", "urn:publicid:IDN+dragon.maxgigapop.net+authority+am",
               "http://max-myplc.dragon.maxgigapop.net:12346")
 
+Utah = Transit("utah-stitch", "pg", "urn:publicid:IDN+stitch.geniracks.net+authority+cm",
+               "https://stitch.geniracks.net:12369/protogeni/xmlrpc/am")
+
 def aggregates ():
   module = sys.modules[__name__]
   for name,obj in inspect.getmembers(module):
