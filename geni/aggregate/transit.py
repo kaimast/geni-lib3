@@ -13,7 +13,7 @@ class Transit(AM):
 
 
 AL2S = Transit("i2-al2s", "oess", "urn:publicid:IDN+al2s.internet2.edu+authority+am",
-               "https://foam-oess-stage.grnoc.iu.edu:3626/foam/gapi/2")
+               "https://geni-al2s.net.internet2.edu:3626/foam/gapi/2")
 
 ION = Transit("i2-ion", "pg", "urn:publicid:IDN+ion.internet2.edu+authority+am",
               "http://geni-am.net.internet2.edu:12346")
