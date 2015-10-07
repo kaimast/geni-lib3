@@ -15,6 +15,17 @@ class Connection(germ.Connection):
     self.user = "foamadmin"
 
   @property
+  def pgcmid (self):
+    url = "https://%s:%d/core/admin/vts/pg-cmid" % (self.host, self.port)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
+  @pgcmid.setter
+  def pgcmid (self, val):
+    url = "https://%s:%d/core/admin/vts/pg-cmid/%s" % (self.host, self.port, val)
+    r = requests.post(url, **self.rkwargs)
+
+  @property
   def pgvlans (self):
     url = "https://%s:%d/core/admin/vts/pgvlans" % (self.host, self.port)
     r = requests.get(url, **self.rkwargs)
