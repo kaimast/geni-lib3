@@ -42,6 +42,7 @@ class Shell(object):
     import geni.aggregate.vts
     import geni.aggregate.exogeni
     import geni.aggregate.cloudlab
+    import geni.aggregate.transit
     import pprint
 
     imports["util"] = geni.util
@@ -51,6 +52,7 @@ class Shell(object):
     imports["VTSAM"] = geni.aggregate.vts
     imports["EGAM"] = geni.aggregate.exogeni
     imports["CLAM"] = geni.aggregate.cloudlab
+    imports["TRANSITAM"] = geni.aggregate.transit
     imports["IGX"] = geni.rspec.igext
     imports["EGX"] = geni.rspec.egext
     imports["IGUtil"] = geni.rspec.igutil
