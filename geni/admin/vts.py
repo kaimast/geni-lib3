@@ -60,6 +60,10 @@ class Connection(germ.Connection):
     r = requests.put(url, d, **self.rkwargs)
     return r
 
+  def removeCircuitPlane (self, label):
+    url = "https://%s:%d/core/admin/vts/circuitplane/%s" % (self.host, self.port, label)
+    r = requests.delete(url, **self.rkwargs)
+
   def getDatapaths (self, sliver_urn):
     url = "https://%s:%d/core/admin/vts/sliver/%s/datapaths" % (self.host, self.port, sliver_urn)
     r = requests.get(url, **self.rkwargs)
