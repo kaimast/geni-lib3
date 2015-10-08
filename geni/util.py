@@ -37,9 +37,15 @@ requested from the given aggregate."""
 
   if not manifest:
     manifest = am.listresources(context, slice)
-  for node in manifest.nodes:
-    for login in node.logins:
-      print "[%s] %s:%d" % (login.username, login.hostname, login.port)
+
+  if manifest.containers:
+    for container in manifest.containers:
+      for login in container.logins:
+        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
+  elif manifest.nodes:
+    for node in manifest.nodes:
+      for login in node.logins:
+        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
 
 
 # You can't put very much information in a queue before you hang your OS
