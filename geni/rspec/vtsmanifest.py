@@ -7,6 +7,7 @@ import os
 from lxml import etree as ET
 
 import geni.namespaces as GNS
+from .pgmanifest import ManifestSvcLogin
 
 XPNS = {'g' : GNS.REQUEST.name,
         'v' : "http://geni.bssoftworks.com/rspec/ext/vts/manifest/1",
@@ -50,12 +51,14 @@ class InternalPort(GenericPort):
   def __init__ (self):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
+    self.mac_address = None
 
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
+    p.mac_address = elem.get("mac-address")
     return p
 
   @property
@@ -96,6 +99,32 @@ class PGLocalPort(GenericPort):
     p.shared_vlan = elem.get("shared-lan")
     return p
 
+class ManifestContainer(object):
+  def __init__ (self):
+    self.client_id = None
+    self.image = None
+    self.sliver_id = None
+    self.logins = []
+    self.ports = []
+
+  @classmethod
+  def _fromdom (cls, elem):
+    c = ManifestContainer()
+    c.name = elem.get("client_id")
+    c.image = elem.get("image")
+    c.sliver_id = elem.get("sliver_id")
+
+    logins = elem.xpath('g:services/g:login', namespaces = XPNS)
+    for lelem in logins:
+      l = ManifestSvcLogin._fromdom(lelem)
+      c.logins.append(l)
+
+    ports = elem.xpath('v:port', namespaces = XPNS)
+    for cport in ports:
+      p = Manifest._buildPort(cport)
+      c.ports.append(p)
+
+    return c
 
 class ManifestFunction(object):
   def __init__ (self, client_id):
@@ -147,6 +176,10 @@ class Manifest(object):
     elems = self._root.xpath("v:datapath/v:port", namespaces = XPNS)
     for elem in elems:
       yield Manifest._buildPort(elem)
+  
+  @property
+  def containers (self):
+    for elem in self._root.xpath("v:container", namespaces = XPNS): yield ManifestContainer._fromdom(elem)
 
   @property
   def functions (self):
