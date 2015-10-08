@@ -107,7 +107,6 @@ class ManifestFunction(object):
     if typ == "sslvpn":
       f = SSLVPNFunction._fromdom(elem)
 
-
 class SSLVPNFunction(ManifestFunction):
   def __init__ (sef, client_id):
     super(SSLVPNFunction, self).__init__(client_id)
@@ -115,7 +114,6 @@ class SSLVPNFunction(ManifestFunction):
     self.local_ip = None
     self.key = None
     
-
 class Manifest(object):
   def __init__ (self, path = None, xml = None):
     if path:
@@ -148,7 +146,7 @@ class Manifest(object):
   def ports (self):
     elems = self._root.xpath("v:datapath/v:port", namespaces = XPNS)
     for elem in elems:
-      yield self._buildPort(elem)
+      yield Manifest._buildPort(elem)
 
   @property
   def functions (self):
@@ -159,9 +157,10 @@ class Manifest(object):
   def findPort (self, client_id):
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)
     if pelems:
-      return self._buildPort(pelems[0])
+      return Manifest._buildPort(pelems[0])
 
-  def _buildPort (self, elem):
+  @staticmethod
+  def _buildPort (elem):
     t = elem.get("type")
     if t == "gre":
       return GREPort._fromdom(elem)
