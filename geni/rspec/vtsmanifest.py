@@ -48,6 +48,12 @@ class GenericPort(object):
 
 
 class InternalPort(GenericPort):
+  class NoMACAddressError(Exception):
+    def __init__ (self, cid):
+      self._cid = cid
+    def __str__ (self):
+      return "Port with client_id %s does not have MAC address." % (self._cid)
+
   def __init__ (self):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
@@ -58,7 +64,13 @@ class InternalPort(GenericPort):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
-    p.mac_address = elem.get("mac-address")
+    print "b4 try"
+    if elem.get("mac-address") is None:
+      raise InternalPort.NoMACAddressError(p.client_id)
+    else:
+      p.mac_address = elem.get("mac-address")
+      print "inside else"
+
     return p
 
   @property
