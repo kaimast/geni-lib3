@@ -64,12 +64,10 @@ class InternalPort(GenericPort):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
-    print "b4 try"
     if elem.get("mac-address") is None:
       raise InternalPort.NoMACAddressError(p.client_id)
     else:
       p.mac_address = elem.get("mac-address")
-      print "inside else"
 
     return p
 
