@@ -14,6 +14,25 @@ class Namespaces(object):
 
 
 ###################
+# Utility Objects #
+###################
+
+class DelayInfo(object):
+  def __init__ (self, time = None, jitter = None, correlation = None, distribution = None):
+    self.time = time
+    self.jitter = jitter
+    self.correlation = correlation
+    self.distribution = distribution
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}egress-delay" % (Namespaces.VTS.name))
+    if self.time: d.attrib["time"] = str(self.time)
+    if self.jitter: d.attrib["jitter"] = str(self.jitter)
+    if self.correlation: d.attrib["correlation"] = str(self.correlation)
+    if self.distribution: d.attrib["distribution"] = self.distribution
+    return d
+
+###################
 # Datapath Images #
 ###################
 
@@ -165,12 +184,15 @@ class Port(object):
 
 
 class PGCircuit(Port):
-  def __init__ (self, name = None):
+  def __init__ (self, name = None, delay_info = None):
     super(PGCircuit, self).__init__(name)
+    self.delay_info = delay_info
 
   def _write (self, element):
     p = super(PGCircuit, self)._write(element)
     p.attrib["type"] = "pg-local"
+    if self.delay_info:
+      self.delay_info._write(p)
     return p
 
 LocalCircuit = PGCircuit
@@ -189,16 +211,19 @@ class VFCircuit(Port):
 
 
 class InternalCircuit(Port):
-  def __init__ (self, target, vlan = None):
+  def __init__ (self, target, vlan = None, delay_info = None):
     super(InternalCircuit, self).__init__()
     self.vlan = vlan
     self.target = target
+    self.delay_info = delay_info
 
   def _write (self, element):
     p = super(InternalCircuit, self)._write(element)
     p.attrib["type"] = "internal"
     if self.vlan:
       p.attrib["vlan-id"] = str(self.vlan)
+    if self.delay_info:
+      self.delay_info._write(p)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
@@ -258,7 +283,7 @@ class Request(geni.rspec.RSpec):
 # Utilities #
 #############
 
-def connectInternalCircuit (dp1, dp2):
+def connectInternalCircuit (dp1, dp2, delay_info = None):
   dp1v = None
   dp2v = None
 
@@ -270,8 +295,8 @@ def connectInternalCircuit (dp1, dp2):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v)
-  dp = InternalCircuit(None, dp2v)
+  sp = InternalCircuit(None, dp1v, delay_info)
+  dp = InternalCircuit(None, dp2v, delay_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)

@@ -186,12 +186,42 @@ class AggNode(object):
 class AggPort(object):
   def __init__ (self):
     self.id = None
+    self.capacity = 0
     self._root = None
+
+  @property
+  def links (self):
+    l = self._root.xpath("t:link", namespaces=_XPNS)
+    return XPathXRange(l, AggLink)
 
   @classmethod
   def _fromdom (cls, elem):
     port = AggPort()
     port._root = elem
     port.id = elem.get("id")
+    port.capacity = int(elem.xpath("t:capacity", namespaces=_XPNS)[0].text)
     return port
 
+
+class AggLink(object):
+  def __init__ (self):
+    self._root = None
+    self.id = None
+    self.remote_urn = None
+
+  @property
+  def al2sinfo (self):
+    if not self.remote_urn.count("al2s.internet2.edu"):
+      return None
+    parts = self.remote_urn.split(":")
+    port = parts[-2]
+    switch = parts[-3].split("+")[-1]
+    return (switch, port)
+
+  @classmethod
+  def _fromdom (cls, elem):
+    link = AggLink()
+    link._root = elem
+    link.id = elem.get("id")
+    link.remote_urn = elem.xpath("t:remoteLinkId", namespaces=_XPNS)[0].text
+    return link

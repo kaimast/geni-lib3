@@ -239,8 +239,11 @@ class Advertisement(object):
   @property
   def stitchinfo (self):
     """Reference to the stitching info in the manifest, if present."""
-    elem = self._root.xpath('/g:rspec/t:stitching', namespaces=_XPNS)[0]
-    return stitching.AdInfo(elem)
+    try:
+      elem = self._root.xpath('/g:rspec/t:stitching', namespaces=_XPNS)[0]
+      return stitching.AdInfo(elem)
+    except IndexError:
+      return None
 
   @property
   def text (self):
