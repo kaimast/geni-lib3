@@ -179,7 +179,9 @@ class Manifest(object):
   
   @property
   def containers (self):
-    for elem in self._root.xpath("v:container", namespaces = XPNS): yield ManifestContainer._fromdom(elem)
+    elems = self._root.xpath("v:container", namespaces = XPNS)
+    for elem in elems:
+      yield ManifestContainer._fromdom(elem)
 
   @property
   def functions (self):
