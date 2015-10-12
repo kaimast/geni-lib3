@@ -67,8 +67,9 @@ class OVSImage(DatapathImage):
 
 
 class OVSOpenFlowImage(OVSImage):
-  def __init__ (self, controller, ofver = "1.0"):
+  def __init__ (self, controller, ofver = "1.0", dpid = None):
     super(OVSOpenFlowImage, self).__init__("bss:ovs-201-of")
+    self.dpid = dpid
     self.controller = controller
     self.ofver = ofver
 
@@ -79,6 +80,10 @@ class OVSOpenFlowImage(OVSImage):
 
     v = ET.SubElement(i, "{%s}openflow-version" % (Namespaces.VTS.name))
     v.attrib["value"] = self.ofver
+
+    if self.dpid:
+      d = ET.SubElement(i, "{%s}openflow-dpid" % (Namespaces.VTS.name))
+      d.attrib["value"] = str(self.dpid)
 
     return i
 
