@@ -16,7 +16,7 @@ class Connection(germ.Connection):
 
   @property
   def pgcmid (self):
-    url = "https://%s:%d/core/admin/vts/pg-cmid" % (self.host, self.port)
+    url = "%s/core/admin/vts/pg-cmid" % (self.baseurl)
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
 
