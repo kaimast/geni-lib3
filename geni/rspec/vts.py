@@ -2,6 +2,8 @@
 
 from __future__ import absolute_import
 
+import functools
+
 import geni.rspec
 import geni.namespaces as GNS
 from geni.rspec.pg import Resource
