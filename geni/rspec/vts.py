@@ -28,7 +28,7 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.SDN)
 
     self._ext_children = []
-    for name,ext in Node.EXTENSIONS:
+    for name,ext in Request.EXTENSIONS:
       self._wrapext(name,ext)
 
   def _wrapext (self, name, klass):
