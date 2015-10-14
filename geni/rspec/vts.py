@@ -12,6 +12,64 @@ class Namespaces(object):
   VTS = GNS.Namespace("vts", "http://geni.bssoftworks.com/rspec/ext/vts/request/1")
   SDN = GNS.Namespace("sdn", "http://geni.bssoftworks.com/rspec/ext/sdn/request/1")
 
+################################################
+# Base Request - Must be at top for EXTENSIONS #
+################################################
+
+class Request(geni.rspec.RSpec):
+  EXTENSIONS = []
+
+  def __init__ (self):
+    super(Request, self).__init__("request")
+    self.resources = []
+
+    self.addNamespace(GNS.REQUEST, None)
+    self.addNamespace(Namespaces.VTS)
+    self.addNamespace(Namespaces.SDN)
+
+    self._ext_children = []
+    for name,ext in Node.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
+
+  def addResource (self, rsrc):
+    for ns in rsrc.namespaces:
+      self.addNamespace(ns)
+    self.resources.append(rsrc)
+
+  def writeXML (self, path):
+    f = open(path, "w+")
+
+    rspec = self.getDOM()
+
+    for resource in self.resources:
+      resource._write(rspec)
+
+    for obj in self._ext_children:
+      obj._write(rspec)
+
+
+    f.write(ET.tostring(rspec, pretty_print=True))
+    f.close()
+
+  def write (self, path):
+    """
+.. deprecated:: 0.4
+    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
+
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
+
 
 ###################
 # Utility Objects #
@@ -152,6 +210,8 @@ class Datapath(Resource):
       port._write(d)
     return d
 
+Request.EXTENSIONS.append(("Datapath", Datapath))
+
 
 class Container(Resource):
   def __init__ (self, image, name):
@@ -175,6 +235,8 @@ class Container(Resource):
     for port in self.ports:
       port._write(d)
     return d
+
+Request.EXTENSIONS.append(("Container", Container))
 
 
 class Port(object):
@@ -248,41 +310,6 @@ class GRECircuit(Port):
     return p
 
  
-class Request(geni.rspec.RSpec):
-  def __init__ (self):
-    super(Request, self).__init__("request")
-    self.resources = []
-
-    self.addNamespace(GNS.REQUEST, None)
-    self.addNamespace(Namespaces.VTS)
-    self.addNamespace(Namespaces.SDN)
-
-  def addResource (self, rsrc):
-    for ns in rsrc.namespaces:
-      self.addNamespace(ns)
-    self.resources.append(rsrc)
-
-  def writeXML (self, path):
-    f = open(path, "w+")
-
-    rspec = self.getDOM()
-
-    for resource in self.resources:
-      resource._write(rspec)
-
-    f.write(ET.tostring(rspec, pretty_print=True))
-    f.close()
-
-  def write (self, path):
-    """
-.. deprecated:: 0.4
-    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
-
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
-                  GW.GENILibDeprecationWarning, 2)
-    self.writeXML(path)
 
 #############
 # Utilities #
