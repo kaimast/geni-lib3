@@ -43,6 +43,11 @@ class Connection(germ.Connection):
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
 
+  def deleteSlivers (self, slice_urn):
+    url = "%s/core/admin/vts/slice/%s" % (self.baseurl, slice_urn)
+    r = requests.delete(url, **self.rkwargs)
+    return r.json()["value"]
+
   def addTargetBridge (self, name, brname):
     url = "https://%s:%d/core/admin/vts/target-bridge" % (self.host, self.port)
     d = json.dumps({"name" : name, "brname" : brname})
