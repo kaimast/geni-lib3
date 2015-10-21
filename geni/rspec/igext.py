@@ -3,6 +3,9 @@
 from __future__ import absolute_import
 
 from lxml import etree as ET
+import re
+import sys
+import inspect
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
@@ -171,6 +174,11 @@ XenVM.EXTENSIONS.append(("Firewall", Firewall))
 class Tour(object):
   TEXT = "text"
   MARKDOWN = "markdown"
+
+  # One or more blank lines, followed by "Instructions:" on it's own line, then
+  # one or more blank lines. Eats the blank lines.
+  SPLIT_REGEX = re.compile("\n+^\w*instructions\w*:?\w*$\n+",
+      re.IGNORECASE | re.MULTILINE)
   
   def __init__ (self):
     self.description = None
@@ -190,6 +198,16 @@ class Tour(object):
     self.instructions_type = type
     self.instructions = inst
     pass
+
+  def useDocstring(self, module = None):
+    if module is None:
+      module = sys.modules["__main__"]
+    if not self.description and module.__doc__:
+      docstr = inspect.getdoc(module)
+      docparts = Tour.SPLIT_REGEX.split(docstr,2)
+      self.Description(Tour.TEXT,docparts[0])
+      if len(docparts) == 2 and not self.instructions:
+        self.Instructions(Tour.TEXT,docparts[0])
 
   def _write (self, root):
     #
