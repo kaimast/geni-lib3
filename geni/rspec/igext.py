@@ -208,6 +208,9 @@ class Tour(object):
       self.Description(Tour.TEXT,docparts[0])
       if len(docparts) == 2 and not self.instructions:
         self.Instructions(Tour.TEXT,docparts[0])
+      return True
+    else:
+      return False
 
   def _write (self, root):
     #
