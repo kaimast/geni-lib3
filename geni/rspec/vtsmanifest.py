@@ -57,17 +57,25 @@ class InternalPort(GenericPort):
   def __init__ (self):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
-    self.mac_address = None
+    self._macaddress = None
+  
+  @property
+  def macaddress (self):
+    if not self._macaddress:
+      raise InternalPort.NoMACAddressError(self.client_id)
+    else:
+      return self._macaddress
+
+  @macaddress.setter
+  def macaddress (self, val):
+    self._macaddress = val
 
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
-    if elem.get("mac-address") is None:
-      raise InternalPort.NoMACAddressError(p.client_id)
-    else:
-      p.mac_address = elem.get("mac-address")
+    p.macaddress = elem.get("mac-address")
 
     return p
 
