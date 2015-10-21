@@ -207,7 +207,7 @@ class Tour(object):
       docparts = Tour.SPLIT_REGEX.split(docstr,2)
       self.Description(Tour.TEXT,docparts[0])
       if len(docparts) == 2 and not self.instructions:
-        self.Instructions(Tour.TEXT,docparts[0])
+        self.Instructions(Tour.TEXT,docparts[1])
       return True
     else:
       return False
