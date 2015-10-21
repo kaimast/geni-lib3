@@ -440,6 +440,9 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
 
+  def hasTour (self):
+    return self.tour is not None
+
   def writeXML (self, path):
     """Write the current request contents as an XML file that represents an rspec
     in the GENIv3 format."""

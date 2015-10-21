@@ -9,6 +9,8 @@ import atexit
 import warnings
 import json
 import argparse
+import geni.rspec.igext as igext
+
 from argparse import Namespace
 
 class ParameterType (object):
@@ -62,7 +64,15 @@ class Context (object):
     
     If run standalone (not in the portal), the request will be printed to the
     standard output; if run in the portal, it will be placed someplace the
-    portal can pick it up."""
+    portal can pick it up. 
+    
+    If the given rspec does not have a Tour object, this will attempt to
+    build one from the file's docstring"""
+    if not rspec.hasTour():
+      tour = igext.Tour()
+      if tour.useDocstring():
+        rspec.addTour(tour)
+
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, type, defaultValue,
