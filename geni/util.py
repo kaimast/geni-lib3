@@ -35,7 +35,7 @@ If a manifest object is provided the information will be mined from this data,
 otherwise you must supply a context, slice, and am and a manifest will be
 requested from the given aggregate."""
 
-  from .rspec import vtsmanifest as VTSM
+  from .rspec.vtsmanifest import Manifest as VTSM
   from .rspec.pgmanifest import Manifest as PGM
 
   if not manifest:
@@ -45,7 +45,7 @@ requested from the given aggregate."""
     for node in manifest.nodes:
       for login in node.logins:
         print "[%s] %s:%d" % (login.username, login.hostname, login.port)
-  elif isinstance(manifest, VTSM.Manifest):
+  elif isinstance(manifest, VTSM):
     for container in manifest.containers:
       for login in container.logins:
         print "[%s] %s:%d" % (login.username, login.hostname, login.port)
