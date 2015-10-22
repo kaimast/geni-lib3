@@ -176,7 +176,7 @@ class Tour(object):
   MARKDOWN = "markdown"
 
   # One or more blank lines, followed by "Instructions:" on it's own line, then
-  # one or more blank lines. Eats the blank lines.
+  # zero or more blank lines. Eats the blank lines.
   SPLIT_REGEX = re.compile("\n+^\w*instructions\w*:?\w*$\n+",
       re.IGNORECASE | re.MULTILINE)
   
@@ -205,9 +205,9 @@ class Tour(object):
     if not self.description and module.__doc__:
       docstr = inspect.getdoc(module)
       docparts = Tour.SPLIT_REGEX.split(docstr,2)
-      self.Description(Tour.TEXT,docparts[0])
+      self.Description(Tour.MARKDOWN,docparts[0])
       if len(docparts) == 2 and not self.instructions:
-        self.Instructions(Tour.TEXT,docparts[1])
+        self.Instructions(Tour.MARKDOWN,docparts[1])
       return True
     else:
       return False
