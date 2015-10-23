@@ -35,12 +35,20 @@ If a manifest object is provided the information will be mined from this data,
 otherwise you must supply a context, slice, and am and a manifest will be
 requested from the given aggregate."""
 
+  from .rspec import vtsmanifest as VTSM
+  from .rspec.pgmanifest import Manifest as PGM
+
   if not manifest:
     manifest = am.listresources(context, slice)
-  for node in manifest.nodes:
-    for login in node.logins:
-      print "[%s] %s:%d" % (login.username, login.hostname, login.port)
 
+  if isinstance(manifest, PGM):
+    for node in manifest.nodes:
+      for login in node.logins:
+        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
+  elif isinstance(manifest, VTSM.Manifest):
+    for container in manifest.containers:
+      for login in container.logins:
+        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
 
 # You can't put very much information in a queue before you hang your OS
 # trying to write to the pipe, so we only write the paths and then load

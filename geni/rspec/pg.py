@@ -268,7 +268,7 @@ class L2GRE(Link):
 class StitchedLink(Link):
   class UnknownComponentManagerError(Exception):
     def __init__ (self, cid):
-      self._cid = cide
+      self._cid = cid
     def __str__ (self):
       return "Interface with client_id %s is not attached to a bound node." % (self._cid)
 
