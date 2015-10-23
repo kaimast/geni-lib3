@@ -124,3 +124,14 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
+def lookup_aggregates (url, root_bundle, cert, key, cred_strings):
+  options = {"match" : {'SERVICE_TYPE': 'AGGREGATE_MANAGER'}}
+
+  req_data = xmlrpclib.dumps(("SERVICE", [], options), methodname = "lookup")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+

@@ -132,6 +132,17 @@ class CHAPI2(Framework):
     else:
       raise ClearinghouseError(res["output"], res)
 
+  def listAggregates (self, context):
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+
+    res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key, [ucred])
+
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
   def listSlices (self, context):
     from ..gcf import oscript
     args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listslices"]
