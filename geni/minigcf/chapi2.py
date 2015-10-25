@@ -27,6 +27,13 @@ class TLS1HttpAdapter(HTTPAdapter):
 def headers ():
   return GCU.defaultHeaders()
   
+def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
+  req_data = xmlrpclib.dumps((typ, cred_strings, optioins), methodname="lookup")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
 def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
   s = requests.Session()
@@ -127,11 +134,6 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
 def lookup_aggregates (url, root_bundle, cert, key, cred_strings):
   options = {"match" : {'SERVICE_TYPE': 'AGGREGATE_MANAGER'}}
 
-  req_data = xmlrpclib.dumps(("SERVICE", [], options), methodname = "lookup")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
-  return xmlrpclib.loads(resp.content)[0][0]
-
+  return self._lookup(url, root_bundle, cert, key, "SERVICE", [], options)
 
 
