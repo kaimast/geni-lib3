@@ -28,7 +28,7 @@ def headers ():
   return GCU.defaultHeaders()
   
 def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
-  req_data = xmlrpclib.dumps((typ, cred_strings, optioins), methodname="lookup")
+  req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
@@ -134,6 +134,6 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
 def lookup_aggregates (url, root_bundle, cert, key, cred_strings):
   options = {"match" : {'SERVICE_TYPE': 'AGGREGATE_MANAGER'}}
 
-  return self._lookup(url, root_bundle, cert, key, "SERVICE", [], options)
+  return _lookup(url, root_bundle, cert, key, "SERVICE", [], options)
 
 
