@@ -6,6 +6,10 @@ import os.path
 import code
 
 class Shell(object):
+  def __init__ (self, debug = False):
+    super(Shell, self).__init__()
+    self.debug = debug
+
   def run (self, options):
     imports = {}
 
@@ -58,6 +62,12 @@ class Shell(object):
     imports["IGUtil"] = geni.rspec.igutil
     imports["PP"] = pprint.pprint
 
+    if self.debug:
+      import geni.minigcf.chapi2
+      import geni.minigcf.amapi2
+      imports["CH2"] = geni.minigcf.chapi2
+      imports["AM2"] = geni.minigcf.amapi2
+
     try:
       imports["context"] = geni.util.loadContext()
     except IOError:
@@ -68,5 +78,11 @@ class Shell(object):
 if __name__ == '__main__':
   import sys
   sys.path.insert(0, os.path.realpath(os.path.curdir))
-  s = Shell()
+  if len(sys.argv) > 1:
+    if sys.argv[1] == "--debug":
+      s = Shell(debug = True)
+    else:
+      sys.exit(1)
+  else:
+    s = Shell()
   s.run(None)

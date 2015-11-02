@@ -67,6 +67,12 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
   return xmlrpclib.loads(resp.content)[0][0]
 
 
+def lookup_slices_for_project (url, root_bundle, cert, key, cred_strings, project_urn):
+  options = {"match" : {"SLICE_PROJECT_URN" : project_urn} }
+
+  return _lookup(url, root_bundle, cert, key, "SLICE", cred_strings, options)
+
+
 def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc = None):
   fields = {}
   fields["PROJECT_EXPIRATION"] = exp.strftime(DATE_FMT)
@@ -104,13 +110,17 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
 
 
 def lookup_projects (url, root_bundle, cert, key, cred_strings, urn = None, uid = None, expired = None):
-  options = {}
+  options = { }
+  match = { }
   if urn is not None:
-    options["PROJECT_URN"] = urn
+    match["PROJECT_URN"] = urn
   if uid is not None:
-    options["PROJECT_UID"] = uid
+    match["PROJECT_UID"] = uid
   if expired is not None:
-    options["PROJECT_EXPIRED"] = expired
+    match["PROJECT_EXPIRED"] = expired
+
+  if match:
+    options["match"] = match
 
   return _lookup(url, root_bundle, cert, key, "PROJECT", cred_strings, options)
 

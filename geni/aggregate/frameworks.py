@@ -15,6 +15,17 @@ class ClearinghouseError(Exception):
   def __str__ (self):
     return self.text
 
+
+class Project(object):
+  def __init__ (self):
+    self.expired = None
+    self.urn = None
+
+class CHAPI2Project(Project):
+  def __init__ (self, pinfo):
+    super(CHAPI2Project, self).__init__()
+
+
 class Framework(object):
   class KeyPathError(Exception):
     def __init__ (self, path):
