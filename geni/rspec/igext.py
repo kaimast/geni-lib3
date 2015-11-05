@@ -242,3 +242,20 @@ class Site(object):
 
 pg.Node.EXTENSIONS.append(("Site", Site))
 
+
+class Password(Resource):
+  """A declaration for a randomly generated password.
+
+The portal will generate the password, encrypt it, and pass on the
+encrypted value to the AM(s) and therefore the node(s)."""
+
+  def __init__(self, name=None):
+    super(Password, self).__init__()
+    self.name = name
+
+  def _write (self, root):
+    pl = ET.SubElement(root, "{%s}password" % (PGNS.EMULAB.name))
+    if self.name:
+      pl.attrib["name"] = self.name
+
+    return pl
