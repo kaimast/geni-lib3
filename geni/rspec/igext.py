@@ -43,11 +43,18 @@ class XenVM(Node):
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)
-    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
-    xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
-    xen.attrib["cores"] = str(self.cores)
-    xen.attrib["ram"] = str(self.ram)
-    xen.attrib["disk"] = str(self.disk)
+    if self.cores or self.ram or self.disk:
+      st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+      xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
+      if self.cores:
+        xen.attrib["cores"] = str(self.cores)
+        pass
+      if self.ram:
+        xen.attrib["ram"] = str(self.ram)
+        pass
+      if self.disk:
+        xen.attrib["disk"] = str(self.disk)
+        pass
     return nd
 
 
