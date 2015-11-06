@@ -426,6 +426,7 @@ class Request(geni.rspec.RSpec):
     super(Request, self).__init__("request")
     self.resources = []
     self.tour = None
+    self.mfactor = None
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
@@ -439,6 +440,10 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.EMULAB)
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
+
+  def setCollocateFactor (self, mfactor):
+    self.addNamespace(Namespaces.EMULAB)
+    self.mfactor = mfactor
 
   def hasTour (self):
     return self.tour is not None
@@ -460,6 +465,11 @@ class Request(geni.rspec.RSpec):
     for resource in self.resources:
       resource._write(rspec)
 
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+      pass
+      
     f.write(ET.tostring(rspec, pretty_print=True))
     
     if path is not None:
@@ -476,6 +486,11 @@ class Request(geni.rspec.RSpec):
 
     for resource in self.resources:
       resource._write(rspec)
+
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+      pass
 
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
