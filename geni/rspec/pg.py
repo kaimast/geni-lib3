@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -427,6 +427,7 @@ class Request(geni.rspec.RSpec):
     self.resources = []
     self.tour = None
     self.mfactor = None
+    self.packing_strategy = None
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
@@ -444,6 +445,10 @@ class Request(geni.rspec.RSpec):
   def setCollocateFactor (self, mfactor):
     self.addNamespace(Namespaces.EMULAB)
     self.mfactor = mfactor
+
+  def setPackingStrategy (self, strategy):
+    self.addNamespace(Namespaces.EMULAB)
+    self.packing_strategy = strategy
 
   def hasTour (self):
     return self.tour is not None
@@ -470,6 +475,11 @@ class Request(geni.rspec.RSpec):
       mf.attrib["count"] = str(self.mfactor)
       pass
       
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
+      pass
+      
     f.write(ET.tostring(rspec, pretty_print=True))
     
     if path is not None:
@@ -492,6 +502,11 @@ class Request(geni.rspec.RSpec):
       mf.attrib["count"] = str(self.mfactor)
       pass
 
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
+      pass
+      
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
 
