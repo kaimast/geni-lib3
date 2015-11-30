@@ -155,10 +155,14 @@ class CHAPI2(Framework):
       raise ClearinghouseError(res["output"], res)
 
   def listSlices (self, context):
-    from ..gcf import oscript
-    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listslices"]
-    (txt, res) = oscript.call(args)
-    return res
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+    return chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+
+#    from ..gcf import oscript
+#    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listslices"]
+#    (txt, res) = oscript.call(args)
+#    return res
 
   def getUserCredentials (self, context, owner_urn):
     from ..minigcf import chapi2

@@ -99,6 +99,11 @@ class Connection(germ.Connection):
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
 
+  def getManifestRspec (self, sliver_urn):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/manifest-rspec" % (self.host, self.port, sliver_urn)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
   def removePort (self, sliver_urn, dpname, client_id):
     url = "https://%s:%d/core/admin/vts/sliver/%s/datapath/%s/port/%s" % (self.host, self.port,
             sliver_urn, dpname, client_id)
@@ -117,3 +122,4 @@ class Connection(germ.Connection):
     d = json.dumps({"name" : image_name})
     r = requests.post(url, d, **self.rkwargs)
     return r.json()["value"]
+

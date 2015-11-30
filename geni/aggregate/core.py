@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import tempfile
 import os
+import os.path
 
 class _Registry(object):
   def __init__ (self):
@@ -20,6 +21,15 @@ class AM(object):
   class UnspecifiedComponentManagerError(Exception):
     def __str__ (self):
       return "AM object does not have a component manager ID specified"
+
+  class InvalidRSpecPathError(Exception):
+    def __init__ (self, path):
+      if len(path) > 400:
+        path = path[:400] + "..."
+      self.path = path
+    def __str__ (self):
+      return "RSpec object provided as path string, but path not found: %s" % (self.path)
+
 
   def __init__ (self, name, url, api, amtype, cmid=None):
     self.url = url
@@ -67,10 +77,16 @@ class AM(object):
     self.api.deletesliver(context, self.url, sname)
 
   def createsliver (self, context, sname, rspec):
-    tf = tempfile.NamedTemporaryFile(delete=False)
-    path = tf.name
-    tf.close()
-    rspec.writeXML(path)
+    if isinstance(rspec, (str, unicode)):
+      rspec = os.path.normpath(os.path.expanduser(rspec))
+      if not os.path.exists(rspec):
+        raise AM.InvalidRSpecPathError(rspec)
+      path = rspec
+    else:
+      tf = tempfile.NamedTemporaryFile(delete=False)
+      path = tf.name
+      tf.close()
+      rspec.writeXML(path)
     res = self.api.createsliver(context, self.url, sname, path)
     os.remove(path)
     return self.amtype.parseManifest(res)
