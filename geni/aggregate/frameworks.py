@@ -32,7 +32,7 @@ class Member(object):
     self.uid = None
     self.roles = {}
 
-  def _set_from_project (project_info):
+  def _set_from_project (self, project_info):
     self.urn = project_info["PROJECT_MEMBER"]
     self.uid = project_info["PROJECT_MEMBER_UID"]
     self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
