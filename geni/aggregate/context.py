@@ -123,6 +123,11 @@ class Context(object):
     return (exp, urn)
 
   @property
+  def _chargs (self):
+    ucred = open(self.usercred_path, "r").read()
+    return (False, self.cf.cert, self.cf.key, [ucred])
+
+  @property
   def userurn (self):
     return self._ucred_info[2]
 

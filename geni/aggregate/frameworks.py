@@ -120,7 +120,10 @@ class CHAPI2(Framework):
     ### TODO: Exception
     return None
 
-  def listProjectMembers (self, context, project_urn):
+  def listProjectMembers (self, context, project_urn = None):
+    if not project_urn:
+      project_urn = self.projectNameToURN(context.project)
+
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
     res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [ucred], project_urn)

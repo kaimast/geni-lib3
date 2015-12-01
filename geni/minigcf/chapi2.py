@@ -35,6 +35,11 @@ def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
   return xmlrpclib.loads(resp.content)[0][0]
 
 
+def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
+  options = {"match" : {"KEY_MEMBER" : user_urn} }
+  return _lookup(url, root_bundle, cert, key, "KEY", cred_strings, options)
+  
+
 def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
   s = requests.Session()
@@ -69,7 +74,6 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
 
 def lookup_slices_for_project (url, root_bundle, cert, key, cred_strings, project_urn):
   options = {"match" : {"SLICE_PROJECT_URN" : project_urn} }
-
   return _lookup(url, root_bundle, cert, key, "SLICE", cred_strings, options)
 
 
