@@ -26,6 +26,33 @@ class CHAPI2Project(Project):
     super(CHAPI2Project, self).__init__()
 
 
+class Member(object):
+  def __init__ (self):
+    self.urn = None
+    self.uid = None
+    self.roles = {}
+
+  def _set_from_project (project_info):
+    self.urn = project_info["PROJECT_MEMBER"]
+    self.uid = project_info["PROJECT_MEMBER_UID"]
+    self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
+
+class _MemberRegistry(object):
+  def __init__ (self):
+    self._members = {}
+
+  def addProjectInfo (self, project_info):
+    try:
+      m = self._members[project_info["PROJECT_MEMBER"]]
+    except KeyError:
+      m = Member()
+
+    m._set_from_project(project_info)
+    return m
+
+      
+MemberRegistry = _MemberRegistry()
+
 class Framework(object):
   class KeyPathError(Exception):
     def __init__ (self, path):
@@ -128,7 +155,10 @@ class CHAPI2(Framework):
     ucred = open(context.usercred_path, "r").read()
     res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [ucred], project_urn)
     if res["code"] == 0:
-      return res["value"]
+      members = []
+      for mobj in res["value"]:
+        members.append(MemberRegistry.addProjectInfo(mobj))
+      return members 
     else:
       raise ClearinghouseError(res["output"], res)
 
