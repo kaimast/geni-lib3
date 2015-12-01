@@ -46,6 +46,7 @@ class _MemberRegistry(object):
       m = self._members[project_info["PROJECT_MEMBER"]]
     except KeyError:
       m = Member()
+      self._members[project_info["PROJECT_MEMBER"]] = m
 
     m._set_from_project(project_info)
     return m
