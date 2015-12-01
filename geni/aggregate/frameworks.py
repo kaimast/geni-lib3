@@ -157,6 +157,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       members = []
       for mobj in res["value"]:
+        mobj["PROJECT_URN"] = project_urn
         members.append(MemberRegistry.addProjectInfo(mobj))
       return members 
     else:
