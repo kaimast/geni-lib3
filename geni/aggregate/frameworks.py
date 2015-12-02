@@ -232,6 +232,16 @@ class CHAPI2(Framework):
     else:
       raise ClearinghouseError(res["output"], res)
 
+  def renewSlice (self, context, slicename, exp):
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+
+    fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
+    slice_urn = self.sliceNameToURN(context.project, slicename)
+
+    ret = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
+    return ret
+
 
 class Portal(CHAPI2):
   def __init__ (self):

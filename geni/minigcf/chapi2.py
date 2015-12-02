@@ -38,6 +38,14 @@ def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
 def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
   options = {"match" : {"KEY_MEMBER" : user_urn} }
   return _lookup(url, root_bundle, cert, key, "KEY", cred_strings, options)
+
+
+def create_key_info (url, root_bundle, cert, key, cred_strings, data):
+  req_data = xmlrpclib.dumps(("KEY", cred_strings, {"fields" : data}), methodname="create")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
   
 
 def get_credentials (url, root_bundle, cert, key, creds, target_urn):
@@ -56,6 +64,14 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
   if desc: fields["SLICE_DESCRIPTION"] = desc
 
   req_data = xmlrpclib.dumps(("SLICE", cred_strings, {"fields" : fields}), methodname = "create")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def update_slice (url, root_bundle, cert, key, cred_strings, slice_urn, fields):
+  req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, {"fields" : fields}), methodname = "update")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
