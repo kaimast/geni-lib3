@@ -15,6 +15,17 @@ class ClearinghouseError(Exception):
   def __str__ (self):
     return self.text
 
+
+class Project(object):
+  def __init__ (self):
+    self.expired = None
+    self.urn = None
+
+class CHAPI2Project(Project):
+  def __init__ (self, pinfo):
+    super(CHAPI2Project, self).__init__()
+
+
 class Framework(object):
   class KeyPathError(Exception):
     def __init__ (self, path):
@@ -126,6 +137,17 @@ class CHAPI2(Framework):
       res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [ucred])
     else:
       res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key, [ucred], context.userurn)
+
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def listAggregates (self, context):
+    from ..minigcf import chapi2
+    ucred = open(context.usercred_path, "r").read()
+
+    res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key, [ucred])
 
     if res["code"] == 0:
       return res["value"]

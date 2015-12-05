@@ -27,12 +27,21 @@ class TLS1HttpAdapter(HTTPAdapter):
 def headers ():
   return GCU.defaultHeaders()
   
+def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
+  req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
 def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
+
 
 def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp = None, desc = None):
   fields = {}
@@ -47,6 +56,7 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
+
 def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
   options = {}
 
@@ -55,6 +65,13 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_slices_for_project (url, root_bundle, cert, key, cred_strings, project_urn):
+  options = {"match" : {"SLICE_PROJECT_URN" : project_urn} }
+
+  return _lookup(url, root_bundle, cert, key, "SLICE", cred_strings, options)
+
 
 def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc = None):
   fields = {}
@@ -68,6 +85,7 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
+
 
 def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   """Delete project by URN
@@ -92,19 +110,20 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
 
 
 def lookup_projects (url, root_bundle, cert, key, cred_strings, urn = None, uid = None, expired = None):
-  options = {}
+  options = { }
+  match = { }
   if urn is not None:
-    options["PROJECT_URN"] = urn
+    match["PROJECT_URN"] = urn
   if uid is not None:
-    options["PROJECT_UID"] = uid
+    match["PROJECT_UID"] = uid
   if expired is not None:
-    options["PROJECT_EXPIRED"] = expired
+    match["PROJECT_EXPIRED"] = expired
 
-  req_data = xmlrpclib.dumps(("PROJECT", cred_strings, options), methodname = "lookup")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
-  return xmlrpclib.loads(resp.content)[0][0]
+  if match:
+    options["match"] = match
+
+  return _lookup(url, root_bundle, cert, key, "PROJECT", cred_strings, options)
+
 
 def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
   options = {}
@@ -115,6 +134,7 @@ def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, membe
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
+
 def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_urn):
   options = {}
 
@@ -123,4 +143,11 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_aggregates (url, root_bundle, cert, key, cred_strings):
+  options = {"match" : {'SERVICE_TYPE': 'AGGREGATE_MANAGER'}}
+
+  return _lookup(url, root_bundle, cert, key, "SERVICE", [], options)
+
 

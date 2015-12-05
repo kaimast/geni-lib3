@@ -43,6 +43,17 @@ class Connection(germ.Connection):
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
 
+  @property
+  def bridges (self):
+    url = "https://%s:%d/core/admin/vts/ovs/bridges" % (self.host, self.port)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
+  def deleteSlivers (self, slice_urn):
+    url = "%s/core/admin/vts/slice/%s" % (self.baseurl, slice_urn)
+    r = requests.delete(url, **self.rkwargs)
+    return r.json()["value"]
+
   def addTargetBridge (self, name, brname):
     url = "https://%s:%d/core/admin/vts/target-bridge" % (self.host, self.port)
     d = json.dumps({"name" : name, "brname" : brname})
@@ -73,6 +84,14 @@ class Connection(germ.Connection):
   def getDatapaths (self, sliver_urn):
     url = "https://%s:%d/core/admin/vts/sliver/%s/datapaths" % (self.host, self.port, sliver_urn)
     r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
+  def deleteDatapath (self, dpname, really = False):
+    if not really:
+      print "WARNING WARNING!!!!  You do not want to do this to datapaths managed by a sliver unless you really know what you are doing."
+      return
+    url = "https://%s:%d/core/admin/vts/ovs/bridge/%s" % (self.host, self.port, dpname)
+    r = requests.delete(url, **self.rkwargs)
     return r.json()["value"]
 
   def getRequestRspec (self, sliver_urn):
