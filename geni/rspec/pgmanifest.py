@@ -36,15 +36,25 @@ class ManifestLink(Link):
 
     return lnk
 
+class ManifestSvcLogin(object):
+  def __init__ (self):
+    self.auth = None
+    self.hostname = None
+    self.port = None
+    self.username = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestSvcLogin()
+    n.auth = elem.get("authentication")
+    n.hostname = elem.get("hostname")
+    n.port = int(elem.get("port"))
+    n.username = elem.get("username")
+
+    return n
+
 
 class ManifestNode(object):
-  class Login(object):
-    def __init__ (self):
-      self.auth = None
-      self.hostname = None
-      self.port = None
-      self.username = None
-
   class Interface(object):
     def __init__ (self):
       self.client_id = None
@@ -69,11 +79,7 @@ class ManifestNode(object):
 
     logins = elem.xpath('g:services/g:login', namespaces = _XPNS)
     for lelem in logins:
-      l = ManifestNode.Login()
-      l.auth = lelem.get("authentication")
-      l.hostname = lelem.get("hostname")
-      l.port = int(lelem.get("port"))
-      l.username = lelem.get("username")
+      l = ManifestSvcLogin._fromdom(lelem)
       n.logins.append(l)
 
     interfaces = elem.xpath('g:interface', namespaces = _XPNS)
