@@ -10,6 +10,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
 from .. import _coreutil as GCU
+from . import config
 
 # We need to suppress warnings that assume we want a level of security we aren't actually asking for
 import requests.packages.urllib3
@@ -31,7 +32,8 @@ def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
   req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -44,7 +46,8 @@ def create_key_info (url, root_bundle, cert, key, cred_strings, data):
   req_data = xmlrpclib.dumps(("KEY", cred_strings, {"fields" : data}), methodname="create")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
   
 
@@ -52,7 +55,8 @@ def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -66,7 +70,8 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
   req_data = xmlrpclib.dumps(("SLICE", cred_strings, {"fields" : fields}), methodname = "create")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -74,7 +79,8 @@ def update_slice (url, root_bundle, cert, key, cred_strings, slice_urn, fields):
   req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, {"fields" : fields}), methodname = "update")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -84,7 +90,8 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
   req_data = xmlrpclib.dumps(("SLICE", member_urn, cred_strings, options), methodname = "lookup_for_member")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -103,7 +110,8 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
   req_data = xmlrpclib.dumps(("PROJECT", cred_strings, {"fields" : fields}), methodname = "create")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -117,7 +125,8 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "delete")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 #def _update_project (url, root_bundle, cert, key, cred_strings, project_urn):
@@ -151,7 +160,8 @@ def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, membe
   req_data = xmlrpclib.dumps(("PROJECT", member_urn, cred_strings, options), methodname = "lookup_for_member")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -161,7 +171,8 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "lookup_members")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
