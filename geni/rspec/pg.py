@@ -51,6 +51,7 @@ class Install(Service):
     ins = ET.SubElement(element, "{%s}install" % (GNS.REQUEST.name))
     ins.attrib["url"] = self.url
     ins.attrib["install_path"] = self.path
+    return ins
 
 
 class Execute(Service):
@@ -66,6 +67,7 @@ class Execute(Service):
       exc.attrib["command"] = self.command.resolve()
     else:
       exc.attrib["command"] = self.command
+    return exc
 
 
 class Address(object):
@@ -84,6 +86,7 @@ class IPv4Address(Address):
     ip.attrib["address"] = self.address
     ip.attrib["netmask"] = self.netmask
     ip.attrib["type"] = self.type
+    return ip
 
 
 class Interface(object):
@@ -120,6 +123,7 @@ class Interface(object):
         intf.attrib["component_id"] = self.component_id
     for addr in self.addresses:
       addr._write(intf)
+    return intf
 
 
 class Link(Resource):
