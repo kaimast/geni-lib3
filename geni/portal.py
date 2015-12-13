@@ -59,15 +59,14 @@ class Context (object):
 
   def printRequestRSpec (self, rspec):
     """Print the given request RSpec.
-    
+
     If run standalone (not in the portal), the request will be printed to the
     standard output; if run in the portal, it will be placed someplace the
     portal can pick it up."""
     rspec.writeXML(self._portalRequestPath)
 
-  def defineParameter (self, name, description, type, defaultValue,
-      legalValues = None, longDescription = None, advanced = False,
-      groupId = None):
+  def defineParameter (self, name, description, typ, defaultValue, legalValues = None,
+                       longDescription = None, advanced = False, groupId = None):
     """Define a new paramter to the script.
 
     The given name will be used when parameters are bound. The description is
@@ -77,7 +76,7 @@ class Context (object):
     one of the legalValues. Entries in the legalValues list may be either
     simple strings (eg. "m400"), in which case they will be show directly to
     the user, or 2-element tuples (eg. ("m400", "ARM64"),), in which the second
-    entry is what is shown to the user. defaultValue may be a tuple, so that 
+    entry is what is shown to the user. defaultValue may be a tuple, so that
     one can pass, say, 'legalvalues[0]' for the option. The longDescription is
     an optional, detailed description of this parameter and how it relates to
     other parameters; it will be shown to the user if they ask to see the help,
@@ -87,7 +86,7 @@ class Context (object):
     advanced to True, you create a parameter group named "Advanced Parameters";
     this group will not exist or be shown if none of your parameters set the
     'advanced' argument to True.
-    
+
     After defining parameters, bindParameters() must be called exactly once."""
 
     if isinstance(defaultValue, tuple):
@@ -97,12 +96,11 @@ class Context (object):
       raise IllegalParameterDefaultError(defaultValue)
 
     self._parameterOrder.append(name)
-    self._parameters[name] = {'description': description, 'type': type,
-        'defaultValue': defaultValue, 'legalValues': legalValues,
-        'longDescription': longDescription, 'advanced': advanced }
+    self._parameters[name] = {'description': description, 'type': typ,
+                              'defaultValue': defaultValue, 'legalValues': legalValues,
+                              'longDescription': longDescription, 'advanced': advanced }
     if groupId is not None:
       self._parameters[name]['groupId'] = groupId
-      pass
     if len(self._parameters) == 1:
       atexit.register(self._checkBind)
 
@@ -118,12 +116,11 @@ class Context (object):
     defineParameter to True.  If you need multiple groups, define your own
     groups this way.
     """
-    self._parameterGroups[groupId] = groupName;
-    pass
+    self._parameterGroups[groupId] = groupName
 
   def bindParameters (self):
     """Returns values for the parameters defined by defineParameter().
-    
+
     Returns a Namespace (like argparse), so if you call foo = bindParameters(), a
     parameter defined with name "bar" is accessed as foo.bar . Since defaults
     are required, all parameters are guaranteed to have values in the Namespace
@@ -145,10 +142,9 @@ class Context (object):
     """
     Enable this option if you want to return an error to the user for
     incorrect parameter values, even if they can be autocorrected.  This can
-    be useful to show the user that 
+    be useful to show the user that
     """
     self._parameterWarningsAreFatal = True
-    pass
 
   def reportError (self,parameterError,immediate=False):
     """
@@ -163,8 +159,7 @@ class Context (object):
     self._parameterErrors.append(parameterError)
     if immediate:
       self.verifyParameters()
-    pass
-  
+
   def reportWarning (self,parameterError):
     """
     Record a parameter warning.  Warnings will be printed if there are
@@ -173,8 +168,7 @@ class Context (object):
     subsequent immediate error.
     """
     self._parameterWarnings.append(parameterError)
-    pass
-  
+
   def verifyParameters (self):
     """
     If there have been calls to Context.parameterError, and/or to
@@ -203,11 +197,10 @@ class Context (object):
     if self._parameterWarningsAreFatal:
       retcode += len(self._parameterWarnings)
     sys.exit(100+retcode)
-    pass
-  
+
   @staticmethod
   def _legalList(l):
-    return map(lambda x: x if not isinstance(x,tuple) else x[0], l)
+    return [x if not isinstance(x, tuple) else x[0] for x in l]
 
   def _bindParametersCmdline (self):
     parser = argparse.ArgumentParser()
@@ -228,9 +221,9 @@ class Context (object):
     namespace = Namespace()
     paramValues= {}
     if self._readParamsPath:
-        f = open(self._readParamsPath, "r")
-        paramValues = json.load(f)
-        f.close()
+      f = open(self._readParamsPath, "r")
+      paramValues = json.load(f)
+      f.close()
     for name in self._parameterOrder:
       opts = self._parameters[name]
       val = paramValues.get(name, opts['defaultValue'])
@@ -246,9 +239,7 @@ class Context (object):
                                         [name]))
       else:
         setattr(namespace, name, val)
-        pass
-      pass
-    # This might not return. 
+    # This might not return.
     self.verifyParameters()
     return namespace
 
@@ -273,7 +264,6 @@ class Context (object):
       json.dump(name,f)
       f.write(': ')
       json.dump(opts,f)
-      pass
     f.write('}')
     f.close()
     return
@@ -281,7 +271,7 @@ class Context (object):
   def _checkBind (self):
     if len(self._parameters) > 0 and not self._bindingDone:
       warnings.warn("Parameters were defined, but never bound with " +
-          " bindParameters()", RuntimeWarning)
+                    " bindParameters()", RuntimeWarning)
 
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):
@@ -298,22 +288,18 @@ class PortalJSONEncoder(json.JSONEncoder):
         except:
           # Let the base class default method raise the TypeError
           return json.JSONEncoder.default(self, o)
-        pass
-      pass
-    pass
-  pass
 
 #
 # Define some exceptions.  Everybody should subclass PortalError.
 #
 class PortalError (Exception):
   def __init__(self,message):
+    super(PortalError, self).__init__()
     self.message = message
-    pass
-  
+
   def __str__(self):
     return self.__class__.__name__ + ": " + self.message
-    
+
   def __objdict__(self):
     retval = dict({ 'errorType': self.__class__.__name__, })
     for (k,v) in self.__dict__.iteritems():
@@ -324,7 +310,6 @@ class PortalError (Exception):
       retval[k] = v
     return retval
 
-  pass
 
 class ParameterError (PortalError):
   """
@@ -343,10 +328,9 @@ class ParameterError (PortalError):
     The Portal UI will show this error message near *each* involved
     parameter to increase user understanding of the error.
     """
-    self.message = message
+    super(ParameterError, self).__init__(message)
     self.params = paramList
-    
-  pass
+
 
 class ParameterWarning (PortalError):
   """
@@ -361,7 +345,7 @@ class ParameterWarning (PortalError):
   and/or suggest a set of modified values that will improve the
   situation.  .
   """
-  def __init__(self,message,paramList,fixedValues={}):
+  def __init__(self,message,paramList,fixedValues=None):
     """
     Create a ParameterWarning.  @message is the overall error
     message; in the Portal Web UI, it will be displayed near each
@@ -379,15 +363,16 @@ class ParameterWarning (PortalError):
     that a parameter change will occur, so we warn them and
     autocorrect!
     """
-    self.message = message
+    super(ParameterWarning, self).__init__(message)
     self.params = paramList
+    if not fixedValues: fixedValues = {}
     self.fixedValues = fixedValues
-    
-  pass
+
 
 class IllegalParameterDefaultError (PortalError):
   def __init__ (self,val):
-    self._val = val 
+    super(IllegalParameterDefaultError, self).__init__("no message?")
+    self._val = val
 
   def __str__ (self):
     return "% given as a default value, but is not listed as a legal value" % self._val
