@@ -184,7 +184,7 @@ class Context(object):
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
         if not os.path.exists(ucpath):
           cfg = self.cfg_path
-          cred = self.cf.getUserCredentials(self, self._default_user.urn)
+          cred = self.cf.getUserCredentials(self._default_user.urn)
 
           f = open(ucpath, "w+")
           f.write(cred)
