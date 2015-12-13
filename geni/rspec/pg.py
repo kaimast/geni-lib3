@@ -2,15 +2,16 @@
 
 from __future__ import absolute_import
 
+import itertools
+import sys
+import functools
+
+from lxml import etree as ET
+
 import geni.rspec
 import geni.namespaces as GNS
 import geni.urn
 
-from lxml import etree as ET
-import itertools
-import uuid
-import sys
-import functools
 
 
 class Resource(object):
@@ -31,7 +32,7 @@ class Command(object):
   def __init__ (self, cmd, data):
     self.cmd = cmd
     self.data = data
-  
+
   def resolve (self):
     return self.cmd % self.data
 
@@ -92,6 +93,7 @@ class IPv4Address(Address):
 class Interface(object):
   class InvalidAddressTypeError(Exception):
     def __init__ (self, addr):
+      super(Interface.InvalidAddressTypeError, self).__init__()
       self.addr = addr
     def __str__ (self):
       return "Type (%s) is invalid for interface addresses." % (type(self.addr))
@@ -180,7 +182,7 @@ class Link(Resource):
   @vlan_tagging.setter
   def vlan_tagging (self, val):
     self.namespaces.append(Namespaces.EMULAB)
-    self._vlan_tagging = val 
+    self._vlan_tagging = val
 
   @property
   def best_effort (self):
@@ -272,6 +274,7 @@ class L2GRE(Link):
 class StitchedLink(Link):
   class UnknownComponentManagerError(Exception):
     def __init__ (self, cid):
+      super(StitchedLink.UnknownComponentManagerError, self).__init__()
       self._cid = cid
     def __str__ (self):
       return "Interface with client_id %s is not attached to a bound node." % (self._cid)
@@ -347,7 +350,7 @@ class Node(Resource):
         nd.attrib["component_manager_id"] = str(self.component_manager_id)
       else:
         nd.attrib["component_manager_id"] = self.component_manager_id
-    
+
     st = ET.SubElement(nd, "{%s}sliver_type" % (GNS.REQUEST.name))
     st.attrib["name"] = self.type
 
@@ -363,8 +366,8 @@ class Node(Resource):
         self.disk_image._write(st)
 
     if self.hardware_type:
-        hwt = ET.SubElement(nd, "{%s}hardware_type" % (GNS.REQUEST.name))
-        hwt.attrib["name"] = self.hardware_type
+      hwt = ET.SubElement(nd, "{%s}hardware_type" % (GNS.REQUEST.name))
+      hwt.attrib["name"] = self.hardware_type
 
     if self.interfaces:
       for intf in self.interfaces:
@@ -376,7 +379,7 @@ class Node(Resource):
         service._write(svc)
 
     if self.routable_control_ip:
-      rc = ET.SubElement(nd, "{%s}routable_control_ip" % (Namespaces.EMULAB.name))
+      ET.SubElement(nd, "{%s}routable_control_ip" % (Namespaces.EMULAB.name))
 
     for obj in self._ext_children:
       obj._write(nd)
@@ -384,7 +387,7 @@ class Node(Resource):
     return nd
 
   def addInterface (self, name = None):
-    existingNames = map(lambda x: getattr(x,'name'), self.interfaces)
+    existingNames = [x.name for x in self.interfaces]
     if name is not None:
       intfName = "%s:%s" % (self.client_id, name)
     else:
@@ -462,7 +465,7 @@ class Request(geni.rspec.RSpec):
       resource._write(rspec)
 
     f.write(ET.tostring(rspec, pretty_print=True))
-    
+
     if path is not None:
       f.close()
 
@@ -500,7 +503,7 @@ class XenVM(Node):
   def __init__ (self, name, component_id = None, exclusive = False):
     import geni.warnings as GW
     import warnings
-    warnings.warn("geni.rspec.pg.XenVM is deprecated, please use geni.rspec.igext.XenVM instead", 
+    warnings.warn("geni.rspec.pg.XenVM is deprecated, please use geni.rspec.igext.XenVM instead",
                   GW.GENILibDeprecationWarning)
     super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
     self.cores = 1
