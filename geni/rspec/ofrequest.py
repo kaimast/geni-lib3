@@ -1,6 +1,6 @@
 # Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
-from __future__ import absolute_imports
+from __future__ import absolute_import
 
 from . import RSpec
 
