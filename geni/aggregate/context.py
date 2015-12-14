@@ -31,6 +31,7 @@ class SlicecredProxy(object):
 class SliceCredInfo(object):
   class CredentialExpiredError(Exception):
     def __init__ (self, name, expires):
+      super(SliceCredInfo.CredentialExpiredError, self).__init__()
       self.expires = expires
       self.sname = name
     def __str__ (self):
@@ -93,6 +94,7 @@ class Context(object):
 
   class UserCredExpiredError(Exception):
     def __init__ (self, expires):
+      super(Context.UserCredExpiredError, self).__init__()
       self.expires = expires
     def __str__ (self):
       return "User Credential expired on %s" % (self.expires)
@@ -183,7 +185,6 @@ class Context(object):
       if self._default_user:
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
         if not os.path.exists(ucpath):
-          cfg = self.cfg_path
           cred = self.cf.getUserCredentials(self._default_user.urn)
 
           f = open(ucpath, "w+")
@@ -196,7 +197,7 @@ class Context(object):
       else:
         raise NoUserError()
     return self._usercred_info
-    
+
   @property
   def usercred_path (self):
     # If you only need a user cred, something that works in the next 5 minutes is fine.  If you
@@ -209,14 +210,14 @@ class Context(object):
       try:
         os.remove(self._ucred_info[1])
         self._usercred_info = None
-      except OSError, e:
+      except OSError:
         # Windows won't let us remove open files
         # TODO: A place for some debug logging
         pass
 
     if self._ucred_info[1] < datetime.datetime.now():
       raise Context.UserCredExpiredError(self._ucred_info[1])
-    
+
     return self._ucred_info[0]
 
   @property
