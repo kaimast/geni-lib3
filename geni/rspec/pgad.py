@@ -1,5 +1,9 @@
 # Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 
 from lxml import etree as ET
@@ -22,7 +26,8 @@ class Image(object):
     self.url = None
 
   def __repr__ (self):
-    return "<Image: %s, os: '%s', version: '%s', description: '%s', url: '%s'>" % (self.name, self.os, self.version, self.description, self.url)
+    return "<Image: %s, os: '%s', version: '%s', description: '%s', url: '%s'>" % (self.name, self.os, self.version,
+                                                                                   self.description, self.url)
 
   def __hash__ (self):
     return hash("%s-%s" % (self.name, self.url))
@@ -31,10 +36,10 @@ class Image(object):
     return hash(self) == hash(other)
 
   def __ne__ (self, other):
-    return not (self == other)
+    return not self == other
 
   @classmethod
-  def _fromdom (self, elem):
+  def _fromdom (cls, elem):
     i = Image()
     i.name = elem.get("name")
     if i.name is None:
@@ -55,7 +60,7 @@ class Location(object):
     return "<Location: %f, %f>" % (self.latitude, self.longitude)
 
   @classmethod
-  def _fromdom (self, elem):
+  def _fromdom (cls, elem):
     l = Location()
     l.latitude = float(elem.get("latitude"))
     l.longitude = float(elem.get("longitude"))
@@ -96,6 +101,8 @@ class AdNode(object):
     self.shared = False
     self.interfaces = []
     self.location = None
+    self.ram = None
+    self.cpu = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -153,7 +160,7 @@ class AdLink(object):
   def _fromdom (cls, elem):
     link = AdLink()
     link.component_id = elem.get("component_id")
-    
+
     ltypes = elem.xpath('g:link_type', namespaces = _XPNS)
     for ltype in ltypes:
       link.link_types.add(ltype.get("name"))
@@ -200,9 +207,9 @@ class Advertisement(object):
       ra.available = int(elem.get("available"))
       ra.configured = int(elem.get("configured"))
       self._routable_addresses = ra
-    except Exception, e:
+    except Exception:
       pass
-    
+
   @property
   def routable_addresses (self):
     """A RoutableAddresses object containing the number of configured and available publicly routable IP addresses at this site."""

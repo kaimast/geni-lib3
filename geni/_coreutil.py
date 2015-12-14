@@ -18,7 +18,7 @@ def getDefaultDir ():
       os.makedirs(DEF_DIR, 0775)
       import ctypes
       BSSW = "%s/bssw" % (HOME)
-      if not (ctypes.windll.kernel32.SetFileAttributesW(unicode(BSSW), WIN32_ATTR_HIDDEN)):
+      if not ctypes.windll.kernel32.SetFileAttributesW(unicode(BSSW), WIN32_ATTR_HIDDEN):
         raise ctypes.WinError()
 
   return DEF_DIR

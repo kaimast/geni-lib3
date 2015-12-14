@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,11 @@
 
 import multiprocessing as MP
 import time
-import os
 import traceback as tb
 import tempfile
 import json
 
-from geni.aggregate.apis import AMError, ListResourcesError, DeleteSliverError
+from geni.aggregate.apis import ListResourcesError, DeleteSliverError
 
 def checkavailrawpc(context, am):
   """Returns a list of node objects representing available raw PCs at the
@@ -24,7 +23,7 @@ given aggregate."""
       if "raw-pc" in node.sliver_types:
         avail.append(node)
   return avail
-  
+
 
 def printlogininfo(context = None, am = None, slice = None, manifest = None):
   """Prints out host login info in the format:
@@ -63,7 +62,7 @@ def _mp_get_manifest (context, site, slc, q):
     q.put((site.name, slc, path))
   except ListResourcesError:
     q.put((site.name, slc, None))
-  except Exception, e:
+  except Exception:
     tb.print_exc()
     q.put((site.name, slc, None))
 
@@ -106,7 +105,7 @@ def _mp_get_advertisement (context, site, q):
   try:
     ad = site.listresources(context)
     q.put((site.name, ad))
-  except:
+  except Exception:
     q.put((site.name, None))
 
 def getAdvertisements (context, ams):
@@ -148,6 +147,7 @@ def deleteSliverExists(am, context, slice):
 
 def builddot (manifests):
   """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
+  # pylint: disable=too-many-branches
 
   from .rspec import vtsmanifest as VTSM
   from .rspec.pgmanifest import Manifest as PGM
@@ -172,11 +172,11 @@ def builddot (manifests):
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
-                  intf_map[ref][0].sliver_id, lannode,
-                  intf_map[ref][1].component_id.split(":")[-1]))
+              intf_map[ref][0].sliver_id, lannode,
+              intf_map[ref][1].component_id.split(":")[-1]))
           dda("\"%s\" -> \"%s\"" % (lannode, intf_map[ref][0].sliver_id))
 
-        
+
     elif isinstance(manifest, VTSM.Manifest):
       # TODO: We need to actually go through datapaths and such, but we can approximate for now
       for port in manifest.ports:

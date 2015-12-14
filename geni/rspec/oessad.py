@@ -6,9 +6,7 @@ from lxml import etree as ET
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
-from . import pg
 from . import stitching
-from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 'e' : PGNS.EMULAB.name, 't' : stitching.STITCHNS.name}
 

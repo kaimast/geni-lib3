@@ -1,4 +1,9 @@
-# Copyright (c) 2014-2015 The University of Utah
+# Copyright (c) 2014-2015 The University of Utah and Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 """Library for dealing with scripts that are run in the context of a portal."""
 
 from __future__ import absolute_import
@@ -229,7 +234,7 @@ class Context (object):
       val = paramValues.get(name, opts['defaultValue'])
       try:
         val = ParameterType.argparsemap[opts['type']](val)
-      except:
+      except Exception:
         self.reportError(ParameterError("Could not coerce '%s' to '%s'" %
                                         (val, opts['type']), [name]))
         continue
@@ -281,11 +286,11 @@ class PortalJSONEncoder(json.JSONEncoder):
       # First try the default encoder:
       try:
         return json.JSONEncoder.default(self, o)
-      except:
+      except Exception:
         try:
           # Then try to return a string, at least
           return str(o)
-        except:
+        except Exception:
           # Let the base class default method raise the TypeError
           return json.JSONEncoder.default(self, o)
 

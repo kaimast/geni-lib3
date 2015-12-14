@@ -1,4 +1,8 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -29,7 +33,7 @@ class OFAttachment(Attachment):
     a.remote_port_name = elem.get("remote-port-name")
     return a
 
-  
+
 class Port(object):
   def __init__ (self):
     self.name = None
@@ -69,7 +73,7 @@ class Datapath(object):
     lelem = elem.xpath('o:location', namespaces = XPNS)
     if lelem:
       d.location = Location._fromdom(lelem[0])
-      
+
     return d
 
 

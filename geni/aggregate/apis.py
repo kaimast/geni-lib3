@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,11 +13,12 @@ from .core import APIRegistry
 
 class AMError(Exception):
   def __init__ (self, text, data = None):
+    super(AMError, self).__init__()
     self.text = text
     self.data = data
   def __str__ (self):
     return self.text
-  
+
 class DeleteSliverError(AMError): pass
 class CreateSliverError(AMError): pass
 class SliverStatusError(AMError): pass
@@ -26,7 +27,8 @@ class ListResourcesError(AMError): pass
 
 class AMAPIv3(object):
   def _getDefaultArgs (self, context, url):
-    return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "3"]
+    return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
+            context.usercred_path, "-a", url, "-V", "3"]
 
   def poa (self, context, url, sname, action, options = None):
     from ..gcf import oscript
@@ -40,7 +42,7 @@ class AMAPIv3(object):
       tf.close()
       arglist.extend(["--optionsfile", path])
 
-    text,res = oscript.call(arglist)
+    _,res = oscript.call(arglist)
     if res.values()[0]["code"]["geni_code"] == 0:
       return res.values()[0]["value"]
 
@@ -48,11 +50,13 @@ class AMAPIv3(object):
 class AMAPIv2(object):
   def _getDefaultArgs (self, context, url):
     if context.debug:
-      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
+      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
+              context.usercred_path, "-a", url, "-V", "2"]
     else:
-      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "2"]
+      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
+              context.usercred_path, "-a", url, "-V", "2"]
 
-  def listresources (self, context, url, sname, options = {}):
+  def listresources (self, context, url, sname, options = None):
 #    from ..gcf import oscript
 #    arglist = self._getDefaultArgs(context, url)
 #
@@ -67,6 +71,8 @@ class AMAPIv2(object):
 #      return rspec
 #    else:
 #      raise ListResourcesError(text)
+    if not options: options = {}
+
     from ..minigcf import amapi2 as AM2
     creds = []
 
@@ -83,7 +89,7 @@ class AMAPIv2(object):
       return res
 
     raise ListResourcesError(res["output"], res)
-    
+
 
   def createsliver (self, context, url, sname, rspec):
     from ..gcf import oscript
@@ -124,16 +130,18 @@ class AMAPIv2(object):
     from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["getversion"])
-    text, res = oscript.call(arglist)
+    _,res = oscript.call(arglist)
     return res.values()[0]
 
 
 class AMAPIv1(object):
   def _getDefaultArgs (self, context, url):
     if context.debug:
-      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "1"]
+      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
+              context.usercred_path, "-a", url, "-V", "1"]
     else:
-      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile", context.usercred_path, "-a", url, "-V", "1"]
+      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
+              context.usercred_path, "-a", url, "-V", "1"]
 
   def listresources (self, context, url, sname):
     from ..gcf import oscript
@@ -190,7 +198,7 @@ class AMAPIv1(object):
     from ..gcf import oscript
     arglist = self._getDefaultArgs(context, url)
     arglist.extend(["getversion"])
-    text, res = oscript.call(arglist)
+    _,res = oscript.call(arglist)
     return res.values()[0]
 
 APIRegistry.register("amapiv1", AMAPIv1())

@@ -1,14 +1,19 @@
 # Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 
 import functools
+
+from lxml import etree as ET
 
 import geni.rspec
 import geni.namespaces as GNS
 from geni.rspec.pg import Resource
 
-from lxml import etree as ET
 
 class Namespaces(object):
   VTS = GNS.Namespace("vts", "http://geni.bssoftworks.com/rspec/ext/vts/request/1")
@@ -157,7 +162,7 @@ class OVSL2Image(OVSImage):
 
 class SFlow(object):
   def __init__ (self, collector_ip):
-    self.collector_ip = collector_ip 
+    self.collector_ip = collector_ip
     self.collector_port = 6343
     self.header_bytes = 128
     self.sampling_n = 64
@@ -311,7 +316,7 @@ class GRECircuit(Port):
     p.attrib["endpoint"] = self.endpoint
     return p
 
- 
+
 
 #############
 # Utilities #

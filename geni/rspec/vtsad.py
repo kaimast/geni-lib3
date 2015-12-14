@@ -1,11 +1,16 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
+
+from lxml import etree as ET
 
 import geni.namespaces as GNS
 from geni.model.util import XPathXRange
 
-from lxml import etree as ET
 
 VTSNS = GNS.Namespace("vts", "http://geni.bssoftworks.com/rspec/ext/vts/ad/1")
 _XPNS = {'g' : GNS.REQUEST.name, 'v' : VTSNS.name}
@@ -40,7 +45,7 @@ class Advertisement(object):
   @property
   def circuit_planes (self):
     return XPathXRange(self._root.xpath("v:circuit-planes/v:circuit-plane", namespaces = _XPNS), CircuitPlane)
-    
+
   @property
   def text (self):
     return ET.tostring(self._root, pretty_print=True)

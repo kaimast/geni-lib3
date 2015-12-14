@@ -1,4 +1,8 @@
-# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -33,7 +37,8 @@ LSU = IGCompute("ig-lsu", "instageni.lsu.edu", "urn:publicid:IDN+instageni.lsu.e
 MAX = IGCompute("ig-max", "instageni.maxgigapop.net", "urn:publicid:IDN+instageni.maxgigapop.net+authority+cm")
 Missouri = IGCompute("ig-missouri", "instageni.rnet.missouri.edu", "urn:publicid:IDN+instageni.rnet.missouri.edu+authority+cm")
 MOXI = IGCompute("ig-moxi", "instageni.iu.edu", "urn:publicid:IDN+instageni.iu.edu+authority+cm")
-Northwestern = IGCompute("ig-northwestern", "instageni.northwestern.edu", "urn:publicid:IDN+instageni.northwestern.edu+authority+cm")
+Northwestern = IGCompute("ig-northwestern", "instageni.northwestern.edu",
+                         "urn:publicid:IDN+instageni.northwestern.edu+authority+cm")
 NPS = IGCompute("ig-nps", "instageni.nps.edu", "urn:publicid:IDN+instageni.nps.edu+authority+cm")
 NYSERNet = IGCompute("ig-nysernet", "instageni.nysernet.org", "urn:publicid:IDN+instageni.nysernet.org+authority+cm")
 NYU = IGCompute("ig-nyu", "genirack.nyu.edu", "urn:publicid:IDN+genirack.nyu.edu+authority+cm")
@@ -42,8 +47,8 @@ Rutgers = IGCompute("ig-rutgers", "instageni.rutgers.edu", "urn:publicid:IDN+ins
 SOX = IGCompute("ig-sox", "instageni.sox.net", "urn:publicid:IDN+instageni.sox.net+authority+cm")
 Stanford = IGCompute("ig-stanford", "instageni.stanford.edu", "urn:publicid:IDN+instageni.stanford.edu+authority+cm")
 UCLA = IGCompute("ig-ucla", "instageni.idre.ucla.edu", "urn:publicid:IDN+instageni.idre.ucla.edu+authority+cm")
-UKYPKS2 = IGCompute('ig-ukypks2', 'pks2.sdn.uky.edu', 'urn:publicid:IDN+pks2.sdn.uky.edu+authority+cm');
-UMKC = IGCompute('ig-umkc', 'instageni.umkc.edu', 'urn:publicid:IDN+instageni.umkc.edu+authority+cm');
+UKYPKS2 = IGCompute('ig-ukypks2', 'pks2.sdn.uky.edu', 'urn:publicid:IDN+pks2.sdn.uky.edu+authority+cm')
+UMKC = IGCompute('ig-umkc', 'instageni.umkc.edu', 'urn:publicid:IDN+instageni.umkc.edu+authority+cm')
 Utah = IGCompute("ig-utah", "boss.utah.geniracks.net", "urn:publicid:IDN+utah.geniracks.net+authority+cm")
 UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:IDN+utahddc.geniracks.net+authority+cm")
 UTC = IGCompute("ig-utc", "instageni.utc.edu", "urn:publicid:IDN+instageni.utc.edu+authority+cm")
@@ -52,14 +57,14 @@ Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+in
 
 def aggregates ():
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result

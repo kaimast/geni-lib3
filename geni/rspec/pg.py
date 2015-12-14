@@ -207,6 +207,7 @@ class Link(Resource):
     self._link_multiplexing = val
 
   def _write (self, root):
+    # pylint: disable=too-many-branches
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
     lnk.attrib["client_id"] = self.client_id
 
@@ -340,6 +341,7 @@ class Node(Resource):
     return self.client_id
 
   def _write (self, root):
+    # pylint: disable=too-many-branches
     nd = ET.SubElement(root, "{%s}node" % (GNS.REQUEST.name))
     nd.attrib["client_id"] = self.client_id
     if self.exclusive is not None:  # Don't write this for EG

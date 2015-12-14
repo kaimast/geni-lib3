@@ -1,4 +1,8 @@
-# Copyright (c) 2014, 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -183,12 +187,10 @@ class Tour(object):
   def Description(self, type, desc):
     self.description_type = type
     self.description = desc
-    pass
 
   def Instructions(self, type, inst):
     self.instructions_type = type
     self.instructions = inst
-    pass
 
   def _write (self, root):
     #
@@ -200,12 +202,10 @@ class Tour(object):
       desc = ET.SubElement(td, "description")
       desc.text = self.description
       desc.attrib["type"] = self.description_type
-      pass
     if self.instructions:
       inst = ET.SubElement(td, "instructions")
       inst.text = self.instructions
       inst.attrib["type"] = self.instructions_type
-      pass
     return td
 
 
