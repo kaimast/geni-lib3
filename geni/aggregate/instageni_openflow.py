@@ -1,4 +1,8 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -47,14 +51,14 @@ Wisconsin = IGOF("ig-of-wisconsin", "foam.instageni.wisc.edu")
 
 def aggregates ():
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       yield obj
 
 def name_to_aggregate ():
   result = {}
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result

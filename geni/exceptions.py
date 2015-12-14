@@ -1,4 +1,8 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class AbstractImplementationError(Exception):
   def __str__ (self):
@@ -10,6 +14,7 @@ class NoUserError(Exception):
 
 class SliceCredError(Exception):
   def __init__ (self, text):
+    super(SliceCredError, self).__init__()
     self.text = text
 
   def __str__ (self):

@@ -10,6 +10,7 @@ from .core import FrameworkRegistry
 
 class ClearinghouseError(Exception):
   def __init__ (self, text, data = None):
+    super(ClearinghouseError, self).__init__()
     self.text = text
     self.data = data
   def __str__ (self):
@@ -51,12 +52,13 @@ class _MemberRegistry(object):
     m._set_from_project(project_info)
     return m
 
-      
+
 MemberRegistry = _MemberRegistry()
 
 class Framework(object):
   class KeyPathError(Exception):
     def __init__ (self, path):
+      super(Framework.KeyPathError, self).__init__()
       self.path = path
     def __str__ (self):
       return "Path %s does not contain a key" % (self.path)
@@ -66,6 +68,7 @@ class Framework(object):
     self._type = None
     self._authority = None
     self._ch = None
+    self._ma = None
     self._sa = None
     self._cert = None
     self._key = None
@@ -104,13 +107,6 @@ class Framework(object):
   def cert (self, val):
     self._cert = val
 
-#  def createslice (self, context, name):
-#    from ..gcf import oscript
-#    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "createslice"]
-#    args.append(name)
-#    (txt, res) = oscript.call(args)
-#    return res
-
   def _update (self, context):
     pass
 
@@ -131,7 +127,7 @@ class Emulab(ProtoGENI):
 
 class CHAPI1(Framework):
   def __init__ (self, name = "chapi"):
-    super(CHAPI2, self).__init__(name)
+    super(CHAPI1, self).__init__(name)
     self._type = "chapi"
 
 
@@ -160,7 +156,7 @@ class CHAPI2(Framework):
       for mobj in res["value"]:
         mobj["PROJECT_URN"] = project_urn
         members.append(MemberRegistry.addProjectInfo(mobj))
-      return members 
+      return members
     else:
       raise ClearinghouseError(res["output"], res)
 
@@ -194,12 +190,7 @@ class CHAPI2(Framework):
     ucred = open(context.usercred_path, "r").read()
     return chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
 
-#    from ..gcf import oscript
-#    args = ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "-f", self.name, "--usercredfile", context.usercred_path, "listslices"]
-#    (txt, res) = oscript.call(args)
-#    return res
-
-  def getUserCredentials (self, context, owner_urn):
+  def getUserCredentials (self, owner_urn):
     from ..minigcf import chapi2
     res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], owner_urn)
     if res["code"] == 0:

@@ -16,14 +16,14 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-from .. import _coreutil as GCU
-from . import config
-
 # We need to suppress warnings that assume we want a level of security we aren't actually asking for
 import requests.packages.urllib3
 import requests.packages.urllib3.exceptions
 requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
                                             requests.packages.urllib3.exceptions.InsecurePlatformWarning))
+
+from .. import _coreutil as GCU
+from . import config
 
 class TLS1HttpAdapter(HTTPAdapter):
   def init_poolmanager(self, connections, maxsize, block=False):
@@ -32,9 +32,10 @@ class TLS1HttpAdapter(HTTPAdapter):
 
 def headers ():
   return GCU.defaultHeaders()
-  
 
-def getversion (url, root_bundle, cert, key, options = {}):
+
+def getversion (url, root_bundle, cert, key, options = None):
+  if not options: options = {}
   req_data = xmlrpclib.dumps(options, methodname="GetVersion")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
@@ -42,10 +43,11 @@ def getversion (url, root_bundle, cert, key, options = {}):
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
-def listresources (url, root_bundle, cert, key, cred_strings, options = {}, sliceurn = None):
+def listresources (url, root_bundle, cert, key, cred_strings, options = None, sliceurn = None):
+  if not options: options = {}
   opts = {"geni_rspec_version" : {"version" : "3", "type" : "GENI"},
-             "geni_available" : False,
-             "geni_compressed" : False}
+          "geni_available" : False,
+          "geni_compressed" : False}
 
   if sliceurn:
     opts["geni_slice_urn"] = sliceurn
@@ -60,7 +62,8 @@ def listresources (url, root_bundle, cert, key, cred_strings, options = {}, slic
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
 
-def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = {}):
+def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = None):
+  if not options: options = {}
   req_data = xmlrpclib.dumps((owner_urn, cred_strings, options), methodname="ListImages")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())

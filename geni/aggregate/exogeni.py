@@ -30,14 +30,14 @@ WSU = EGCompute("eg-wsu", "wsu-hn.exogeni.net")
 
 def aggregates ():
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result

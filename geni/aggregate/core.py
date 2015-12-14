@@ -1,4 +1,8 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -24,6 +28,7 @@ class AM(object):
 
   class InvalidRSpecPathError(Exception):
     def __init__ (self, path):
+      super(AM.InvalidRSpecPathError, self).__init__()
       if len(path) > 400:
         path = path[:400] + "..."
       self.path = path

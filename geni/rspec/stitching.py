@@ -1,5 +1,9 @@
 # Copyright (c) 2015  Barnstormer Softworks, Ltd.
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 
 import datetime
@@ -87,7 +91,7 @@ class Hop(object):
     ce.text = "%d" % (self.capacity)
 
     scd = ET.SubElement(link, "{%s}switchingCapabilityDescriptor" % (STITCHNS))
-    
+
     sct = ET.SubElement(scd, "{%s}switchingcapType" % (STITCHNS))
     sct.text = "l2sc"
 
@@ -137,7 +141,7 @@ class AdInfo(object):
         info = AggInfo(elem)
         self._aggregates[info.urn] = info
     return self._aggregates
-    
+
 
 class AggInfo(object):
   def __init__ (self, elem):

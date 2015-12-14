@@ -6,7 +6,6 @@
 
 import requests
 import requests.auth
-import json
 
 from ..types import DPID
 
@@ -70,7 +69,7 @@ class Connection(object):
                      params={"action":"get_node_interfaces", "workgroup_id":self.workgroup_id,
                              "node":name})
     return r.json()["results"]
-    
+
   def provisionVLANPatch (self, desc, tag, node_name, intf_a_name, intf_b_name):
     payload = {"action" : "provision_circuit", "workgroup_id" : self.workgroup_id,
                "circuit_id" : -1, "description" : desc, "bandwidth" : 0, "provision_time": -1,
