@@ -13,7 +13,7 @@ from .. import urn
 
 class OFController(object):
   """OpenFlow controller specification to be used on a PG VLAN.
-  
+
 Add to link objects using the Link.addChild() method.
 
 .. note::
@@ -61,7 +61,7 @@ class AddressPool(Resource):
   @property
   def name (self):
     return self.client_id
-  
+
   def _write (self, root):
     pl = ET.SubElement(root, "{%s}routable_pool" % (PGNS.EMULAB.name))
     pl.attrib["client_id"] = self.client_id
@@ -107,7 +107,7 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 class RemoteBlockstore(pg.Node):
   def __init__ (self, name, mount):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
-    bs = self.Blockstore("%s-bs" % (self.name), mount)
+    bs = Blockstore("%s-bs" % (self.name), mount)
     bs.where = "remote"
     self._bs = bs
     self._interface = self.addInterface("if0")
@@ -138,12 +138,12 @@ class RemoteBlockstore(pg.Node):
 
 
 class Firewall(object):
-  class Style:
+  class Style(object):
     OPEN     = "open"
     CLOSED   = "closed"
     BASIC    = "basic"
 
-  class Direction:
+  class Direction(object):
     INCOMING = "incoming"
     OUTGOING = "outgoing"
 
@@ -152,13 +152,13 @@ class Firewall(object):
     self.exceptions = []
 
   def addException(self, port, direction, ip = None):
-    self.exceptions.append({"port" : port, "direction" : direction, "ip" : ip});
+    self.exceptions.append({"port" : port, "direction" : direction, "ip" : ip})
 
   def _write (self, node):
     fw = ET.SubElement(node, "{%s}firewall" % (PGNS.EMULAB))
     fw.attrib["style"] = self.style
     for excep in self.exceptions:
-      ex = ET.SubElement(fw, "exception");
+      ex = ET.SubElement(fw, "exception")
       ex.attrib["port"]      = str(excep["port"])
       ex.attrib["direction"] = excep["direction"]
       if excep["ip"]:
@@ -171,7 +171,7 @@ XenVM.EXTENSIONS.append(("Firewall", Firewall))
 class Tour(object):
   TEXT = "text"
   MARKDOWN = "markdown"
-  
+
   def __init__ (self):
     self.description = None
     # Type can markdown
@@ -179,7 +179,6 @@ class Tour(object):
     self.instructions = None
     # Type can markdown
     self.instructions_type = Tour.TEXT
-    pass
 
   def Description(self, type, desc):
     self.description_type = type
