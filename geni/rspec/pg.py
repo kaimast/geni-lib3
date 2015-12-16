@@ -137,6 +137,7 @@ class Link(Resource):
     self.shared_vlan = None
     self._mac_learning = True
     self._vlan_tagging = False
+    self._trivial_ok = None
     self._link_multiplexing = False
     self._best_effort = False
     self._ext_children = []
@@ -196,6 +197,15 @@ class Link(Resource):
     self.namespaces.append(Namespaces.EMULAB)
     self._link_multiplexing = val
 
+  @property
+  def trivial_ok (self):
+    return self._trivial_ok
+
+  @trivial_ok.setter
+  def trivial_ok (self, val):
+    self.namespaces.append(Namespaces.EMULAB)
+    self._trivial_ok = val
+
   def _write (self, root):
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
     lnk.attrib["client_id"] = self.client_id
@@ -226,6 +236,15 @@ class Link(Resource):
     if self._link_multiplexing:
       tagging = ET.SubElement(lnk, "{%s}link_multiplexing" % (Namespaces.EMULAB.name))
       tagging.attrib["enabled"] = "true"
+
+    if self._trivial_ok is not None:
+      trivial = ET.SubElement(lnk, "{%s}trivial_ok" % (Namespaces.EMULAB.name))
+      if self._trivial_ok:
+        trivial.attrib["enabled"] = "true"
+      else:
+        trivial.attrib["enabled"] = "false"
+        pass
+      pass
 
     ################
     # These are...sortof duplicate (but not quite).  We should sort that out.
