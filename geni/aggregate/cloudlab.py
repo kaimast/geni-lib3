@@ -12,8 +12,8 @@ import sys
 from .core import AM
 
 # Imports to pick up aggregates available in the cloudlab UI
-from .instageni import UtahDDC
-from .apt import Apt
+from .instageni import UtahDDC # pylint: disable=unused-import
+from .apt import Apt # pylint: disable=unused-import
 
 class CloudLabAM(AM):
   def __init__ (self, name, host, cmid = None, url = None):
@@ -28,14 +28,14 @@ Wisconsin = CloudLabAM("cl-wisconsin", "www.wisc.cloudlab.us", "urn:publicid:IDN
 
 def aggregates ():
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result

@@ -1,4 +1,8 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -19,12 +23,16 @@ class VTS(AM):
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
     if ofver:
-      options["openflow-version" : ofver]
+      options["openflow-version"] = ofver
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:change-controller", options)
 
   def dumpFlows (self, context, sname, datapaths, show_hidden=False):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
+
+  def dumpMACs (self, context, sname, datapaths):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:dump-macs",
+                           options={"datapaths" : datapaths})
 
   def clearFlows (self, context, sname, datapaths):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:clear-flows", options={"datapaths" : datapaths})
@@ -39,7 +47,7 @@ class VTS(AM):
 
   def addFlows (self, context, sname, flows):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:add-flows", options={"rules" : flows})
-    
+
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")
@@ -56,14 +64,14 @@ UWashington = VTS("vts-uwashington", "uwash.vts.bsswks.net")
 
 def aggregates ():
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
-  for name,obj in inspect.getmembers(module):
+  for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result

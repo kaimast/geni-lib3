@@ -1,4 +1,8 @@
-# Copyright (c) 2013-2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
@@ -16,6 +20,8 @@ class ManifestLink(Link):
   def __init__ (self):
     super(ManifestLink, self).__init__()
     self.interface_refs = []
+    self.sliver_id = None
+    self.vlan = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -36,21 +42,32 @@ class ManifestLink(Link):
 
     return lnk
 
+class ManifestSvcLogin(object):
+  def __init__ (self):
+    self.auth = None
+    self.hostname = None
+    self.port = None
+    self.username = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestSvcLogin()
+    n.auth = elem.get("authentication")
+    n.hostname = elem.get("hostname")
+    n.port = int(elem.get("port"))
+    n.username = elem.get("username")
+
+    return n
+
 
 class ManifestNode(object):
-  class Login(object):
-    def __init__ (self):
-      self.auth = None
-      self.hostname = None
-      self.port = None
-      self.username = None
-
   class Interface(object):
     def __init__ (self):
       self.client_id = None
       self.mac_address = None
       self.sliver_id = None
       self.address_info = None
+      self.component_id = None
 
   def __init__ (self):
     super(ManifestNode, self).__init__()
@@ -69,11 +86,7 @@ class ManifestNode(object):
 
     logins = elem.xpath('g:services/g:login', namespaces = _XPNS)
     for lelem in logins:
-      l = ManifestNode.Login()
-      l.auth = lelem.get("authentication")
-      l.hostname = lelem.get("hostname")
-      l.port = int(lelem.get("port"))
-      l.username = lelem.get("username")
+      l = ManifestSvcLogin._fromdom(lelem)
       n.logins.append(l)
 
     interfaces = elem.xpath('g:interface', namespaces = _XPNS)
@@ -86,7 +99,7 @@ class ManifestNode(object):
       try:
         ipelem = ielem.xpath('g:ip', namespaces = _XPNS)[0]
         i.address_info = (ipelem.get("address"), ipelem.get("netmask"))
-      except Exception, e:
+      except Exception:
         pass
       n.interfaces.append(i)
 

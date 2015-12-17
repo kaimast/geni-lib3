@@ -1,9 +1,12 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import
 
 import abc
-import os
 
 from .core import AMTypeRegistry
 
@@ -27,10 +30,14 @@ class ExoGENI(AMType):
     super(ExoGENI, self).__init__ (name)
 
   def parseAdvertisement (self, data):
-    return data
+    from ..rspec import pgad
+    ad = pgad.Advertisement(xml=data["value"])
+    return ad
 
   def parseManifest (self, data):
-    return data
+    from ..rspec import pgmanifest
+    manifest = pgmanifest.Manifest(xml = data["value"])
+    return manifest
 
 
 class ProtoGENI(AMType):
@@ -39,14 +46,18 @@ class ProtoGENI(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import pgad
-    ad = pgad.Advertisement(xml=data)
+    ad = pgad.Advertisement(xml=data["value"])
+    ad.error_url = data["code"]["protogeni_error_url"]
     return ad
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    manifest = pgmanifest.Manifest(xml = data)
+    if isinstance(data, (str, unicode)):
+      manifest = pgmanifest.Manifest(xml = data)
+    else:
+      manifest = pgmanifest.Manifest(xml = data["value"])
+      manifest.error_url = data["code"]["protogeni_error_url"]
     return manifest
-
 
 class FOAM(AMType):
   def __init__ (self, name="foam"):
@@ -54,12 +65,12 @@ class FOAM(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import ofad
-    ad = ofad.Advertisement(xml=data)
+    ad = ofad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import ofmanifest
-    manifest = ofmanifest.Manifest(xml = data)
+    manifest = ofmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -69,12 +80,12 @@ class OpenGENI(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import pgad
-    ad = pgad.Advertisement(xml=data)
+    ad = pgad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    manifest = pgmanifest.Manifest(xml = data)
+    manifest = pgmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -84,12 +95,15 @@ class VTS(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import vtsad
-    ad = vtsad.Advertisement(xml=data)
+    ad = vtsad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import vtsmanifest
-    manifest = vtsmanifest.Manifest(xml = data)
+    if isinstance(data, (str, unicode)):
+      manifest = vtsmanifest.Manifest(xml = data)
+    else:
+      manifest = vtsmanifest.Manifest(xml = data["value"])
     return manifest
 
 
@@ -99,12 +113,15 @@ class OESS(AMType):
 
   def parseAdvertisement (self, data):
     from ..rspec import oessad
-    ad = oessad.Advertisement(xml=data)
+    ad = oessad.Advertisement(xml=data["value"])
     return ad
 
   def parseManifest (self, data):
     from ..rspec import oessmanifest
-    manifest = oessmanifest.Manifest(xml = data)
+    if isinstance(data, (str, unicode)):
+      manifest = oessmanifest.Manifest(xml = data)
+    else:
+      manifest = oessmanifest.Manifest(xml = data["value"])
     return manifest
 
 

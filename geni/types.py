@@ -9,14 +9,14 @@ class DPID(object):
 
   class OutOfRangeError(Exception):
     def __init__ (self, val):
-      super(OutOfRangeError, self).__init__()
+      super(DPID.OutOfRangeError, self).__init__()
       self.val = val
     def __str__ (self):
       return "Input value (%d) out of range of valid DPIDs" % (self.val)
 
   class InputTypeError(Exception):
     def __init__ (self, val):
-      super(InputTypeError, self).__init__()
+      super(DPID.InputTypeError, self).__init__()
       self.val = val
     def __str__ (self):
       return "Input value (%s) has invalid type (%s)" % (self.val, type(self.val))
@@ -36,7 +36,7 @@ class DPID(object):
       raise DPID.InputTypeError(val)
 
   def __eq__ (self, other):
-    return self._dpid == other._dpid
+    return self._dpid == other._dpid # pylint: disable=W0212
 
   def __hash__ (self):
     return self._dpid
@@ -50,23 +50,23 @@ class DPID(object):
 
   def __json__ (self):
     return str(self)
-  
+
   def hexstr (self):
-     return "%016x" % (self._dpid) 
+    return "%016x" % (self._dpid)
 
 class EthernetMAC (object):
   MAX = (2 ** 48) - 1
 
   class OutOfRangeError(Exception):
     def __init__ (self, val):
-      super(OutOfRangeError, self).__init__()
+      super(EthernetMAC.OutOfRangeError, self).__init__()
       self.val = val
     def __str__ (self):
       return "Input value (%d) out of range of valid Ethernet Addresses" % (self.val)
 
   class InputTypeError(Exception):
     def __init__ (self, val):
-      super(InputTypeError, self).__init__()
+      super(EthernetMAC.InputTypeError, self).__init__()
       self.val = val
     def __str__ (self):
       return "Input value (%s) has invalid type (%s)" % (self.val, type(self.val))
@@ -88,7 +88,7 @@ class EthernetMAC (object):
       raise EthernetMAC.InputTypeError(val)
 
   def __eq__ (self, other):
-    return self._mac == other._mac
+    return self._mac == other._mac # pylint: disable=W0212
 
   def __hash__ (self):
     return self._mac

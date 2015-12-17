@@ -1,5 +1,9 @@
 # Copyright (c) 2015  Barnstormer Softworks, Ltd.
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 
 import datetime
@@ -8,8 +12,11 @@ from lxml import etree as ET
 
 from . import pg
 from .. import namespaces
+from ..model.util import XPathXRange
 
 STITCHNS = namespaces.Namespace("stitch", "http://hpn.east.isi.edu/rspec/ext/stitch/0.1/")
+
+_XPNS = {'t' : STITCHNS.name}
 
 class StitchInfo(pg.Resource):
   def __init__ (self):
@@ -84,7 +91,7 @@ class Hop(object):
     ce.text = "%d" % (self.capacity)
 
     scd = ET.SubElement(link, "{%s}switchingCapabilityDescriptor" % (STITCHNS))
-    
+
     sct = ET.SubElement(scd, "{%s}switchingcapType" % (STITCHNS))
     sct.text = "l2sc"
 
@@ -113,3 +120,112 @@ class Hop(object):
       nh.text = "null"
 
     return he
+
+def coerceBool (text):
+  if text.lower() == "false":
+    return False
+  elif text.lower() == "true":
+    return True
+  else:
+    return None
+
+class AdInfo(object):
+  def __init__ (self, elem):
+    self._root = elem
+    self._aggregates = {}
+
+  @property
+  def aggregates (self):
+    if not self._aggregates:
+      for elem in self._root.xpath('t:aggregate', namespaces=_XPNS):
+        info = AggInfo(elem)
+        self._aggregates[info.urn] = info
+    return self._aggregates
+
+
+class AggInfo(object):
+  def __init__ (self, elem):
+    self._root = elem
+    self.urn = elem.get("id")
+    self.url = elem.get("url")
+
+  @property
+  def mode (self):
+    return self._root.xpath("t:stitchingmode", namespaces=_XPNS)[0].text
+
+  @property
+  def scheduledservices (self):
+    t = self._root.xpath("t:scheduledservices", namespaces=_XPNS)[0].text
+    return coerceBool(t)
+
+  @property
+  def negotiatedservices (self):
+    t = self._root.xpath("t:negotiatedservices", namespaces=_XPNS)[0].text
+    return coerceBool(t)
+
+  @property
+  def nodes (self):
+    n = self._root.xpath("t:node", namespaces=_XPNS)
+    return XPathXRange(n, AggNode)
+
+
+class AggNode(object):
+  def __init__ (self):
+    self.id = None
+    self._root = None
+
+  @property
+  def ports (self):
+    p = self._root.xpath("t:port", namespaces=_XPNS)
+    return XPathXRange(p, AggPort)
+
+  @classmethod
+  def _fromdom (cls, elem):
+    node = AggNode()
+    node._root = elem
+    node.id = elem.get("id")
+    return node
+
+
+class AggPort(object):
+  def __init__ (self):
+    self.id = None
+    self.capacity = 0
+    self._root = None
+
+  @property
+  def links (self):
+    l = self._root.xpath("t:link", namespaces=_XPNS)
+    return XPathXRange(l, AggLink)
+
+  @classmethod
+  def _fromdom (cls, elem):
+    port = AggPort()
+    port._root = elem
+    port.id = elem.get("id")
+    port.capacity = int(elem.xpath("t:capacity", namespaces=_XPNS)[0].text)
+    return port
+
+
+class AggLink(object):
+  def __init__ (self):
+    self._root = None
+    self.id = None
+    self.remote_urn = None
+
+  @property
+  def al2sinfo (self):
+    if not self.remote_urn.count("al2s.internet2.edu"):
+      return None
+    parts = self.remote_urn.split(":")
+    port = parts[-2]
+    switch = parts[-3].split("+")[-1]
+    return (switch, port)
+
+  @classmethod
+  def _fromdom (cls, elem):
+    link = AggLink()
+    link._root = elem
+    link.id = elem.get("id")
+    link.remote_urn = elem.xpath("t:remoteLinkId", namespaces=_XPNS)[0].text
+    return link

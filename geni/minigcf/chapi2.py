@@ -9,13 +9,14 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-from .. import _coreutil as GCU
-
 # We need to suppress warnings that assume we want a level of security we aren't actually asking for
 import requests.packages.urllib3
 import requests.packages.urllib3.exceptions
 requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
                                             requests.packages.urllib3.exceptions.InsecurePlatformWarning))
+
+from .. import _coreutil as GCU
+from . import config
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -26,13 +27,78 @@ class TLS1HttpAdapter(HTTPAdapter):
 
 def headers ():
   return GCU.defaultHeaders()
-  
-def get_credentials (url, root_bundle, cert, key, owner_urn):
-  req_data = xmlrpclib.dumps((owner_urn, [], {}), methodname="get_credentials")
+
+def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
+  req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
+  options = {"match" : {"KEY_MEMBER" : user_urn} }
+  return _lookup(url, root_bundle, cert, key, "KEY", cred_strings, options)
+
+
+def create_key_info (url, root_bundle, cert, key, cred_strings, data):
+  req_data = xmlrpclib.dumps(("KEY", cred_strings, {"fields" : data}), methodname="create")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def get_credentials (url, root_bundle, cert, key, creds, target_urn):
+  req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp = None, desc = None):
+  fields = {}
+  fields["SLICE_NAME"] = name
+  fields["SLICE_PROJECT_URN"] = proj_urn
+  if exp: fields["SLICE_EXPIRATION"] = exp.strftime(DATE_FMT)
+  if desc: fields["SLICE_DESCRIPTION"] = desc
+
+  req_data = xmlrpclib.dumps(("SLICE", cred_strings, {"fields" : fields}), methodname = "create")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def update_slice (url, root_bundle, cert, key, cred_strings, slice_urn, fields):
+  req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, {"fields" : fields}), methodname = "update")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
+  options = {}
+
+  req_data = xmlrpclib.dumps(("SLICE", member_urn, cred_strings, options), methodname = "lookup_for_member")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_slices_for_project (url, root_bundle, cert, key, cred_strings, project_urn):
+  options = {"match" : {"SLICE_PROJECT_URN" : project_urn} }
+  return _lookup(url, root_bundle, cert, key, "SLICE", cred_strings, options)
+
 
 def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc = None):
   fields = {}
@@ -44,8 +110,10 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
   req_data = xmlrpclib.dumps(("PROJECT", cred_strings, {"fields" : fields}), methodname = "create")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
+
 
 def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   """Delete project by URN
@@ -57,24 +125,34 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "delete")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
+
+#def _update_project (url, root_bundle, cert, key, cred_strings, project_urn):
+#  options = {"fields" : {}}
+#  req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "update")
+#  s = requests.Session()
+#  s.mount(url, TLS1HttpAdapter())
+#  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+#  return xmlrpclib.loads(resp.content)[0][0]
 
 
 def lookup_projects (url, root_bundle, cert, key, cred_strings, urn = None, uid = None, expired = None):
-  options = {}
+  options = { }
+  match = { }
   if urn is not None:
-    options["PROJECT_URN"] = urn
+    match["PROJECT_URN"] = urn
   if uid is not None:
-    options["PROJECT_UID"] = uid
+    match["PROJECT_UID"] = uid
   if expired is not None:
-    options["PROJECT_EXPIRED"] = expired
+    match["PROJECT_EXPIRED"] = expired
 
-  req_data = xmlrpclib.dumps(("PROJECT", cred_strings, options), methodname = "lookup")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
-  return xmlrpclib.loads(resp.content)[0][0]
+  if match:
+    options["match"] = match
+
+  return _lookup(url, root_bundle, cert, key, "PROJECT", cred_strings, options)
+
 
 def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
   options = {}
@@ -82,8 +160,10 @@ def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, membe
   req_data = xmlrpclib.dumps(("PROJECT", member_urn, cred_strings, options), methodname = "lookup_for_member")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
+
 
 def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_urn):
   options = {}
@@ -91,6 +171,14 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "lookup_members")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   return xmlrpclib.loads(resp.content)[0][0]
+
+
+def lookup_aggregates (url, root_bundle, cert, key):
+  options = {"match" : {'SERVICE_TYPE': 'AGGREGATE_MANAGER'}}
+
+  return _lookup(url, root_bundle, cert, key, "SERVICE", [], options)
+
 

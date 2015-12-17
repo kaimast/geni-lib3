@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import json
+
 import requests
 import requests.auth
 
@@ -20,6 +22,10 @@ class Connection(object):
     self.port = 3626
 
   @property
+  def baseurl (self):
+    return "https://%s:%d" % (self.host, self.port)
+
+  @property
   def rkwargs (self):
     d = {"headers" : self.headers,
          "auth" : self.auth,
@@ -33,4 +39,28 @@ class Connection(object):
   @property
   def auth (self):
     return requests.auth.HTTPBasicAuth(self.user, self.password)
+
+  @property
+  def configkeys (self):
+    url = "%s/core/admin/get-config-keys" % (self.baseurl)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
+  @property
+  def version (self):
+    url = "%s/core/admin/get-version" % (self.baseurl)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]["version"]
+
+  def getConfig (self, key):
+    url = "%s/core/admin/get-config" % (self.baseurl)
+    d = json.dumps({"key":key})
+    r = requests.post(url, d, **self.rkwargs)
+    return r.json()["value"]
+
+  def setConfig (self, key, value):
+    url = "%s/core/admin/set-config" % (self.baseurl)
+    d = json.dumps({"key":key, "value":value})
+    r = requests.post(url, d, **self.rkwargs)
+    return r.json()["value"]
 

@@ -7,6 +7,7 @@ import os
 from lxml import etree as ET
 
 import geni.namespaces as GNS
+from .pgmanifest import ManifestSvcLogin
 
 XPNS = {'g' : GNS.REQUEST.name,
         'v' : "http://geni.bssoftworks.com/rspec/ext/vts/manifest/1",
@@ -14,6 +15,7 @@ XPNS = {'g' : GNS.REQUEST.name,
 
 class UnhandledPortTypeError(Exception):
   def __init__ (self, typ):
+    super(UnhandledPortTypeError, self).__init__()
     self.typ = typ
   def __str__ (self):
     return "Port type '%s' isn't supported by port builder.  Perhaps you should contribute some code?" % (self.typ)
@@ -47,15 +49,36 @@ class GenericPort(object):
 
 
 class InternalPort(GenericPort):
+  class NoMACAddressError(Exception):
+    def __init__ (self, cid):
+      super(InternalPort.NoMACAddressError, self).__init__()
+      self._cid = cid
+    def __str__ (self):
+      return "Port with client_id %s does not have MAC address." % (self._cid)
+
   def __init__ (self):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
+    self._macaddress = None
+
+  @property
+  def macaddress (self):
+    if not self._macaddress:
+      raise InternalPort.NoMACAddressError(self.client_id)
+    else:
+      return self._macaddress
+
+  @macaddress.setter
+  def macaddress (self, val):
+    self._macaddress = val
 
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
+    p.macaddress = elem.get("mac-address")
+
     return p
 
   @property
@@ -96,6 +119,33 @@ class PGLocalPort(GenericPort):
     p.shared_vlan = elem.get("shared-lan")
     return p
 
+class ManifestContainer(object):
+  def __init__ (self):
+    self.name = None
+    self.client_id = None
+    self.image = None
+    self.sliver_id = None
+    self.logins = []
+    self.ports = []
+
+  @classmethod
+  def _fromdom (cls, elem):
+    c = ManifestContainer()
+    c.name = elem.get("client_id")
+    c.image = elem.get("image")
+    c.sliver_id = elem.get("sliver_id")
+
+    logins = elem.xpath('g:services/g:login', namespaces = XPNS)
+    for lelem in logins:
+      l = ManifestSvcLogin._fromdom(lelem)
+      c.logins.append(l)
+
+    ports = elem.xpath('v:port', namespaces = XPNS)
+    for cport in ports:
+      p = Manifest._buildPort(cport)
+      c.ports.append(p)
+
+    return c
 
 class ManifestFunction(object):
   def __init__ (self, client_id):
@@ -106,15 +156,18 @@ class ManifestFunction(object):
     typ = elem.get("type")
     if typ == "sslvpn":
       f = SSLVPNFunction._fromdom(elem)
-
+      return f
 
 class SSLVPNFunction(ManifestFunction):
-  def __init__ (sef, client_id):
+  def __init__ (self, client_id):
     super(SSLVPNFunction, self).__init__(client_id)
     self.tp_port = None
     self.local_ip = None
     self.key = None
-    
+
+  @staticmethod
+  def _fromdom (elem):
+    return
 
 class Manifest(object):
   def __init__ (self, path = None, xml = None):
@@ -124,7 +177,7 @@ class Manifest(object):
       self._xml = xml
     self._root = ET.fromstring(self._xml)
     self._pid = os.getpid()
-  
+
   @property
   def root (self):
     if os.getpid() != self._pid:
@@ -148,7 +201,13 @@ class Manifest(object):
   def ports (self):
     elems = self._root.xpath("v:datapath/v:port", namespaces = XPNS)
     for elem in elems:
-      yield self._buildPort(elem)
+      yield Manifest._buildPort(elem)
+
+  @property
+  def containers (self):
+    elems = self._root.xpath("v:container", namespaces = XPNS)
+    for elem in elems:
+      yield ManifestContainer._fromdom(elem)
 
   @property
   def functions (self):
@@ -159,9 +218,10 @@ class Manifest(object):
   def findPort (self, client_id):
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)
     if pelems:
-      return self._buildPort(pelems[0])
+      return Manifest._buildPort(pelems[0])
 
-  def _buildPort (self, elem):
+  @staticmethod
+  def _buildPort (elem):
     t = elem.get("type")
     if t == "gre":
       return GREPort._fromdom(elem)

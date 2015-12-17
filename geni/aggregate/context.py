@@ -9,7 +9,6 @@ import datetime
 
 import lxml.etree as ET
 
-from . import cmd
 from ..exceptions import NoUserError, SliceCredError
 
 class SlicecredProxy(object):
@@ -32,6 +31,7 @@ class SlicecredProxy(object):
 class SliceCredInfo(object):
   class CredentialExpiredError(Exception):
     def __init__ (self, name, expires):
+      super(SliceCredInfo.CredentialExpiredError, self).__init__()
       self.expires = expires
       self.sname = name
     def __str__ (self):
@@ -42,6 +42,7 @@ class SliceCredInfo(object):
     self.context = context
     self._path = None
     self.expires = None
+    self.urn = None
     self._build()
 
   def _build (self):
@@ -52,29 +53,36 @@ class SliceCredInfo(object):
     if not os.path.exists(self._path):
       self._downloadCredential()
     else:
-      self._setExpires()
+      self._parseInfo()
 
   def _downloadCredential (self):
-    (text, cred) = cmd.getslicecred(self.context, self.slicename)
-    if not cred:
-      raise SliceCredError(text)
+    cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
+
+#      raise SliceCredError(text)
+
     f = open(self._path, "w+")
     f.write(cred)
     f.close()
-    self._setExpires()
+    self._parseInfo()
 
-  def _setExpires (self):
+  def _parseInfo (self):
     r = ET.parse(self._path)
+
+    # Expiration
     expstr = r.find("credential/expires").text
     if expstr[-1] == 'Z':
       expstr = expstr[:-1]
     self.expires = datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
+
+    # URN
+    self.urn = r.find("credential/target_urn").text
 
   @property
   def path (self):
     checktime = datetime.datetime.now() + datetime.timedelta(days=6)
     if self.expires < checktime:
       # We expire in the next 6 days
+      # TODO: Log something
       self._downloadCredential()
       if self.expires < datetime.datetime.now():
         raise SliceCredInfo.CredentialExpiredError(self.slicename, self.expires)
@@ -86,6 +94,7 @@ class Context(object):
 
   class UserCredExpiredError(Exception):
     def __init__ (self, expires):
+      super(Context.UserCredExpiredError, self).__init__()
       self.expires = expires
     def __str__ (self):
       return "User Credential expired on %s" % (self.expires)
@@ -96,25 +105,46 @@ class Context(object):
     self._default_user = None
     self._users = set()
     self._cf = None
-    self.project = None
-    self._usercred_info = None
+    self._project = None
+    self._usercred_info = None  # (path, expires, urn)
     self._slicecreds = {}
     self.debug = False
 
   def _getSliceCred (self, sname):
-    if not self._slicecreds.has_key(sname):
-      scinfo = SliceCredInfo(self, sname)
-      self._slicecreds[sname] = scinfo
+    info = self.getSliceInfo(sname)
+    return info.path
 
-    return self._slicecreds[sname].path
-
-  def _getCredExpires (self, path):
+  def _getCredInfo(self, path):
     r = ET.parse(path)
     expstr = r.find("credential/expires").text
     if expstr[-1] == 'Z':
       expstr = expstr[:-1]
-    return datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
-    
+    exp = datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
+    urn = r.find("credential/target_urn").text
+
+    return (exp, urn)
+
+  @property
+  def _chargs (self):
+    ucred = open(self.usercred_path, "r").read()
+    return (False, self.cf.cert, self.cf.key, [ucred])
+
+  @property
+  def userurn (self):
+    return self._ucred_info[2]
+
+  @property
+  def project (self):
+    return self._project
+
+  @project.setter
+  def project (self, val):
+    self._project = val
+
+  @property
+  def project_urn (self):
+    return self._cf.projectNameToURN(self._project)
+
   @property
   def cf (self):
     return self._cf
@@ -148,46 +178,47 @@ class Context(object):
       os.makedirs(nval)
     self._data_dir = nval
 
+### TODO: User credentials need to belong to Users, or fix up this profile nonsense
   @property
-  def usercred_path (self):
-    # If you only need a user cred, something that works in the next 5 minutes is fine.  If you
-    # are doing something more long term then you need a slice credential anyhow, whose
-    # expiration will stop you as it should not outlast the user credential (and if it does,
-    # some clearinghouse has decided that is allowed).
-    if self._usercred_info is not None:
-      checktime = datetime.datetime.now() + datetime.timedelta(minutes=5)
-      if self._usercred_info[1] < checktime:
-        # Delete the user cred and hope you already renewed it
-        try:
-          os.remove(self._usercred_info[1])
-          self._usercred_info = None
-        except OSError, e:
-          # Windows won't let us remove open files
-          # TODO: A place for some debug logging
-          pass
-
-
+  def _ucred_info (self):
     if self._usercred_info is None:
       if self._default_user:
         ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
         if not os.path.exists(ucpath):
-          cfg = self.cfg_path
-          cred = cmd.getusercred(cfg)
+          cred = self.cf.getUserCredentials(self._default_user.urn)
 
           f = open(ucpath, "w+")
           f.write(cred)
           path = f.name
           f.close()
 
-        expires = self._getCredExpires(ucpath)
-        self._usercred_info = (ucpath, expires)
+        (expires, urn) = self._getCredInfo(ucpath)
+        self._usercred_info = (ucpath, expires, urn)
       else:
         raise NoUserError()
+    return self._usercred_info
 
-    if self._usercred_info[1] < datetime.datetime.now():
-      raise Context.UserCredExpiredError(self._usercred_info[1])
-    
-    return self._usercred_info[0]
+  @property
+  def usercred_path (self):
+    # If you only need a user cred, something that works in the next 5 minutes is fine.  If you
+    # are doing something more long term then you need a slice credential anyhow, whose
+    # expiration will stop you as it should not outlast the user credential (and if it does,
+    # some clearinghouse has decided that is allowed).
+    checktime = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    if self._ucred_info[1] < checktime:
+      # Delete the user cred and hope you already renewed it
+      try:
+        os.remove(self._ucred_info[1])
+        self._usercred_info = None
+      except OSError:
+        # Windows won't let us remove open files
+        # TODO: A place for some debug logging
+        pass
+
+    if self._ucred_info[1] < datetime.datetime.now():
+      raise Context.UserCredExpiredError(self._ucred_info[1])
+
+    return self._ucred_info[0]
 
   @property
   def cfg_path (self):
@@ -224,4 +255,10 @@ class Context(object):
   @property
   def slicecreds (self):
     return SlicecredProxy(self)
+
+  def getSliceInfo (self, sname):
+    if not self._slicecreds.has_key(sname):
+      scinfo = SliceCredInfo(self, sname)
+      self._slicecreds[sname] = scinfo
+    return self._slicecreds[sname]
 
