@@ -6,10 +6,10 @@
 
 from __future__ import absolute_import
 
-import tempfile
 import json
 
 from .core import APIRegistry
+from .. import tempfile
 
 class AMError(Exception):
   def __init__ (self, text, data = None):
@@ -36,9 +36,8 @@ class AMAPIv3(object):
     arglist.extend(["--slicecredfile", context.slicecreds[sname], "poa", sname, action])
 
     if options:
-      tf = tempfile.NamedTemporaryFile(delete=False)
+      (tf, path) = tempfile.makeFile()
       tf.write(json.dumps(options))
-      path = tf.name
       tf.close()
       arglist.extend(["--optionsfile", path])
 
@@ -57,20 +56,6 @@ class AMAPIv2(object):
               context.usercred_path, "-a", url, "-V", "2"]
 
   def listresources (self, context, url, sname, options = None):
-#    from ..gcf import oscript
-#    arglist = self._getDefaultArgs(context, url)
-#
-#    if sname:
-#      arglist.extend(["--slicecredfile", context.slicecreds[sname], "listresources", sname])
-#    else:
-#      arglist.append("listresources")
-#
-#    text,res = oscript.call(arglist)
-#    if res.values()[0]["code"]["geni_code"] == 0:
-#      rspec = res.values()[0]["value"]
-#      return rspec
-#    else:
-#      raise ListResourcesError(text)
     if not options: options = {}
 
     from ..minigcf import amapi2 as AM2

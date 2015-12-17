@@ -10,7 +10,7 @@ import traceback as tb
 import tempfile
 import json
 
-from geni.aggregate.apis import ListResourcesError, DeleteSliverError
+from .aggregate.apis import ListResourcesError, DeleteSliverError
 
 def checkavailrawpc(context, am):
   """Returns a list of node objects representing available raw PCs at the
@@ -54,6 +54,8 @@ requested from the given aggregate."""
 # them again on the backside
 def _mp_get_manifest (context, site, slc, q):
   try:
+    # Don't use geni.tempfile here - we don't want them deleted when the child process ends
+    # TODO: tempfiles should get deleted when the parent process picks them back up
     mf = site.listresources(context, slc)
     tf = tempfile.NamedTemporaryFile(delete=False)
     tf.write(mf.text)

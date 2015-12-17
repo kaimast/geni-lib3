@@ -6,9 +6,10 @@
 
 from __future__ import absolute_import
 
-import tempfile
 import os
 import os.path
+
+from .. import tempfile
 
 class _Registry(object):
   def __init__ (self):
@@ -88,8 +89,7 @@ class AM(object):
         raise AM.InvalidRSpecPathError(rspec)
       path = rspec
     else:
-      tf = tempfile.NamedTemporaryFile(delete=False)
-      path = tf.name
+      (tf, path) = tempfile.makeFile()
       tf.close()
       rspec.writeXML(path)
     res = self.api.createsliver(context, self.url, sname, path)
