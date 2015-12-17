@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-import tempfile
 import os
 import os.path
 import datetime
@@ -10,6 +9,7 @@ import datetime
 import lxml.etree as ET
 
 from ..exceptions import NoUserError, SliceCredError
+from .. import tempfile
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -57,8 +57,6 @@ class SliceCredInfo(object):
 
   def _downloadCredential (self):
     cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
-
-#      raise SliceCredError(text)
 
     f = open(self._path, "w+")
     f.write(cred)
@@ -237,10 +235,8 @@ class Context(object):
       l.append("")
 
     # Make tempfile with proper args
-    # TODO:  We need global tempfile accounting so we can clean up on terminate
-    tf = tempfile.NamedTemporaryFile(delete=False)
+    (tf, path) = tempfile.makeFile()
     tf.write("\n".join(l))
-    path = tf.name
     tf.close()
     return path
 
