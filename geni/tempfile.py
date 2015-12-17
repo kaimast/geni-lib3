@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 import tempfile
 import shutil
+import os
 
 class TempfileManager(object):
   """Global tempfile manager for the current process that guarantees deletion when the process ends."""
@@ -22,11 +23,11 @@ class TempfileManager(object):
     shutil.rmtree(self.path, ignore_errors = True)
 
   def makeFile (self):
-    """Create a temporary file.  The open file handle and full path are returned.
+    """Create a temporary file.  The open file object and full path are returned.
        .. note:
          You may delete this file at any time, otherwise it will be deleted when the process exits."""
     (handle, path) = tempfile.mkstemp(dir = self.path)
-    return (handle, path)
+    return (os.fdopen(handle), path)
 
 TFM = TempfileManager()
 
