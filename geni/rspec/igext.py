@@ -7,6 +7,9 @@
 from __future__ import absolute_import
 
 from lxml import etree as ET
+import re
+import sys
+import inspect
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
@@ -44,11 +47,18 @@ class XenVM(Node):
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)
-    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
-    xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
-    xen.attrib["cores"] = str(self.cores)
-    xen.attrib["ram"] = str(self.ram)
-    xen.attrib["disk"] = str(self.disk)
+    if self.cores or self.ram or self.disk:
+      st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+      xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
+      if self.cores:
+        xen.attrib["cores"] = str(self.cores)
+        pass
+      if self.ram:
+        xen.attrib["ram"] = str(self.ram)
+        pass
+      if self.disk:
+        xen.attrib["disk"] = str(self.disk)
+        pass
     return nd
 
 
@@ -176,6 +186,11 @@ class Tour(object):
   TEXT = "text"
   MARKDOWN = "markdown"
 
+  # One or more blank lines, followed by "Instructions:" on it's own line, then
+  # zero or more blank lines. Eats the blank lines.
+  SPLIT_REGEX = re.compile("\n+^\w*instructions\w*:?\w*$\n+",
+      re.IGNORECASE | re.MULTILINE)
+  
   def __init__ (self):
     self.description = None
     # Type can markdown
@@ -191,6 +206,20 @@ class Tour(object):
   def Instructions(self, type, inst):
     self.instructions_type = type
     self.instructions = inst
+    pass
+
+  def useDocstring(self, module = None):
+    if module is None:
+      module = sys.modules["__main__"]
+    if not self.description and module.__doc__:
+      docstr = inspect.getdoc(module)
+      docparts = Tour.SPLIT_REGEX.split(docstr,2)
+      self.Description(Tour.MARKDOWN,docparts[0])
+      if len(docparts) == 2 and not self.instructions:
+        self.Instructions(Tour.MARKDOWN,docparts[1])
+      return True
+    else:
+      return False
 
   def _write (self, root):
     #
@@ -220,3 +249,20 @@ class Site(object):
 
 pg.Node.EXTENSIONS.append(("Site", Site))
 
+
+class Password(Resource):
+  """A declaration for a randomly generated password.
+
+The portal will generate the password, encrypt it, and pass on the
+encrypted value to the AM(s) and therefore the node(s)."""
+
+  def __init__(self, name=None):
+    super(Password, self).__init__()
+    self.name = name
+
+  def _write (self, root):
+    pl = ET.SubElement(root, "{%s}password" % (PGNS.EMULAB.name))
+    if self.name:
+      pl.attrib["name"] = self.name
+
+    return pl

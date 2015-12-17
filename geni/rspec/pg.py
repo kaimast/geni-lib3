@@ -147,6 +147,7 @@ class Link(Resource):
     self.shared_vlan = None
     self._mac_learning = True
     self._vlan_tagging = False
+    self._trivial_ok = None
     self._link_multiplexing = False
     self._best_effort = False
     self._ext_children = []
@@ -206,6 +207,15 @@ class Link(Resource):
     self.namespaces.append(Namespaces.EMULAB)
     self._link_multiplexing = val
 
+  @property
+  def trivial_ok (self):
+    return self._trivial_ok
+
+  @trivial_ok.setter
+  def trivial_ok (self, val):
+    self.namespaces.append(Namespaces.EMULAB)
+    self._trivial_ok = val
+
   def _write (self, root):
     # pylint: disable=too-many-branches
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
@@ -237,6 +247,15 @@ class Link(Resource):
     if self._link_multiplexing:
       tagging = ET.SubElement(lnk, "{%s}link_multiplexing" % (Namespaces.EMULAB.name))
       tagging.attrib["enabled"] = "true"
+
+    if self._trivial_ok is not None:
+      trivial = ET.SubElement(lnk, "{%s}trivial_ok" % (Namespaces.EMULAB.name))
+      if self._trivial_ok:
+        trivial.attrib["enabled"] = "true"
+      else:
+        trivial.attrib["enabled"] = "false"
+        pass
+      pass
 
     ################
     # These are...sortof duplicate (but not quite).  We should sort that out.
@@ -439,6 +458,8 @@ class Request(geni.rspec.RSpec):
     super(Request, self).__init__("request")
     self.resources = []
     self.tour = None
+    self.mfactor = None
+    self.packing_strategy = None
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
@@ -452,6 +473,17 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.EMULAB)
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
+
+  def setCollocateFactor (self, mfactor):
+    self.addNamespace(Namespaces.EMULAB)
+    self.mfactor = mfactor
+
+  def setPackingStrategy (self, strategy):
+    self.addNamespace(Namespaces.EMULAB)
+    self.packing_strategy = strategy
+
+  def hasTour (self):
+    return self.tour is not None
 
   def writeXML (self, path):
     """Write the current request contents as an XML file that represents an rspec
@@ -470,6 +502,16 @@ class Request(geni.rspec.RSpec):
     for resource in self.resources:
       resource._write(rspec)
 
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+      pass
+      
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
+      pass
+      
     f.write(ET.tostring(rspec, pretty_print=True))
 
     if path is not None:
@@ -487,6 +529,16 @@ class Request(geni.rspec.RSpec):
     for resource in self.resources:
       resource._write(rspec)
 
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+      pass
+
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
+      pass
+      
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
 
