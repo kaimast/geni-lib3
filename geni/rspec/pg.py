@@ -254,8 +254,6 @@ class Link(Resource):
         trivial.attrib["enabled"] = "true"
       else:
         trivial.attrib["enabled"] = "false"
-        pass
-      pass
 
     ################
     # These are...sortof duplicate (but not quite).  We should sort that out.
@@ -505,13 +503,11 @@ class Request(geni.rspec.RSpec):
     if self.mfactor:
       mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
       mf.attrib["count"] = str(self.mfactor)
-      pass
-      
+
     if self.packing_strategy:
       mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
       mf.attrib["strategy"] = str(self.packing_strategy)
-      pass
-      
+
     f.write(ET.tostring(rspec, pretty_print=True))
 
     if path is not None:
@@ -532,13 +528,11 @@ class Request(geni.rspec.RSpec):
     if self.mfactor:
       mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
       mf.attrib["count"] = str(self.mfactor)
-      pass
 
     if self.packing_strategy:
       mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
       mf.attrib["strategy"] = str(self.packing_strategy)
-      pass
-      
+
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
 

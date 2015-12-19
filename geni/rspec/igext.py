@@ -6,10 +6,11 @@
 
 from __future__ import absolute_import
 
-from lxml import etree as ET
 import re
 import sys
 import inspect
+
+from lxml import etree as ET
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
@@ -52,13 +53,10 @@ class XenVM(Node):
       xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
       if self.cores:
         xen.attrib["cores"] = str(self.cores)
-        pass
       if self.ram:
         xen.attrib["ram"] = str(self.ram)
-        pass
       if self.disk:
         xen.attrib["disk"] = str(self.disk)
-        pass
     return nd
 
 
@@ -188,9 +186,9 @@ class Tour(object):
 
   # One or more blank lines, followed by "Instructions:" on it's own line, then
   # zero or more blank lines. Eats the blank lines.
-  SPLIT_REGEX = re.compile("\n+^\w*instructions\w*:?\w*$\n+",
-      re.IGNORECASE | re.MULTILINE)
-  
+  SPLIT_REGEX = re.compile(r"\n+^\w*instructions\w*:?\w*$\n+",
+                           re.IGNORECASE | re.MULTILINE)
+
   def __init__ (self):
     self.description = None
     # Type can markdown
@@ -206,7 +204,6 @@ class Tour(object):
   def Instructions(self, type, inst):
     self.instructions_type = type
     self.instructions = inst
-    pass
 
   def useDocstring(self, module = None):
     if module is None:
