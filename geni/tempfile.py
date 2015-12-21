@@ -27,7 +27,7 @@ class TempfileManager(object):
        .. note:
          You may delete this file at any time, otherwise it will be deleted when the process exits."""
     (handle, path) = tempfile.mkstemp(dir = self.path)
-    return (os.fdopen(handle), path)
+    return (os.fdopen(handle, "w"), path)
 
 TFM = TempfileManager()
 

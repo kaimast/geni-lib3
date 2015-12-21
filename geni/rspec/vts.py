@@ -193,6 +193,7 @@ class SSLVPNFunction(Resource):
     d.attrib["type"] = "sslvpn"
     return d
 
+Request.EXTENSIONS.append(("SSLVPNFunction", SSLVPNFunction))
 
 class Datapath(Resource):
   def __init__ (self, image, name):
