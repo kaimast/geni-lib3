@@ -269,7 +269,7 @@ class Link(Resource):
         bw = intfA.bandwidth if intfA.bandwidth else self.bandwidth
         lat = intfA.latency if intfA.latency else self.latency
         plr = intfA.plr if intfA.plr else self.plr
-        self._write_link_prop(lnk, inftB.client_id, intfA.client_id, bw, lat, plr)
+        self._write_link_prop(lnk, intfB.client_id, intfA.client_id, bw, lat, plr)
 
     for obj in self._ext_children:
       obj._write(lnk)
