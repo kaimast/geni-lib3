@@ -108,6 +108,8 @@ class Interface(object):
     self.addresses = []
     self.component_id = None
     self.bandwidth = None
+    self.latency = None
+    self.plr = None
 
   @property
   def name (self):
@@ -135,6 +137,8 @@ class Interface(object):
 class Link(Resource):
   LNKID = 0
   DEFAULT_BW = -1
+  DEFAULT_LAT = 0
+  DEFAULT_PLR = 0.0
 
   def __init__ (self, name = None, ltype = ""):
     super(Link, self).__init__()
@@ -154,6 +158,8 @@ class Link(Resource):
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
+    self.latency = Link.DEFAULT_LAT
+    self.plr = Link.DEFAULT_PLR
 
   @classmethod
   def newLinkID (cls):
@@ -255,35 +261,47 @@ class Link(Resource):
       else:
         trivial.attrib["enabled"] = "false"
 
-    ################
-    # These are...sortof duplicate (but not quite).  We should sort that out.
-    if self.bandwidth != Link.DEFAULT_BW:
-      if len(self.interfaces) >= 2:
-        for (src,dst) in itertools.permutations(self.interfaces):
-          bw = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
-          bw.attrib["capacity"] = "%d" % (self.bandwidth)
-          bw.attrib["source_id"] = src.client_id
-          bw.attrib["dest_id"] = dst.client_id
-
-    for intf in self.interfaces:
-      if intf.bandwidth:
-        for other in self.interfaces:
-          if intf is not other:
-            prop = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
-            prop.attrib["source_id"] = other.name
-            prop.attrib["dest_id"] = intf.name
-            prop.attrib["capacity"] = str(intf.bandwidth)
-    ################
+    # LAN shaping properties are handled by the LAN class below.
+    if self.type != "lan":
+      for (intfA,intfB) in itertools.permutations(self.interfaces,2):
+        bw = intfA.bandwidth if intfA.bandwidth else self.bandwidth
+        lat = intfA.latency if intfA.latency else self.latency
+        plr = intfA.plr if intfA.plr else self.plr
+        self._write_link_prop(lnk, intfB.client_id, intfA.client_id, bw, lat, plr)
 
     for obj in self._ext_children:
       obj._write(lnk)
 
     return lnk
 
+  def _write_link_prop(self, lnk, src, dst, bw, lat, plr):
+    if bw != Link.DEFAULT_BW or lat != Link.DEFAULT_LAT or \
+       plr != Link.DEFAULT_PLR:
+      prop = ET.SubElement(lnk, "{%s}property" % (GNS.REQUEST.name))
+      prop.attrib["source_id"] = src
+      prop.attrib["dest_id"] = dst
+      if bw != Link.DEFAULT_BW:
+        prop.attrib["capacity"] = str(bw)
+      if lat != Link.DEFAULT_LAT:
+        prop.attrib["latency"] = str(lat)
+      if plr != Link.DEFAULT_PLR:
+        prop.attrib["packet_loss"] = str(plr)
 
+    
 class LAN(Link):
   def __init__ (self, name = None):
     super(LAN, self).__init__(name, "lan")
+
+  def _write (self, root):
+    lnk = super(LAN, self)._write(root)
+
+    for intf in self.interfaces:
+      bw = intf.bandwidth if intf.bandwidth else self.bandwidth
+      lat = intf.latency if intf.latency else self.latency
+      plr = intf.plr if intf.plr else self.plr
+      super(LAN, self)._write_link_prop(lnk, intf.client_id, self.client_id, bw, lat, plr)
+
+    return lnk
 
 class L3GRE(Link):
   def __init__ (self, name = None):
