@@ -14,9 +14,9 @@ import atexit
 import warnings
 import json
 import argparse
-import geni.rspec.igext as igext
-
 from argparse import Namespace
+
+from .rspec import igext
 
 class ParameterType (object):
   """Parameter types understood by Context.defineParameter()."""
@@ -69,8 +69,8 @@ class Context (object):
 
     If run standalone (not in the portal), the request will be printed to the
     standard output; if run in the portal, it will be placed someplace the
-    portal can pick it up. 
-    
+    portal can pick it up.
+
     If the given rspec does not have a Tour object, this will attempt to
     build one from the file's docstring"""
     if not rspec.hasTour():
@@ -234,7 +234,7 @@ class Context (object):
 
   def _bindParametersEnv (self):
     namespace = Namespace()
-    paramValues= {}
+    paramValues = {}
     if self._readParamsPath:
       f = open(self._readParamsPath, "r")
       paramValues = json.load(f)
@@ -248,10 +248,8 @@ class Context (object):
         self.reportError(ParameterError("Could not coerce '%s' to '%s'" %
                                         (val, opts['type']), [name]))
         continue
-      if opts['legalValues'] and \
-         val not in Context._legalList(opts['legalValues']):
-        self.reportError(ParameterError("Illegal value '%s'" % (val,),
-                                        [name]))
+      if opts['legalValues'] and val not in Context._legalList(opts['legalValues']):
+        self.reportError(ParameterError("Illegal value '%s'" % (val,), [name]))
       else:
         setattr(namespace, name, val)
     # This might not return.

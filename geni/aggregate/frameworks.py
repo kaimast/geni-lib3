@@ -1,12 +1,16 @@
 # Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 
-import tempfile
 import subprocess
 import os.path
 
 from .core import FrameworkRegistry
+from .. import tempfile
 
 class ClearinghouseError(Exception):
   def __init__ (self, text, data = None):
@@ -79,11 +83,9 @@ class Framework(object):
 
   @key.setter
   def key (self, val):
-    # TODO:  We need global tempfile accounting so we can clean up on terminate
     if not os.path.exists(val):
       raise Framework.KeyPathError(val)
-    tf = tempfile.NamedTemporaryFile(delete=False)
-    path = tf.name
+    (tf, path) = tempfile.makeFile()
     tf.close()
     ### TODO: WARN IF OPENSSL IS NOT PRESENT
     ### TODO: Make ssl binary paths configurable
@@ -178,7 +180,7 @@ class CHAPI2(Framework):
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
 
-    res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key, [ucred])
+    res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key)
 
     if res["code"] == 0:
       return res["value"]
