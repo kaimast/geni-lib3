@@ -1,3 +1,13 @@
+"""
+This is an example intended for use the the CloudLab / Apt portal. It allows
+the user to select the hardware type, number of nodes, and toggle whether or
+not they go into a LAN.
+
+Instructions:
+
+Just use as you would use any other slice
+"""
+
 import geni.portal as portal
 import geni.rspec.pg as RSpec
 
