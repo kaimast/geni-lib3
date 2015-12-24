@@ -4,7 +4,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+"""Utility types used within geni-lib."""
+
 class DPID(object):
+  """Utility class representing OpenFlow Datapath IDs
+
+  This class tries to handle all likely inputs and desired outputs, while
+  providing a single internal type to work with in the code.
+  """
+
   MAX = (2 ** 64) - 1
 
   class OutOfRangeError(Exception):
@@ -52,6 +60,13 @@ class DPID(object):
     return str(self)
 
   def hexstr (self):
+    """Unformatted hex representation of DPID
+
+    Use `str(dpid_obj)` for a hex string with colons.
+
+    Returns:
+      str: Hex formatted DPID, without colons
+    """
     return "%016x" % (self._dpid)
 
 class EthernetMAC (object):
