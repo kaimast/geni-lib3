@@ -12,7 +12,7 @@ import json
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
-def checkavailrawpc(context, am):
+def checkavailrawpc (context, am):
   """Returns a list of node objects representing available raw PCs at the
 given aggregate."""
 
@@ -25,7 +25,21 @@ given aggregate."""
   return avail
 
 
-def printlogininfo(context = None, am = None, slice = None, manifest = None):
+def _corelogininfo (manifest):
+  from .rspec.vtsmanifest import Manifest as VTSM
+  from .rspec.pgmanifest import Manifest as PGM
+
+  linfo = []
+  if isinstance(manifest, PGM):
+    for node in manifest.nodes:
+      linfo.extend([(node.client_id, x.username, x.hostname, x.port) for x in node.logins])
+  elif isinstance(manifest, VTSM):
+    for container in manifest.containers:
+      linfo.extend([(container.client_id, x.username, x.hostname, x.port) for x in container.logins])
+  return linfo
+
+
+def printlogininfo (context = None, am = None, slice = None, manifest = None):
   """Prints out host login info in the format:
 ::
   [username] hostname:port
@@ -34,20 +48,13 @@ If a manifest object is provided the information will be mined from this data,
 otherwise you must supply a context, slice, and am and a manifest will be
 requested from the given aggregate."""
 
-  from .rspec.vtsmanifest import Manifest as VTSM
-  from .rspec.pgmanifest import Manifest as PGM
-
   if not manifest:
     manifest = am.listresources(context, slice)
 
-  if isinstance(manifest, PGM):
-    for node in manifest.nodes:
-      for login in node.logins:
-        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
-  elif isinstance(manifest, VTSM):
-    for container in manifest.containers:
-      for login in container.logins:
-        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
+  info = _corelogininfo(manifest)
+  for line in info:
+    print "[%s] %s: %d" % (line[1], line[2], line[3])
+
 
 # You can't put very much information in a queue before you hang your OS
 # trying to write to the pipe, so we only write the paths and then load
@@ -200,7 +207,7 @@ def builddot (manifests):
 
   return "\n".join(dot_data)
 
-def loadContext (path = None):
+def loadContext (path = None, key_passphrase = None):
   import geni._coreutil as GCU
   from geni.aggregate import FrameworkRegistry
   from geni.aggregate.context import Context
@@ -213,7 +220,11 @@ def loadContext (path = None):
 
   cf = FrameworkRegistry.get(obj["framework"])()
   cf.cert = obj["cert-path"]
-  cf.key = obj["key-path"]
+  
+  if key_passphrase:
+    cf.setKey(obj["key-path"], key_passphrase)
+  else:
+    cf.key = obj["key-path"]
 
   user = User()
   user.name = obj["user-name"]

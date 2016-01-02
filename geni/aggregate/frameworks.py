@@ -12,6 +12,8 @@ import os.path
 from .core import FrameworkRegistry
 from .. import tempfile
 
+class KeyDecryptionError(Exception): pass
+
 class ClearinghouseError(Exception):
   def __init__ (self, text, data = None):
     super(ClearinghouseError, self).__init__()
@@ -100,6 +102,27 @@ class Framework(object):
       ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
       # TODO: Test the size afterwards to make sure the password was right, or parse stderr?
       self._key = path
+
+  def setKey (self, path, passwd):
+    if not os.path.exists(path):
+      raise Framework.KeyPathError(path)
+    (tf, dpath) = tempfile.makeFile()
+
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization
+
+    try:
+      key = serialization.load_pem_private_key(open(path, "rb").read(), passwd, default_backend())
+    except ValueError, e:
+      raise KeyDecryptionError()
+
+    data = key.private_bytes(serialization.Encoding.PEM,
+                             serialization.PrivateFormat.TraditionalOpenSSL,
+                             serialization.NoEncryption())
+    tf.write(data)
+    tf.close()
+
+    self._key = dpath
 
   @property
   def cert (self):

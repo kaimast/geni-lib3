@@ -121,17 +121,20 @@ class PGLocalPort(GenericPort):
 
 class ManifestContainer(object):
   def __init__ (self):
-    self.name = None
     self.client_id = None
     self.image = None
     self.sliver_id = None
     self.logins = []
     self.ports = []
 
+  @property
+  def name (self):
+    return self.client_id
+
   @classmethod
   def _fromdom (cls, elem):
     c = ManifestContainer()
-    c.name = elem.get("client_id")
+    c.client_id = elem.get("client_id")
     c.image = elem.get("image")
     c.sliver_id = elem.get("sliver_id")
 

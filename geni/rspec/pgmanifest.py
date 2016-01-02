@@ -73,14 +73,18 @@ class ManifestNode(object):
     super(ManifestNode, self).__init__()
     self.logins = []
     self.interfaces = []
-    self.name = None
+    self.client_id = None
     self.component_id = None
     self.sliver_id = None
+
+  @property
+  def name (self):
+    return self.client_id
 
   @classmethod
   def _fromdom (cls, elem):
     n = ManifestNode()
-    n.name = elem.get("client_id")
+    n.client_id = elem.get("client_id")
     n.component_id = elem.get("component_id")
     n.sliver_id = elem.get("sliver_id")
 
