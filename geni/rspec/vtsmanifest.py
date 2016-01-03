@@ -161,6 +161,23 @@ class ManifestFunction(object):
       f = SSLVPNFunction._fromdom(elem)
       return f
 
+
+class ManifestDatapath(object):
+  def __init__ (self):
+    self.client_id = None
+    self.image = None
+    self.sliver_id = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    # TODO: Add ports later
+    dp = ManifestDatapath()
+    dp.client_id = elem.get("client_id")
+    dp.image = elem.get("image")
+    dp.sliver_id = elem.get("sliver_id")
+    return dp
+
+
 class SSLVPNFunction(ManifestFunction):
   def __init__ (self, client_id):
     super(SSLVPNFunction, self).__init__(client_id)
@@ -217,6 +234,12 @@ class Manifest(object):
     elems = self._root.xpath("v:functions/v:function", namespaces = XPNS)
     for elem in elems:
       yield ManifestFunction._fromdom(elem)
+
+  @property
+  def datapaths (self):
+    elems = self._root.xpath("v:datapath", namespaces = XPNS)
+    for elem in elems:
+      yield ManifestDatapath._fromdom(elem)
 
   def findPort (self, client_id):
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)

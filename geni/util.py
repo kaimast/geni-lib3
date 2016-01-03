@@ -205,6 +205,10 @@ def builddot (manifests):
         else:
           continue ### TODO: Unsupported Port Type
 
+      for dp in manifest.datapaths:
+        dda("\"%s\" [shape=rectangle]" % (dp.client_id))
+        
+
   dda("}")
 
   return "\n".join(dot_data)
