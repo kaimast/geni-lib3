@@ -8,7 +8,7 @@ import datetime
 
 import lxml.etree as ET
 
-from ..exceptions import NoUserError, SliceCredError
+from ..exceptions import NoUserError
 from .. import tempfile
 
 class SlicecredProxy(object):
@@ -43,6 +43,8 @@ class SliceCredInfo(object):
     self._path = None
     self.expires = None
     self.urn = None
+    self.type = None
+    self.version = None
     self._build()
 
   def _build (self):
@@ -74,6 +76,15 @@ class SliceCredInfo(object):
 
     # URN
     self.urn = r.find("credential/target_urn").text
+
+    # Type
+    tstr = r.find("credential/type").text.strip()
+    if tstr == "privilege":
+      self.type = "geni_sfa"
+      self.version = 3  # We hope
+    elif tstr == "abac":
+      self.type = "abac"
+      self.version = 1
 
   @property
   def path (self):
