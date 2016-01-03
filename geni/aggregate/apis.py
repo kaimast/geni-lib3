@@ -6,10 +6,7 @@
 
 from __future__ import absolute_import
 
-import json
-
 from .core import APIRegistry
-from .. import tempfile
 
 class AMError(Exception):
   def __init__ (self, text, data = None):
