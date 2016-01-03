@@ -8,6 +8,7 @@ import graphviz
 import pandas
 
 from geni.aggregate.frameworks import KeyDecryptionError
+from geni.aggregate.vts import VTS
 import geni.util
 
 ######
@@ -30,6 +31,35 @@ def loginInfo (manifests):
 util = types.ModuleType("geni_ipython_util")
 setattr(util, "showtopo", topo)
 setattr(util, "printlogininfo", loginInfo)
+
+#####
+### Core geni-lib monkeypatches
+#####
+
+def dumpMACs (self, context, sname, datapaths):
+  if not isinstance(datapaths, list):
+    datapaths = [datapaths]
+
+  res = self._dumpMACs(context, sname, datapaths)
+  init = False
+  data = []
+  for k,v in res.iteritems():
+    if not init:
+      cols = ["client-id"]
+      cols.extend(v[0])
+      init = True
+
+    if len(v) > 1:
+      v[1].insert(0, k)
+    for row in v[2:]:
+      row.insert(0, '')
+    data.extend(v[1:])
+
+  return pandas.DataFrame.from_records(data, columns=cols)
+
+
+setattr(VTS, "_dumpMACs", VTS.dumpMACs)
+setattr(VTS, "dumpMACs", dumpMACs)
 
 #####
 ### Extension loader
