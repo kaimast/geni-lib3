@@ -14,6 +14,53 @@ import geni.util
 ######
 ### iPython-specific Utilities
 ######
+
+class ColumnInfo(object):
+  def __init__ (self, iname, oname, default = None, xform = None):
+    self.iname = iname
+    self.oname = oname
+    self.default = default
+    if xform:
+      self.xform = xform
+    else:
+      self.xform = lambda x: x
+
+
+def buildTable (rows, columns, spchar = "=", index_first = True, ignore_last = False):
+  odata = []
+  idx_list = []
+  for row in rows:
+    nrow = []
+    if ignore_last:
+      rdata = {"_last" : row[-1]}
+      row = row[:-1]
+    else:
+      rdata = {}
+
+    if index_first:
+      idx_list.append(row[0])
+      row = row[1:]
+      
+    for item in row:
+      k,v = item.split(spchar)
+      rdata[k] = v
+
+    for col in columns:
+      try:
+        nrow.append(col.xform(rdata[col.iname]))
+      except KeyError:
+        nrow.append(col.default)
+
+    odata.append(nrow)
+
+  if idx_list:
+    df = pandas.DataFrame.from_records(odata, columns = [x.oname for x in columns], index = idx_list)
+  else:
+    df = pandas.DataFrame.from_records(odata, columns = [x.oname for x in columns])
+
+  return df
+
+
 def topo (manifests):
   if not isinstance(manifests, list):
     manifests = [manifests]
@@ -59,9 +106,35 @@ def dumpMACs (self, context, sname, datapaths):
 
   return pandas.DataFrame.from_records(data, index = idx_list, columns=cols)
 
+def dumpFlows (self, context, sname, datapaths, **kwargs):
+  if not isinstance(datapaths, list):
+    datapaths = [datapaths]
+
+  res = self._dumpFlows(context, sname, datapaths, **kwargs)
+  data = []
+  for k,v in res.iteritems():
+    rows = [[y.strip(",") for y in x.split(" ")] for x in v]
+    if len(rows) > 0:
+      rows[0].insert(0, k)
+    for row in rows[1:]:
+      row.insert(0, '')
+    data.extend(rows)
+
+  cols = []
+  cols.append(ColumnInfo("table_id", "table", default = 0, xform = int))
+  cols.append(ColumnInfo("duration", "duration", xform = lambda x: int(x[:-1])))
+  cols.append(ColumnInfo("priority", "priority", xform = int))
+  cols.append(ColumnInfo("n_packets", "packets", default = 0, xform = int))
+  cols.append(ColumnInfo("n_bytes", "bytes", default = 0, xform = int))
+  cols.append(ColumnInfo("_last", "rule"))
+
+  return buildTable(data, cols, ignore_last = True)
+
 
 setattr(VTS, "_dumpMACs", VTS.dumpMACs)
 setattr(VTS, "dumpMACs", dumpMACs)
+setattr(VTS, "_dumpFlows", VTS.dumpFlows)
+setattr(VTS, "dumpFlows", dumpFlows)
 
 #####
 ### Extension loader
