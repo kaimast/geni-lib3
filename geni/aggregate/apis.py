@@ -31,19 +31,14 @@ class AMAPIv3(object):
             context.usercred_path, "-a", url, "-V", "3"]
 
   def poa (self, context, url, sname, action, options = None):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "poa", sname, action])
+    from ..minigcf import amapi3 as AM3
 
-    if options:
-      (tf, path) = tempfile.makeFile()
-      tf.write(json.dumps(options))
-      tf.close()
-      arglist.extend(["--optionsfile", path])
+    sinfo = context.getSliceInfo(sname)
+    res = AM3.poa(url, False, context.cf.cert, context.cf.key, [sinfo], [sinfo.urn], action, options)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
 
-    _,res = oscript.call(arglist)
-    if res.values()[0]["code"]["geni_code"] == 0:
-      return res.values()[0]["value"]
+    # TODO: Raise exception
 
 
 class AMAPIv2(object):

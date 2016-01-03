@@ -41,8 +41,19 @@ def getversion (url, root_bundle, cert, key, options = None):
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
-def poa (url, root_bundle, cert, key, action, options = None):
+def poa (url, root_bundle, cert, key, creds, urns, action, options = None):
   if not options: options = {}
-  req_data = xmlrpclib.dumps(options, methodname="PerformOperationalAction")
+  if not isinstance(urns, list): urns = [urns]
+
+  cred_list = []
+  for cred in creds:
+    cred_list.append({"geni_value" : open(cred.path, "rb").read(), "geni_type" : cred.type, "geni_version" : cred.version})
+
+  req_data = xmlrpclib.dumps((urns, cred_list, action, options),
+                             methodname="PerformOperationalAction")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
 
 
