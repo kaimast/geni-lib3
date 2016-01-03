@@ -8,7 +8,7 @@ import datetime
 
 import lxml.etree as ET
 
-from ..exceptions import NoUserError, SliceCredError
+from ..exceptions import NoUserError
 from .. import tempfile
 
 class SlicecredProxy(object):
