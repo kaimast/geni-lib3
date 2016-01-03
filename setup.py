@@ -20,5 +20,6 @@ setup(name = 'geni-lib',
                  'tools/shell/genish'],
       install_requires = [
         "requests >= 2.7.0",
+        "cryptography",
         ]
       )

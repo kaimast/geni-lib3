@@ -40,3 +40,9 @@ def getversion (url, root_bundle, cert, key, options = None):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
+
+def poa (url, root_bundle, cert, key, action, options = None):
+  if not options: options = {}
+  req_data = xmlrpclib.dumps(options, methodname="PerformOperationalAction")
+
+

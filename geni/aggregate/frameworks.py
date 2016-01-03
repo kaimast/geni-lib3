@@ -213,7 +213,11 @@ class CHAPI2(Framework):
   def listSlices (self, context):
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
-    return chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
   def getUserCredentials (self, owner_urn):
     from ..minigcf import chapi2
@@ -255,8 +259,11 @@ class CHAPI2(Framework):
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
     slice_urn = self.sliceNameToURN(context.project, slicename)
 
-    ret = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
-    return ret
+    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
 
 class Portal(CHAPI2):
