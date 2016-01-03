@@ -23,8 +23,10 @@ def topo (manifests):
 
 
 def loginInfo (manifests):
-  df = pandas.DataFrame.from_records(geni.util._corelogininfo(manifests),
-                                     columns = ["client-id", "username", "host", "port"])
+  linfo = geni.util._corelogininfo(manifests)
+  df = pandas.DataFrame.from_records([x[1:] for x in linfo],
+                                     index = [x[0] for x in linfo],
+                                     columns = ["username", "host", "port"])
   return df
 
 
@@ -43,19 +45,19 @@ def dumpMACs (self, context, sname, datapaths):
   res = self._dumpMACs(context, sname, datapaths)
   init = False
   data = []
+  idx_list = []
   for k,v in res.iteritems():
     if not init:
-      cols = ["client-id"]
-      cols.extend(v[0])
+      cols = v[0]
       init = True
-
+    
     if len(v) > 1:
-      v[1].insert(0, k)
+      idx_list.append(k)
     for row in v[2:]:
-      row.insert(0, '')
+      idx_list.append('')
     data.extend(v[1:])
 
-  return pandas.DataFrame.from_records(data, columns=cols)
+  return pandas.DataFrame.from_records(data, index = idx_list, columns=cols)
 
 
 setattr(VTS, "_dumpMACs", VTS.dumpMACs)
