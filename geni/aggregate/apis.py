@@ -78,13 +78,14 @@ class AMAPIv2(object):
     return res
 
   def sliverstatus (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "sliverstatus", sname])
-    text, res = oscript.call(arglist)
-    if not res.values()[0]:
-      raise SliverStatusError(text)
-    return res.values()[0]
+    from ..minigcf import amapi2 as AM2
+
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+    res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise SliverStatusError(res["output"], res)
 
   def renewsliver (self, context, url, sname, date):
     from ..gcf import oscript
@@ -96,12 +97,14 @@ class AMAPIv2(object):
     return (text, res)
 
   def deletesliver (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "deletesliver", sname])
-    text,res = oscript.call(arglist)
-    if res[1]:
-      raise DeleteSliverError(text)
+    from ..minigcf import amapi2 as AM2
+
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+    res = AM2.deletesliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise DeleteSliverError(res["output"], res)
 
   def getversion (self, context, url):
     from ..gcf import oscript
