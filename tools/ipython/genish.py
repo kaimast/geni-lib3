@@ -85,6 +85,11 @@ setattr(util, "printlogininfo", loginInfo)
 ### Core geni-lib monkeypatches
 #####
 
+def replaceSymbol (module, name, func):
+  """Moves module.name to module._name and sets module.name to the new function object."""
+  setattr(module, "_%s" % (name), getattr(module, name))
+  setattr(module, name, func)
+
 def dumpMACs (self, context, sname, datapaths):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
@@ -131,10 +136,8 @@ def dumpFlows (self, context, sname, datapaths, **kwargs):
   return buildTable(data, cols, ignore_last = True)
 
 
-setattr(VTS, "_dumpMACs", VTS.dumpMACs)
-setattr(VTS, "dumpMACs", dumpMACs)
-setattr(VTS, "_dumpFlows", VTS.dumpFlows)
-setattr(VTS, "dumpFlows", dumpFlows)
+replaceSymbol(VTS, "dumpMACs", dumpMACs)
+replaceSymbol(VTS, "dumpFlows", dumpFlows)
 
 #####
 ### Extension loader
