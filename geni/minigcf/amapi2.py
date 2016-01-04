@@ -79,6 +79,15 @@ def sliverstatus (url, root_bundle, cert, key, creds, slice_urn, options = None)
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
+def renewsliver (url, root_bundle, cert, key, creds, slice_urn, date, options = None):
+  FMT = "%Y-%m-%dT%H:%M:%S+00:00"
+  if not options: options = {}
+  req_data = xmlrpclib.dumps((slice_urn, creds, date.strftime(FMT), options), methodname="RenewSliver")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
 def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = None):
   if not options: options = {}
   req_data = xmlrpclib.dumps((owner_urn, cred_strings, options), methodname="ListImages")

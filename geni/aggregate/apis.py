@@ -88,13 +88,14 @@ class AMAPIv2(object):
     raise SliverStatusError(res["output"], res)
 
   def renewsliver (self, context, url, sname, date):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
-    text, res = oscript.call(arglist)
-    if res[1]:
-      raise RenewSliverError(text)
-    return (text, res)
+    from ..minigcf import amapi2 as AM2
+
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+    res = AM2.renewsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, date)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise RenewSliverError(res["output"], res)
 
   def deletesliver (self, context, url, sname):
     from ..minigcf import amapi2 as AM2
