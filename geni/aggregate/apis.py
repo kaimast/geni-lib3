@@ -16,6 +16,7 @@ class AMError(Exception):
   def __str__ (self):
     return self.text
 
+class GetVersionError(AMError): pass
 class DeleteSliverError(AMError): pass
 class CreateSliverError(AMError): pass
 class SliverStatusError(AMError): pass
@@ -108,11 +109,12 @@ class AMAPIv2(object):
     raise DeleteSliverError(res["output"], res)
 
   def getversion (self, context, url):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["getversion"])
-    _,res = oscript.call(arglist)
-    return res.values()[0]
+    from ..minigcf import amapi2 as AM2
+
+    res = AM2.getversion(url, False, context.cf.cert, context.cf.key)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise GetVersionError(res["output"], res)
 
 
 class AMAPIv1(object):

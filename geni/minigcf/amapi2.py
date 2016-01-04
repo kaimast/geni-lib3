@@ -37,7 +37,7 @@ def headers ():
 
 def getversion (url, root_bundle, cert, key, options = None):
   if not options: options = {}
-  req_data = xmlrpclib.dumps(options, methodname="GetVersion")
+  req_data = xmlrpclib.dumps((options,), methodname="GetVersion")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
