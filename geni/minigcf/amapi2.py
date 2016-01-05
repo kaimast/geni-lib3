@@ -37,7 +37,7 @@ def headers ():
 
 def getversion (url, root_bundle, cert, key, options = None):
   if not options: options = {}
-  req_data = xmlrpclib.dumps(options, methodname="GetVersion")
+  req_data = xmlrpclib.dumps((options,), methodname="GetVersion")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
@@ -61,6 +61,31 @@ def listresources (url, root_bundle, cert, key, cred_strings, options = None, sl
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def deletesliver (url, root_bundle, cert, key, creds, slice_urn, options = None):
+  if not options: options = {}
+  req_data = xmlrpclib.dumps((slice_urn, creds, options), methodname="DeleteSliver")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def sliverstatus (url, root_bundle, cert, key, creds, slice_urn, options = None):
+  if not options: options = {}
+  req_data = xmlrpclib.dumps((slice_urn, creds, options), methodname="SliverStatus")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def renewsliver (url, root_bundle, cert, key, creds, slice_urn, date, options = None):
+  FMT = "%Y-%m-%dT%H:%M:%S+00:00"
+  if not options: options = {}
+  req_data = xmlrpclib.dumps((slice_urn, creds, date.strftime(FMT), options), methodname="RenewSliver")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers())
   return xmlrpclib.loads(resp.content)[0][0]
 
 def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = None):
