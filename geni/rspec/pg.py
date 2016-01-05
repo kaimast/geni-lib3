@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -510,23 +510,8 @@ class Request(geni.rspec.RSpec):
     else:
       f = open(path, "w+")
 
-    rspec = self.getDOM()
-
-    if self.tour:
-      self.tour._write(rspec)
-
-    for resource in self.resources:
-      resource._write(rspec)
-
-    if self.mfactor:
-      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
-      mf.attrib["count"] = str(self.mfactor)
-
-    if self.packing_strategy:
-      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
-      mf.attrib["strategy"] = str(self.packing_strategy)
-
-    f.write(ET.tostring(rspec, pretty_print=True))
+    buf = self.toXMLString(True)
+    f.write(buf)
 
     if path is not None:
       f.close()
@@ -553,41 +538,4 @@ class Request(geni.rspec.RSpec):
 
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
-
-  def write (self, path):
-    """
-.. deprecated:: 0.4
-    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
-
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
-                  GW.GENILibDeprecationWarning, 2)
-    self.writeXML(path)
-
-#### DEPRECATED #####
-class XenVM(Node):
-  """
-.. deprecated:: 0.4
-   Use :py:class:`geni.rspec.igext.XenVM` instead."""
-  def __init__ (self, name, component_id = None, exclusive = False):
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("geni.rspec.pg.XenVM is deprecated, please use geni.rspec.igext.XenVM instead",
-                  GW.GENILibDeprecationWarning)
-    super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
-    self.cores = 1
-    self.ram = 256
-    self.disk = 8
-
-  def _write (self, root):
-    nd = super(XenVM, self)._write(root)
-    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
-    xen = ET.SubElement(st, "{%s}xen" % (Namespaces.EMULAB.name))
-    xen.attrib["cores"] = str(self.cores)
-    xen.attrib["ram"] = str(self.ram)
-    xen.attrib["disk"] = str(self.disk)
-    return nd
-
-VM = XenVM
 

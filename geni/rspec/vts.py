@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,7 +53,10 @@ class Request(geni.rspec.RSpec):
 
   def writeXML (self, path):
     f = open(path, "w+")
+    f.write(self.toXMLString(True))
+    f.close()
 
+  def toXMLString (self, pretty_print = False):
     rspec = self.getDOM()
 
     for resource in self.resources:
@@ -62,20 +65,8 @@ class Request(geni.rspec.RSpec):
     for obj in self._ext_children:
       obj._write(rspec)
 
-
-    f.write(ET.tostring(rspec, pretty_print=True))
-    f.close()
-
-  def write (self, path):
-    """
-.. deprecated:: 0.4
-    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
-
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
-                  GW.GENILibDeprecationWarning, 2)
-    self.writeXML(path)
+    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    return buf
 
 
 ###################
