@@ -1,0 +1,32 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "hashicorp/precise32"
+  config.vm.network :forwarded_port, guest: 8888, host: 8888
+  config.vm.box_check_update = false
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "512"
+  end
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+     sudo apt-get update
+     sudo apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-pip python-dev libzm
+     sudo pip install graphviz functools32 jupyter
+     hg clone http://bitbucket.org/barnstorm/geni-lib
+     cd geni-lib
+     hg update -C 0.9-DEV
+     sudo python setup.py install
+     if [ -f /vagrant/omni.bundle ]
+        then
+           echo "/vagrant/omni.bundle exists. Configuring geni-lib."
+          sudo -u vagrant /usr/local/bin/context-from-bundle --bundle /vagrant/omni.bundle
+     fi
+     mkdir -p ~/.ipython/extensions
+     cp tools/ipython/genish.py ~/.ipython/extensions
+     sudo cp support/jupyter-upstart /etc/init/jupyter.conf
+     sudo start jupyter
+  SHELL
+
+end
