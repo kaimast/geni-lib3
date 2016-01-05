@@ -1,4 +1,4 @@
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,6 +91,15 @@ def renewsliver (url, root_bundle, cert, key, creds, slice_urn, date, options = 
 def listimages (url, root_bundle, cert, key, cred_strings, owner_urn, options = None):
   if not options: options = {}
   req_data = xmlrpclib.dumps((owner_urn, cred_strings, options), methodname="ListImages")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+def createsliver (url, root_bundle, cert, key, creds, slice_urn, rspec, users, options = None):
+  if not options: options = {}
+  req_data = xmlrpclib.dumps((slice_urn, creds, rspec, users, options), methodname="CreateSliver")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),

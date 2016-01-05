@@ -87,13 +87,10 @@ class AM(object):
       rspec = os.path.normpath(os.path.expanduser(rspec))
       if not os.path.exists(rspec):
         raise AM.InvalidRSpecPathError(rspec)
-      path = rspec
+      rspec_data = open(rspec, "rb").read()
     else:
-      (tf, path) = tempfile.makeFile()
-      tf.close()
-      rspec.writeXML(path)
-    res = self.api.createsliver(context, self.url, sname, path)
-    os.remove(path)
+      rspec_data = rspec.toXMLString()
+    res = self.api.createsliver(context, self.url, sname, rspec_data)
     return self.amtype.parseManifest(res)
 
   def getversion (self, context):

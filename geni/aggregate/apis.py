@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,14 +40,6 @@ class AMAPIv3(object):
 
 
 class AMAPIv2(object):
-  def _getDefaultArgs (self, context, url):
-    if context.debug:
-      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-              context.usercred_path, "-a", url, "-V", "2"]
-    else:
-      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-              context.usercred_path, "-a", url, "-V", "2"]
-
   def listresources (self, context, url, sname, options = None):
     if not options: options = {}
 
@@ -70,13 +62,21 @@ class AMAPIv2(object):
 
 
   def createsliver (self, context, url, sname, rspec):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "createsliver", sname, rspec])
-    text,res = oscript.call(arglist)
-    if res is None:
-      raise CreateSliverError(text)
-    return res
+    from ..minigcf import amapi2 as AM2
+
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+
+    udata = []
+    for user in context._users:
+      data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
+      udata.append(data)
+
+    res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise CreateSliverError(res["output"], res)
+
 
   def sliverstatus (self, context, url, sname):
     from ..minigcf import amapi2 as AM2
