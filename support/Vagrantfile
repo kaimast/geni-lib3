@@ -12,7 +12,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
      sudo apt-get update
-     sudo apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-pip python-dev libzmq-dev
+     sudo apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-pip python-dev libzmq-dev python-pandas
      sudo pip install graphviz functools32 jupyter
      hg clone http://bitbucket.org/barnstorm/geni-lib
      cd geni-lib
@@ -23,6 +23,7 @@ Vagrant.configure(2) do |config|
            echo "/vagrant/omni.bundle exists. Configuring geni-lib."
           sudo -u vagrant /usr/local/bin/context-from-bundle --bundle /vagrant/omni.bundle
      fi
+     mkdir -p ~/notebooks
      mkdir -p ~/.ipython/extensions
      cp tools/ipython/genish.py ~/.ipython/extensions
      sudo cp support/jupyter-upstart /etc/init/jupyter.conf
