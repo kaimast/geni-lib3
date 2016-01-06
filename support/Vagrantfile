@@ -20,8 +20,17 @@ Vagrant.configure(2) do |config|
      sudo python setup.py install
      if [ -f /vagrant/omni.bundle ]
         then
-           echo "/vagrant/omni.bundle exists. Configuring geni-lib."
-          sudo -u vagrant /usr/local/bin/context-from-bundle --bundle /vagrant/omni.bundle
+          echo "/vagrant/omni.bundle exists. Configuring geni-lib."
+          PARMS=(--bundle /vagrant/omni.bundle)
+          if [ -f /vagrant/cert.key ]
+             then
+                PARMS+=(--cert-private-key /vagrant/cert.key)
+          fi
+          if [ -f /vagrant/ssh.pubkey ]
+             then
+                PARMS+=(--pubkey /vagrant/ssh.pubkey)
+          fi
+          sudo -u vagrant /usr/local/bin/context-from-bundle "${PARMS[@]}"
      fi
      mkdir -p ~/notebooks
      mkdir -p ~/.ipython/extensions
