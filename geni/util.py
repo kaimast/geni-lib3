@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -207,7 +207,7 @@ def builddot (manifests):
 
       for dp in manifest.datapaths:
         dda("\"%s\" [shape=rectangle]" % (dp.client_id))
-        
+
 
   dda("}")
 
@@ -226,7 +226,7 @@ def loadContext (path = None, key_passphrase = None):
 
   cf = FrameworkRegistry.get(obj["framework"])()
   cf.cert = obj["cert-path"]
-  
+
   if key_passphrase:
     cf.setKey(obj["key-path"], key_passphrase)
   else:

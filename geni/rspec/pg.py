@@ -287,7 +287,7 @@ class Link(Resource):
       if plr != Link.DEFAULT_PLR:
         prop.attrib["packet_loss"] = str(plr)
 
-    
+
 class LAN(Link):
   def __init__ (self, name = None):
     super(LAN, self).__init__(name, "lan")
