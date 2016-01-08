@@ -1,4 +1,4 @@
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,14 +16,9 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-# We need to suppress warnings that assume we want a level of security we aren't actually asking for
-import requests.packages.urllib3
-import requests.packages.urllib3.exceptions
-requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
-                                            requests.packages.urllib3.exceptions.InsecurePlatformWarning,
-                                            requests.packages.urllib3.exceptions.SNIMissingWarning))
-
 from .. import _coreutil as GCU
+
+GCU.disableUrllibWarnings()
 
 class TLS1HttpAdapter(HTTPAdapter):
   def init_poolmanager(self, connections, maxsize, block=False):
