@@ -1,28 +1,25 @@
-.. Copyright (c) 2015  Barnstormer Softworks, Ltd.
+.. Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 .. raw:: latex
 
   \newpage
 
-MacOS X 10.8.x / 10.9.x
-=======================
+MacOS X 10.10.x / 10.11.x
+=================================
 
 These installations require the use of HomeBrew (http://brew.sh).  If you use
 MacPorts or a different manager for installing open source tools on your system
 you will need to satisfy the dependencies using your tool of choice.
 
-You will need to have an Apple Developer account (free registration) in order to download
-the required tools.
-
-.. warning::
-  These instructions DO NOT WORK for 10.10 (Yosemite).
+.. note:: 
+  These instructions have not been tested on older versions of MacOS X
 
 =========================
 Installation Dependencies
 =========================
 
 * HomeBrew (http://brew.sh)
-* Apple Command Line Tools for XCode (https://developer.apple.com/downloads)
+* Apple Command Line Tools for XCode (normally downloaded as part of Brew install)
 
 ===============
 Install / Setup
@@ -33,13 +30,6 @@ we will install the necessary tools and library dependencies for typical ``geni-
 
   $ brew install mercurial
   $ brew install python
-  $ brew install swig
-  $ brew install libxmlsec1
-
-  $ pip install m2crypto
-  $ pip install python-dateutil
-  $ pip install lxml
-  $ pip install pyopenssl
 
 .. note::
   You will now have two version of ``python`` installed on your system - the one that Apple ships
