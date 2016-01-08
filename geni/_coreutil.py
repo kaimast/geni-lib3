@@ -1,4 +1,4 @@
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 import os
 import os.path
@@ -39,3 +39,25 @@ def defaultHeaders ():
 def getDefaultContextPath ():
   ddir = getDefaultDir()
   return os.path.normpath("%s/context.json" % (ddir))
+
+def disableUrllibWarnings ():
+  import requests.packages.urllib3
+  import requests.packages.urllib3.exceptions
+
+  warnings = []
+  try:
+    warnings.append(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+  except AttributeError:
+    pass
+
+  try:
+    warnings.append(requests.packages.urllib3.exceptions.InsecurePlatformWarning)
+  except AttributeError:
+    pass
+
+  try:
+    warnings.append(requests.packages.urllib3.exceptions.SNIMissingWarning)
+  except AttributeError:
+    pass
+
+  requests.packages.urllib3.disable_warnings(tuple(warnings))

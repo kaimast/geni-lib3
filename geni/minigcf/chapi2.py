@@ -13,15 +13,10 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-# We need to suppress warnings that assume we want a level of security we aren't actually asking for
-import requests.packages.urllib3
-import requests.packages.urllib3.exceptions
-requests.packages.urllib3.disable_warnings((requests.packages.urllib3.exceptions.InsecureRequestWarning,
-                                            requests.packages.urllib3.exceptions.InsecurePlatformWarning,
-                                            requests.packages.urllib3.exceptions.SNIMissingWarning))
-
 from .. import _coreutil as GCU
 from . import config
+
+GCU.disableUrllibWarnings()
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
 

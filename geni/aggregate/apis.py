@@ -23,6 +23,7 @@ class SliverStatusError(AMError): pass
 class RenewSliverError(AMError): pass
 class ListResourcesError(AMError): pass
 
+
 class AMAPIv3(object):
   @staticmethod
   def poa (context, url, sname, action, options = None):
