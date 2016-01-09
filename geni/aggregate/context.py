@@ -9,7 +9,6 @@ import datetime
 import lxml.etree as ET
 
 from ..exceptions import NoUserError
-from .. import tempfile
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -228,28 +227,6 @@ class Context(object):
       raise Context.UserCredExpiredError(self._ucred_info[1])
 
     return self._ucred_info[0]
-
-  @property
-  def cfg_path (self):
-    l = []
-    l.append("[omni]")
-    if self.cf: l.append("default_cf = %s" % (self.cf.name))
-    if self.project: l.append("default_project = %s" % (self.project))
-    if self._users: l.append("users = %s" % (", ".join([u.name for u in self._users])))
-    l.append("")
-
-    l.extend(self.cf.getConfig())
-    l.append("")
-
-    for user in self._users:
-      l.extend(user.getConfig())
-      l.append("")
-
-    # Make tempfile with proper args
-    (tf, path) = tempfile.makeFile()
-    tf.write("\n".join(l))
-    tf.close()
-    return path
 
   def addSliceCred (self, sname, path):
     self.slicecred_paths[sname] = path
