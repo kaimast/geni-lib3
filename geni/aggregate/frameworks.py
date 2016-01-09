@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import
 
-import subprocess
 import os.path
 
 from .core import FrameworkRegistry
