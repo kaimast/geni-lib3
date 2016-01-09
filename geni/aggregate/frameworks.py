@@ -113,7 +113,7 @@ class Framework(object):
 
     try:
       key = serialization.load_pem_private_key(open(path, "rb").read(), passwd, default_backend())
-    except ValueError, e:
+    except ValueError:
       raise KeyDecryptionError()
 
     data = key.private_bytes(serialization.Encoding.PEM,

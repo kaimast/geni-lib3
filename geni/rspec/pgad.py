@@ -237,7 +237,7 @@ class Advertisement(object):
     """An iterable of the unique images found in this advertisement."""
     if not self._images:
       for node in self.nodes:
-        for image_list in node.images.itervalues():
+        for image_list in node.images.values():
           for image in image_list:
             self._images.add(image)
     for image in self._images:

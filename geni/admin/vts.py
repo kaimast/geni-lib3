@@ -1,8 +1,10 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+from __future__ import absolute_import, print_function
 
 import json
 
@@ -91,7 +93,7 @@ class Connection(germ.Connection):
 
   def deleteDatapath (self, dpname, really = False):
     if not really:
-      print "WARNING!!!!  You do not want to do this to datapaths managed by a sliver unless you really know what you are doing."
+      print("WARNING!!!!  You do not want to do this to datapaths managed by a sliver unless you really know what you are doing.")
       return
     url = "https://%s:%d/core/admin/vts/ovs/bridge/%s" % (self.host, self.port, dpname)
     r = requests.delete(url, **self.rkwargs)

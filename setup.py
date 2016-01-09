@@ -21,5 +21,9 @@ setup(name = 'geni-lib',
         "requests >= 2.7.0",
         "cryptography",
         "lxml",
+        ],
+      classifiers = [
+        "Programming Language :: Python :: 2.7",
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         ]
       )

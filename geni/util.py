@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import multiprocessing as MP
 import time
@@ -55,7 +55,7 @@ requested from the given aggregate."""
 
   info = _corelogininfo(manifest)
   for line in info:
-    print "[%s] %s: %d" % (line[1], line[2], line[3])
+    print("[%s] %s: %d" % (line[1], line[2], line[3]))
 
 
 # You can't put very much information in a queue before you hang your OS

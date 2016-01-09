@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -19,10 +19,10 @@ class SlicecredProxy(object):
     return self._context._getSliceCred(name)
 
   def iteritems (self):
-    return self._context._slicecred_paths.iteritems()
+    return iter(self._context._slicecred_paths.items())
 
   def iterkeys (self):
-    return self._context._slicecred_paths.iterkeys()
+    return iter(self._context._slicecred_paths.keys())
 
   def __iter__ (self):
     for x in self._context._slicecred_paths:
