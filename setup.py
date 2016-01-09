@@ -1,7 +1,6 @@
 # Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
-from distutils.core import setup
-import setuptools
+from setuptools import setup, find_packages
 
 import os
 import os.path
@@ -15,7 +14,7 @@ setup(name = 'geni-lib',
       version = '0.9.1',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
-      packages = setuptools.find_packages(),
+      packages = find_packages(),
       scripts = ['tools/buildcontext/context-from-bundle',
                  'tools/shell/genish'],
       install_requires = [

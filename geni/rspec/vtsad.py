@@ -40,11 +40,18 @@ class CircuitPlane(object):
     cp = CircuitPlane()
     cp.label = elem.get("label")
     supported = elem.xpath('v:supported-tunnels/v:tunnel-type', namespaces = _XPNS)
+
     for tuntyp in supported:
       cp.tunnel_types.append(tuntyp.get("name"))
-    cp.endpoint = elem.xpath('v:endpoint', namespaces = _XPNS)[0].get("value")
-    for celem in elem.xpath('v:contraints/v:constraint', namespaces = _XPNS):
-      self.constraints[celem.get("key")] = dumbcoerce(celem.get("value"))
+
+    try:
+      cp.endpoint = elem.xpath('v:endpoint', namespaces = _XPNS)[0].get("value")
+    except IndexError:
+      cp.endpoint = None
+
+    for celem in elem.xpath('v:constraints/v:constraint', namespaces = _XPNS):
+      cp.constraints[celem.get("key")] = dumbcoerce(celem.get("value"))
+
     return cp
 
 
