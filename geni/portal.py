@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015 The University of Utah and Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016 The University of Utah and Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -315,12 +315,12 @@ class PortalError (Exception):
 
   def __objdict__(self):
     retval = dict({ 'errorType': self.__class__.__name__, })
-    for (k,v) in self.__dict__.iteritems():
+    for k in self.__dict__.keys():
       if k == 'errorType':
         continue
       if k.startswith('_'):
         continue
-      retval[k] = v
+      retval[k] = self.__dict__[k]
     return retval
 
 

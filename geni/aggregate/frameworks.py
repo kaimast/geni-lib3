@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import
 
-import subprocess
 import os.path
 
 from .core import FrameworkRegistry
@@ -84,24 +83,8 @@ class Framework(object):
     return self._key
 
   @key.setter
-  def key (self, val):
-    if not os.path.exists(val):
-      raise Framework.KeyPathError(val)
-    (tf, path) = tempfile.makeFile()
-    tf.close()
-    ### TODO: WARN IF OPENSSL IS NOT PRESENT
-    ### TODO: Make ssl binary paths configurable
-    if os.name == "nt":
-      nullf = open("NUL")
-      binp = os.path.normpath("C:/OpenSSL-Win32/bin/openssl")
-      ret = subprocess.call("%s rsa -in \"%s\" -out \"%s\"" % (binp, val, path), stdout=nullf, stderr=nullf, shell=True)
-      self._key = path
-    else:
-      nullf = open("/dev/null")
-      # We really don't want shell=True here, but there are pty problems with openssl otherwise
-      ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
-      # TODO: Test the size afterwards to make sure the password was right, or parse stderr?
-      self._key = path
+  def key (self, path):
+    self._key = path
 
   def setKey (self, path, passwd):
     if not os.path.exists(path):
@@ -113,7 +96,7 @@ class Framework(object):
 
     try:
       key = serialization.load_pem_private_key(open(path, "rb").read(), passwd, default_backend())
-    except ValueError, e:
+    except ValueError:
       raise KeyDecryptionError()
 
     data = key.private_bytes(serialization.Encoding.PEM,
@@ -279,18 +262,6 @@ class Portal(CHAPI2):
 
   def sliceNameToURN (self, project, name):
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
-
-  def getConfig (self):
-    l = []
-    l.append("[%s]" % (self.name))
-    l.append("type = %s" % (self._type))
-    l.append("authority = %s" % (self._authority))
-    l.append("ch = %s" % (self._ch))
-    l.append("sa = %s" % (self._sa))
-    l.append("ma = %s" % (self._ma))
-    l.append("cert = %s" % (self.cert))
-    l.append("key = %s" % (self.key))
-    return l
 
 
 class EmulabCH2(CHAPI1):

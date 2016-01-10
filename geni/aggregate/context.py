@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -9,7 +9,6 @@ import datetime
 import lxml.etree as ET
 
 from ..exceptions import NoUserError
-from .. import tempfile
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -19,10 +18,10 @@ class SlicecredProxy(object):
     return self._context._getSliceCred(name)
 
   def iteritems (self):
-    return self._context._slicecred_paths.iteritems()
+    return iter(self._context._slicecred_paths.items())
 
   def iterkeys (self):
-    return self._context._slicecred_paths.iterkeys()
+    return iter(self._context._slicecred_paths.keys())
 
   def __iter__ (self):
     for x in self._context._slicecred_paths:
@@ -228,28 +227,6 @@ class Context(object):
       raise Context.UserCredExpiredError(self._ucred_info[1])
 
     return self._ucred_info[0]
-
-  @property
-  def cfg_path (self):
-    l = []
-    l.append("[omni]")
-    if self.cf: l.append("default_cf = %s" % (self.cf.name))
-    if self.project: l.append("default_project = %s" % (self.project))
-    if self._users: l.append("users = %s" % (", ".join([u.name for u in self._users])))
-    l.append("")
-
-    l.extend(self.cf.getConfig())
-    l.append("")
-
-    for user in self._users:
-      l.extend(user.getConfig())
-      l.append("")
-
-    # Make tempfile with proper args
-    (tf, path) = tempfile.makeFile()
-    tf.write("\n".join(l))
-    tf.close()
-    return path
 
   def addSliceCred (self, sname, path):
     self.slicecred_paths[sname] = path

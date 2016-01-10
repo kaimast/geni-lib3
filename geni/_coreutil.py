@@ -15,11 +15,11 @@ def getDefaultDir ():
   if os.name == "posix":
     DEF_DIR = "%s/.bssw/geni/" % (HOME)
     if not os.path.exists(DEF_DIR):
-      os.makedirs(DEF_DIR, 0775)
+      os.makedirs(DEF_DIR, 0o775)
   elif os.name == "nt":
     DEF_DIR = "%s/bssw/geni/" % (HOME)
     if not os.path.exists(DEF_DIR):
-      os.makedirs(DEF_DIR, 0775)
+      os.makedirs(DEF_DIR, 0o775)
       import ctypes
       BSSW = "%s/bssw" % (HOME)
       if not ctypes.windll.kernel32.SetFileAttributesW(unicode(BSSW), WIN32_ATTR_HIDDEN):
