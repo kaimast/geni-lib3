@@ -74,8 +74,8 @@ class AM(object):
     return status
 
   def renewsliver (self, context, sname, date):
-    text,res = self.api.renewsliver(context, self.url, sname, date)
-    return text,res
+    res = self.api.renewsliver(context, self.url, sname, date)
+    return res
 
   def deletesliver (self, context, sname):
     self.api.deletesliver(context, self.url, sname)
