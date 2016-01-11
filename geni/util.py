@@ -245,3 +245,8 @@ def loadContext (path = None, key_passphrase = None):
 
   return context
 
+def hasDataContext ():
+  import geni._coreutil as GCU
+
+  path = GCU.getDefaultContextPath()
+  return os.path.exists(path)

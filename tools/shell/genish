@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 import os
 import os.path
@@ -71,9 +71,10 @@ class Shell(object):
       imports["AM2"] = geni.minigcf.amapi2
 
     try:
-      import getpass
-      passwd = getpass.getpass("Private key passphrase: ")
-      imports["context"] = geni.util.loadContext(key_passphrase=passwd)
+      if geni.util.hasDataContext():
+        import getpass
+        passwd = getpass.getpass("Private key passphrase: ")
+        imports["context"] = geni.util.loadContext(key_passphrase=passwd)
     except IOError:
       pass
 
