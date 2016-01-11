@@ -11,6 +11,7 @@ import time
 import traceback as tb
 import tempfile
 import json
+import os.path
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
