@@ -73,7 +73,7 @@ class AMAPIv2(object):
 
     res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
     if res["code"]["geni_code"] == 0:
-      return res["value"]
+      return res
     raise CreateSliverError(res["output"], res)
 
   @staticmethod
