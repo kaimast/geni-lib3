@@ -51,16 +51,19 @@ Set up your geni-lib directory
 * Download the ``geni-lib`` Vagrant setup file to this directory
  * On systems with ``curl`` (MacOS X, Linux) you can use the following command::
 
-   curl -O https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile
+    curl -O https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile
   
  * On Windows systems with Powershell you can use the following::
 
-  PS C:\genivm> $client = new-object System.Net.WebClient
-  PS C:\genivm> $client.DownloadFile("https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile", "C:/genivm/Vagrantfile")
+    PS C:\genivm> $client = new-object System.Net.WebClient
+    PS C:\genivm> $client.DownloadFile("https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile", "C:/genivm/Vagrantfile")
 
  * You can also download the above URL with a web browser and save it in your ``genivm`` directory
 
 * Create your vagrant vm using ``vagrant up`` in this directory
+
+.. note::
+  This may take a long time (20+ minutes) depending on the speed of your internet connection
 
 ==============================
 Load the Jupyter web interface
