@@ -228,6 +228,10 @@ def loadContext (path = None, key_passphrase = None):
   cf = FrameworkRegistry.get(obj["framework"])()
   cf.cert = obj["cert-path"]
 
+  if key_passphrase is True:
+    import getpass
+    key_passphrase = getpass.getpass("Private key passphrase: ")
+
   if key_passphrase:
     cf.setKey(obj["key-path"], key_passphrase)
   else:
