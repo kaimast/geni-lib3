@@ -187,11 +187,19 @@ class SSLVPNFunction(Resource):
 Request.EXTENSIONS.append(("SSLVPNFunction", SSLVPNFunction))
 
 class Datapath(Resource):
-  def __init__ (self, image, name):
+  def __init__ (self, image, client_id):
     super(Datapath, self).__init__()
     self.image = image
     self.ports = []
-    self.name = name
+    self.client_id = client_id
+
+  @property
+  def name (self):
+    return self.client_id
+
+  @name.setter
+  def name (self, val):
+    self.client_id = val
 
   def attachPort (self, port):
     if port.name is None:

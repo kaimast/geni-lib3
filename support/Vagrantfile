@@ -12,7 +12,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
      sudo apt-get update
-     sudo apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-pip python-dev libzmq-dev python-pandas graphviz libssl-dev
+     sudo apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-pip python-dev libzmq3-dev python-pandas graphviz libssl-dev python-zmq
      sudo pip install graphviz functools32 jupyter
      hg clone http://bitbucket.org/barnstorm/geni-lib
      cd geni-lib
