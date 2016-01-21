@@ -1,4 +1,4 @@
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 """
 Tempfile Manager to enable secure creation of temporary files, and deletion on process exit.
@@ -10,8 +10,9 @@ while individual `TempfileManager` instances can be created to serve different u
 from __future__ import absolute_import
 
 import tempfile
-import shutil
 import os
+import shutil
+import atexit
 
 class TempfileManager(object):
   """Global tempfile manager for the current process that guarantees deletion when the process ends."""
@@ -19,7 +20,7 @@ class TempfileManager(object):
   def __init__ (self):
     self.path = tempfile.mkdtemp()
 
-  def __del__ (self):
+  def clear (self):
     shutil.rmtree(self.path, ignore_errors = True)
 
   def makeFile (self):
@@ -32,3 +33,5 @@ class TempfileManager(object):
 TFM = TempfileManager()
 
 makeFile = TFM.makeFile
+
+atexit.register(TFM.clear)
