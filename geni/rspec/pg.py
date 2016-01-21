@@ -359,6 +359,8 @@ class Node(Resource):
     for name,ext in Node.EXTENSIONS:
       self._wrapext(name,ext)
 
+    self._raw_elements = []
+
   class DuplicateInterfaceName(Exception):
     def __str__ (self):
       return "Duplicate interface names"
@@ -425,6 +427,9 @@ class Node(Resource):
     for obj in self._ext_children:
       obj._write(nd)
 
+    for elem in self._raw_elements:
+      nd.append(elem)
+
     return nd
 
   def addInterface (self, name = None):
@@ -446,6 +451,9 @@ class Node(Resource):
 
   def addService (self, svc):
     self.services.append(svc)
+
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
 
 
 class RawPC(Node):
