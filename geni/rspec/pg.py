@@ -452,6 +452,9 @@ class Node(Resource):
   def addService (self, svc):
     self.services.append(svc)
 
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
+
 
 class RawPC(Node):
   def __init__ (self, name, component_id = None):
