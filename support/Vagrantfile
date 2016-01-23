@@ -23,7 +23,7 @@ Vagrant.configure(2) do |config|
      cd ..
 
      ## GateOne Setup
-     sudo mkdir -p /etc/gateone/conf.d
+     sudo gateone --configure
      wget https://bitbucket.org/nbastin/geni-lib/raw/20160122-cn4421/support/gateone.conf
      sudo cp gateone.conf /etc/gateone/conf.d/60local.conf
 
