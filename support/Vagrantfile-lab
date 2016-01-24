@@ -25,10 +25,8 @@ Vagrant.configure(2) do |config|
      ## GateOne Setup
      sudo gateone --configure
      wget https://bitbucket.org/nbastin/geni-lib/raw/20160122-cn4421/support/gateone.conf
-     wget https://bitbucket.org/nbastin/geni-lib/raw/20160122-cn4421/support/gateone-bookmarks.json
      sudo mv gateone.conf /etc/gateone/conf.d/60local.conf
-     sudo mv gateone-bookmarks.json /var/lib/gateone/users/ANONYMOUS/bookmarks.json
-
+     
      ## geni-lib install
      hg clone http://bitbucket.org/barnstorm/geni-lib
      cd geni-lib
