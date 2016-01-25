@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    intro/intro
+   intro/credentials
    intro/install
    intro/config
 
