@@ -1,3 +1,9 @@
+.. Copyright (c) 2016  Barnstormer Softworks, Ltd.
+
+.. raw:: latex
+
+  \newpage
+
 Credentials
 ===========
 
