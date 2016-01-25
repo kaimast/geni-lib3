@@ -10,8 +10,16 @@ Vagrant
 geni-lib can be installed on any platform that supports Vagrant using the instructions
 below.
 
+Two variants of the Vagrant environment can be created - a *lite* version that only contains ``geni-lib``
+and should only be used by developers that are accustomed to working with Vagrant or similar environments,
+and a *lab* version that is more fully-featured and should be used by new ``geni-lib`` users or those
+using ``geni-lib`` for a class or conference tutorial.
+
+The documentation here currently only covers the *lab* version.
+
 The Vagrant VM created by this process automatically sets up your geni-lib context and
-provides a web interface for creating `Jupyter <http://jupyter.org>`_ notebooks using GENI resources.
+provides a web interface for creating `Jupyter <http://jupyter.org>`_ notebooks using GENI resources,
+as well as a web-based interface for accessing the VM shell.
 
 =========================
 Installation Dependencies
@@ -22,43 +30,27 @@ Install these dependencies before creating the Vagrant VM.
 * VirtualBox (https://www.virtualbox.org/wiki/Downloads)
 * Vagrant (https://www.vagrantup.com/downloads.html)
 
-========================
-Download The omni.bundle
-========================
-
-First we need a file called ``omni.bundle`` which is available from the GENI Portal web
-interface.  Once you log into the GENI Portal you can use the following steps to locate your
-``omni.bundle`` download:
-
-* At the top of the Portal home page click on the tab labeled **Profile**
-* In the tabs on the Profile page click on the one labeled **Configure omni**
-* Embedded in the text under the **Option 1: Automatic omni configuration** header, there
-  is a button labeled **Download your omni data**.  Click this button.
-
-.. note::
-  If you see a warning that no SSH keys have been uploaded you can still use the bundle, but
-  you will need to provide an SSH public key path in a later step.
-
-* Click the **Download your omni data** button at the bottom of the next page and it should
-  start downloading immediately in your browser.
-
-==============================
-Set up your geni-lib directory
-==============================
+=================================
+Set up your geni-lib VM directory
+=================================
 
 * Create a directory on your system named ``genivm`` to hold your GENI environment
 * Copy your ``omni.bundle`` to this directory
-* Download the ``geni-lib`` Vagrant setup file to this directory
+* Download the ``geni-lib`` Vagrant setup file to this directory from
+  https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile-lab and rename it to be called
+  ``Vagrantfile``
+
  * On systems with ``curl`` (MacOS X, Linux) you can use the following command::
 
-    curl -O https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile
+    curl https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile-lab -o Vagrantfile
   
  * On Windows systems with Powershell you can use the following::
 
     PS C:\genivm> $client = new-object System.Net.WebClient
-    PS C:\genivm> $client.DownloadFile("https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile", "C:/genivm/Vagrantfile")
+    PS C:\genivm> $client.DownloadFile("https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Vagrantfile-lab", "C:/genivm/Vagrantfile")
 
- * You can also download the above URL with a web browser and save it in your ``genivm`` directory
+   .. note::
+      The full path for the destination *must* be specified in the second argument to `DownloadFile`
 
 * Create your vagrant vm using ``vagrant up`` in this directory
 
@@ -74,4 +66,15 @@ Load the Jupyter web interface
 * In the new notebook enter ``%load_ext genish`` in the first cell and enter your key passphrase if necessary
   (otherwise just hit enter to skip the passphrase entry)
 
-Congratulations, ``geni-lib`` is now loaded and ready for use in your web browser!
+=========================
+Accessing the VM Terminal
+=========================
+
+You may often want to access the VM command line for accessing your GENI resources, updating ``geni-lib``,
+etc.  While you can use `vagrant ssh` on some platforms, this doesn't work very well on Windows, so the VM
+provides a web-based mechanism for accessing the VM shell directly.
+
+* Open any web browser and load ``http://localhost:9000``
+* Click the large **Terminal: SSH** button
+
+This will automatically log you into the VM and provide you a shell interface for using the VM OS directly.
