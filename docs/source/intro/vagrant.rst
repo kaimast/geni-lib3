@@ -7,7 +7,7 @@
 Vagrant
 =======
 
-geni-lib can be installed on any platform that supports Vagrant using the instructions
+``geni-lib`` can be installed on any platform that supports Vagrant using the instructions
 below.
 
 Two variants of the Vagrant environment can be created - a *lite* version that only contains ``geni-lib``
