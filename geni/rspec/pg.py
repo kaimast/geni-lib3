@@ -155,11 +155,15 @@ class Link(Resource):
     self._link_multiplexing = False
     self._best_effort = False
     self._ext_children = []
+    self._raw_elements = []
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
     self.latency = Link.DEFAULT_LAT
     self.plr = Link.DEFAULT_PLR
+
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
 
   @classmethod
   def newLinkID (cls):
@@ -271,6 +275,9 @@ class Link(Resource):
 
     for obj in self._ext_children:
       obj._write(lnk)
+
+    for elem in self._raw_elements:
+      lnk.append(elem)
 
     return lnk
 
@@ -484,6 +491,7 @@ class Request(geni.rspec.RSpec):
     self.tour = None
     self.mfactor = None
     self.packing_strategy = None
+    self._raw_elements = []
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.CLIENT)
@@ -508,6 +516,9 @@ class Request(geni.rspec.RSpec):
 
   def hasTour (self):
     return self.tour is not None
+
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
 
   def writeXML (self, path):
     """Write the current request contents as an XML file that represents an rspec
@@ -543,6 +554,9 @@ class Request(geni.rspec.RSpec):
     if self.packing_strategy:
       mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
       mf.attrib["strategy"] = str(self.packing_strategy)
+
+    for elem in self._raw_elements:
+      rspec.append(elem)
 
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf

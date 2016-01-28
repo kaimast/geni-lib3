@@ -202,10 +202,11 @@ class Datapath(Resource):
     self.client_id = val
 
   def attachPort (self, port):
-    if port.name is None:
-      port.clientid = "%s:%d" % (self.name, len(self.ports))
-    else:
-      port.clientid = "%s:%s" % (self.name, port.name)
+    if port.clientid is None:
+      if port.name is None:
+        port.clientid = "%s:%d" % (self.name, len(self.ports))
+      else:
+        port.clientid = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
