@@ -21,6 +21,8 @@ import geni.urn
 ################################################
 
 class Request(geni.rspec.RSpec):
+  EXTENSIONS = []
+
   def __init__ (self):
     super(Request, self).__init__("request")
     self.resources = []
