@@ -482,7 +482,7 @@ class Namespaces(object):
   VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
-  INFO = GNS.Namepsace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
+  INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
 
 
 class Request(geni.rspec.RSpec):
