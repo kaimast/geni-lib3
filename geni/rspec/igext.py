@@ -59,6 +59,8 @@ class XenVM(Node):
         xen.attrib["disk"] = str(self.disk)
     return nd
 
+pg.Request.EXTENSIONS.append(("XenVM", XenVM))
+
 
 class AddressPool(Resource):
   """A pool of public dynamic IP addresses belonging to a slice."""
@@ -84,6 +86,9 @@ class AddressPool(Resource):
     pl.attrib["type"] = self.type
 
     return pl
+
+pg.Request.EXTENSIONS.append(("AddressPool", AddressPool))
+
 
 class Blockstore(object):
   def __init__ (self, name, mount):
@@ -147,6 +152,8 @@ class RemoteBlockstore(pg.Node):
   @dataset.setter
   def dataset (self, val):
     self._bs.dataset = val
+
+pg.Request.EXTENSIONS.append(("RemoteBlockstore", RemoteBlockstore))
 
 
 class Firewall(object):

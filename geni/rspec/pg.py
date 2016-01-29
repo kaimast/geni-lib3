@@ -16,6 +16,102 @@ import geni.rspec
 import geni.namespaces as GNS
 import geni.urn
 
+################################################
+# Base Request - Must be at top for EXTENSIONS #
+################################################
+
+class Request(geni.rspec.RSpec):
+  def __init__ (self):
+    super(Request, self).__init__("request")
+    self.resources = []
+    self.tour = None
+    self.mfactor = None
+    self.packing_strategy = None
+    self._raw_elements = []
+
+    self.addNamespace(GNS.REQUEST, None)
+    self.addNamespace(Namespaces.CLIENT)
+
+    self._ext_children = []
+    for name,ext in Request.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
+
+  def addResource (self, rsrc):
+    for ns in rsrc.namespaces:
+      self.addNamespace(ns)
+    self.resources.append(rsrc)
+
+  def addTour (self, tour):
+    self.addNamespace(Namespaces.EMULAB)
+    self.addNamespace(Namespaces.JACKS)
+    self.tour = tour
+
+  def setCollocateFactor (self, mfactor):
+    self.addNamespace(Namespaces.EMULAB)
+    self.mfactor = mfactor
+
+  def setPackingStrategy (self, strategy):
+    self.addNamespace(Namespaces.EMULAB)
+    self.packing_strategy = strategy
+
+  def hasTour (self):
+    return self.tour is not None
+
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
+
+  def writeXML (self, path):
+    """Write the current request contents as an XML file that represents an rspec
+    in the GENIv3 format."""
+
+    if path is None:
+      f = sys.stdout
+    else:
+      f = open(path, "w+")
+
+    buf = self.toXMLString(True)
+    f.write(buf)
+
+    if path is not None:
+      f.close()
+
+  def toXMLString (self, pretty_print = False):
+    """Return the current request contents as an XML string that represents an rspec
+    in the GENIv3 format."""
+
+    rspec = self.getDOM()
+
+    if self.tour:
+      self.tour._write(rspec)
+
+    for resource in self.resources:
+      resource._write(rspec)
+
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
+
+    for obj in self._ext_children:
+      obj._write(rspec)
+
+    for elem in self._raw_elements:
+      rspec.append(elem)
+
+    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    return buf
+
 
 
 class Resource(object):
@@ -484,81 +580,4 @@ class Namespaces(object):
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
 
-
-class Request(geni.rspec.RSpec):
-  def __init__ (self):
-    super(Request, self).__init__("request")
-    self.resources = []
-    self.tour = None
-    self.mfactor = None
-    self.packing_strategy = None
-    self._raw_elements = []
-
-    self.addNamespace(GNS.REQUEST, None)
-    self.addNamespace(Namespaces.CLIENT)
-
-  def addResource (self, rsrc):
-    for ns in rsrc.namespaces:
-      self.addNamespace(ns)
-    self.resources.append(rsrc)
-
-  def addTour (self, tour):
-    self.addNamespace(Namespaces.EMULAB)
-    self.addNamespace(Namespaces.JACKS)
-    self.tour = tour
-
-  def setCollocateFactor (self, mfactor):
-    self.addNamespace(Namespaces.EMULAB)
-    self.mfactor = mfactor
-
-  def setPackingStrategy (self, strategy):
-    self.addNamespace(Namespaces.EMULAB)
-    self.packing_strategy = strategy
-
-  def hasTour (self):
-    return self.tour is not None
-
-  def addRawElement (self, elem):
-    self._raw_elements.append(elem)
-
-  def writeXML (self, path):
-    """Write the current request contents as an XML file that represents an rspec
-    in the GENIv3 format."""
-
-    if path is None:
-      f = sys.stdout
-    else:
-      f = open(path, "w+")
-
-    buf = self.toXMLString(True)
-    f.write(buf)
-
-    if path is not None:
-      f.close()
-
-  def toXMLString (self, pretty_print = False):
-    """Return the current request contents as an XML string that represents an rspec
-    in the GENIv3 format."""
-
-    rspec = self.getDOM()
-
-    if self.tour:
-      self.tour._write(rspec)
-
-    for resource in self.resources:
-      resource._write(rspec)
-
-    if self.mfactor:
-      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
-      mf.attrib["count"] = str(self.mfactor)
-
-    if self.packing_strategy:
-      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
-      mf.attrib["strategy"] = str(self.packing_strategy)
-
-    for elem in self._raw_elements:
-      rspec.append(elem)
-
-    buf = ET.tostring(rspec, pretty_print = pretty_print)
-    return buf
 
