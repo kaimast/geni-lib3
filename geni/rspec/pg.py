@@ -390,6 +390,8 @@ class Link(Resource):
       if plr != Link.DEFAULT_PLR:
         prop.attrib["packet_loss"] = str(plr)
 
+Request.EXTENSIONS.append(("Link", Link))
+
 
 class LAN(Link):
   def __init__ (self, name = None):
@@ -405,6 +407,9 @@ class LAN(Link):
       super(LAN, self)._write_link_prop(lnk, intf.client_id, self.client_id, bw, lat, plr)
 
     return lnk
+
+Request.EXTENSIONS.append(("LAN", LAN))
+
 
 class L3GRE(Link):
   def __init__ (self, name = None):
