@@ -179,6 +179,8 @@ def builddot (manifests):
 
       for link in manifest.links:
         lannode = link.client_id
+        dda("\"%s\" [shape=doublecircle]" % (lannode))
+
         if link.vlan:
           lannode = "%s" % (link.vlan)
 
