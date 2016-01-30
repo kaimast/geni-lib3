@@ -187,9 +187,9 @@ def builddot (manifests):
         lannode = link.client_id
 
         if link.vlan:
-          lannode = "%s" % (link.vlan)
+          lannode = "VLAN\n%s" % (link.vlan)
 
-        dda("\"%s\" [shape=doublecircle]" % (lannode))
+        dda("\"%s\" [shape=doublecircle,fontsize=11.0]" % (lannode))
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
