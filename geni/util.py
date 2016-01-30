@@ -15,6 +15,12 @@ import os.path
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
+def _getdefault (obj, attr, default):
+  if hasattr(obj, attr):
+    return obj[attr]
+  else:
+    return default
+
 def checkavailrawpc (context, am):
   """Returns a list of node objects representing available raw PCs at the
 given aggregate."""
@@ -179,10 +185,11 @@ def builddot (manifests):
 
       for link in manifest.links:
         lannode = link.client_id
-        dda("\"%s\" [shape=doublecircle]" % (lannode))
 
         if link.vlan:
           lannode = "%s" % (link.vlan)
+
+        dda("\"%s\" [shape=doublecircle]" % (lannode))
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
@@ -226,30 +233,57 @@ def loadContext (path = None, key_passphrase = None):
     path = GCU.getDefaultContextPath()
 
   obj = json.load(open(path, "r"))
-
-  cf = FrameworkRegistry.get(obj["framework"])()
-  cf.cert = obj["cert-path"]
+  
+  version = _getdefault(obj, "version", 1)
 
   if key_passphrase is True:
     import getpass
     key_passphrase = getpass.getpass("Private key passphrase: ")
 
-  if key_passphrase:
-    cf.setKey(obj["key-path"], key_passphrase)
-  else:
-    cf.key = obj["key-path"]
+  if version == 1:
+    cf = FrameworkRegistry.get(obj["framework"])()
+    cf.cert = obj["cert-path"]
+    if key_passphrase:
+      cf.setKey(obj["key-path"], key_passphrase)
+    else:
+      cf.key = obj["key-path"]
 
-  user = User()
-  user.name = obj["user-name"]
-  user.urn = obj["user-urn"]
-  user.addKey(obj["user-pubkeypath"])
+    user = User()
+    user.name = obj["user-name"]
+    user.urn = obj["user-urn"]
+    user.addKey(obj["user-pubkeypath"])
 
-  context = Context()
-  context.addUser(user, default = True)
-  context.cf = cf
-  context.project = obj["project"]
+    context = Context()
+    context.addUser(user, default = True)
+    context.cf = cf
+    context.project = obj["project"]
+
+  elif version == 2:
+    context = Context()
+
+    fobj = obj["framework-info"]
+    cf = FrameworkRegistry.get(fobj["type"])()
+    cf.cert = fobj["cert-path"]
+    if key_passphrase:
+      cf.setKey(fobj["key-path"], key_passphrase)
+    else:
+      cf.key = fobj["key-path"]
+    context.cf = cf
+    context.project = fobj["project"]
+    context.userurn = focj["user-urn"]
+
+    ulist = obj["users"]
+    for uobj in ulist:
+      user = User()
+      user.name = uobj["username"]
+      user.urn = _getdefault(uobj, "urn", None)
+      klist = uobj["keys"]
+      for keypath in klist:
+        user.addKey(keypath)
+      context.addUser(user)
 
   return context
+
 
 def hasDataContext ():
   import geni._coreutil as GCU
