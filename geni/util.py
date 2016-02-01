@@ -254,7 +254,8 @@ def loadContext (path = None, key_passphrase = None):
     user.addKey(obj["user-pubkeypath"])
 
     context = Context()
-    context.addUser(user, default = True)
+    context.addUser(user)
+    context.userurn = user.urn
     context.cf = cf
     context.project = obj["project"]
 

@@ -77,6 +77,20 @@ class Framework(object):
     self._sa = None
     self._cert = None
     self._key = None
+    self._project = None
+
+  @property
+  def project (self):
+    return self._project
+
+  @project.setter
+  def project (self, val):
+    self._project = val
+
+  @property
+  def projecturn (self):
+    # TODO:  Exception
+    return None
 
   @property
   def key (self):
@@ -126,11 +140,25 @@ class ProtoGENI(Framework):
 
 
 class Emulab(ProtoGENI):
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/ma"
+
   def __init__ (self):
     super(Emulab, self).__init__("emulab")
     self._type = "pgch"
     self._ch = "https://www.emulab.net:443/protogeni/xmlrpc/ch"
-    self._ca = "https://www.emulab.net:443/protogeni/xmlrpc/sa"
+    self._sa = None
+    self._ma = None
+
+  @property
+  def project (self):
+    return super(Emulab, self).project
+
+  @project.setter
+  def project (self, val):
+    super(Emulab, self).project.fset(self, val)
+    self._sa = Emulab.SA % (val)
+    self._ma = Emulab.MA % (val)
 
 
 class CHAPI1(Framework):
@@ -148,13 +176,13 @@ class CHAPI2(Framework):
     ### TODO: Exception
     return None
 
-  def sliceNameToURN (self, project, name):
+  def sliceNameToURN (self, slice_name, project = None):
     ### TODO: Exception
     return None
 
   def listProjectMembers (self, context, project_urn = None):
     if not project_urn:
-      project_urn = self.projectNameToURN(context.project)
+      project_urn = self.projecturn
 
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
@@ -214,7 +242,7 @@ class CHAPI2(Framework):
     from ..minigcf import chapi2
 
     ucred = open(context.usercred_path, "r").read()
-    slice_urn = self.sliceNameToURN(context.project, slicename)
+    slice_urn = self.sliceNameToURN(slicename)
 
     res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [ucred], slice_urn)
     if res["code"] == 0:
@@ -240,7 +268,7 @@ class CHAPI2(Framework):
     ucred = open(context.usercred_path, "r").read()
 
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
-    slice_urn = self.sliceNameToURN(context.project, slicename)
+    slice_urn = self.sliceNameToURN(slicename)
 
     res = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
     if res["code"] == 0:
@@ -251,16 +279,22 @@ class CHAPI2(Framework):
 
 class Portal(CHAPI2):
   def __init__ (self):
-    super(Portal, self).__init__("portal")
+    super(Portal, self).__init__("gpo-ch2")
     self._authority = "ch.geni.net"
     self._ch = "https://ch.geni.net:8444/CH"
     self._ma = "https://ch.geni.net:443/MA"
     self._sa = "https://ch.geni.net:443/SA"
 
+  @property
+  def projecturn (self):
+    return self.projectNameToURN(self.project)
+
   def projectNameToURN (self, name):
     return "urn:publicid:IDN+ch.geni.net+project+%s" % (name)
 
-  def sliceNameToURN (self, project, name):
+  def sliceNameToURN (self, name, project = None):
+    if not project:
+      project = self.project
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
 
 
@@ -273,5 +307,6 @@ class EmulabCH2(CHAPI1):
     self._sa = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa"
 
 FrameworkRegistry.register("portal", Portal)
+FrameworkRegistry.register("gpo-ch2", Portal)
 FrameworkRegistry.register("pg", ProtoGENI)
 FrameworkRegistry.register("emulab-ch2", EmulabCH2)
