@@ -108,7 +108,6 @@ class Context(object):
   def __init__ (self):
     self._data_dir = None
     self._nick_cache_path = None
-    self._default_user = None
     self._users = set()
     self._cf = None
     self._usercred_info = None  # (path, expires, urn)
@@ -184,20 +183,17 @@ class Context(object):
   @property
   def _ucred_info (self):
     if self._usercred_info is None:
-      if self._default_user:
-        ucpath = "%s/%s-usercred.xml" % (self.datadir, self.cf.name)
-        if not os.path.exists(ucpath):
-          cred = self.cf.getUserCredentials(self.userurn)
+      ucpath = "%s/%s-usercred.xml" % (self.datadir, self.cf.name)
+      if not os.path.exists(ucpath):
+        cred = self.cf.getUserCredentials(self.userurn)
 
-          f = open(ucpath, "w+")
-          f.write(cred)
-          path = f.name
-          f.close()
+        f = open(ucpath, "w+")
+        f.write(cred)
+        path = f.name
+        f.close()
 
-        (expires, urn) = self._getCredInfo(ucpath)
-        self._usercred_info = (ucpath, expires, urn)
-      else:
-        raise NoUserError()
+      (expires, urn) = self._getCredInfo(ucpath)
+      self._usercred_info = (ucpath, expires, urn)
     return self._usercred_info
 
   @property
