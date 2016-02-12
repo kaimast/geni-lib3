@@ -100,7 +100,7 @@ class LossInfo(object):
 
   @percent.setter
   def percent (self, val):
-    self._percent = decimal.Decimal(percent)
+    self._percent = decimal.Decimal(val)
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
