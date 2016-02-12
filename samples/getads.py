@@ -5,11 +5,10 @@
 import multiprocessing as MP
 from argparse import ArgumentParser
 import time
+import getpass
 
-import example_config
+import geni.util
 import geni.aggregate.instageni as IG
-
-context = example_config.buildContext()
 
 def get_advertisement (context, site):
   try:
@@ -23,9 +22,13 @@ def get_advertisement (context, site):
   
 
 def do_parallel ():
+  context = geni.util.loadContext(key_passphrase=True)
   for idx,site in enumerate(IG.aggregates()):
     p = MP.Process(target=get_advertisement, args=(context, site))
     p.start()
+
+  while MP.active_children():
+    time.sleep(1)
 
 if __name__ == '__main__':
   do_parallel()

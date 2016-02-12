@@ -299,12 +299,25 @@ class Portal(CHAPI2):
 
 
 class EmulabCH2(CHAPI1):
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
+
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
     self._authority = ""
-    self._ch = "https://www.emulab.net:12370/protogeni/pubxmlrpc/sr"
-    self._ma = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-ma"
-    self._sa = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa"
+    self._ch = None
+    self._sa = None
+    self._ma = None
+
+  @property
+  def project (self):
+    return super(EmulabCH2, self).project
+
+  @project.setter
+  def project (self, val):
+    super(Emulab, self).project.fset(self, val)
+    self._sa = EmulabCH2.SA % (val)
+    self._ma = EmulabCH2.MA % (val)
 
 FrameworkRegistry.register("portal", Portal)
 FrameworkRegistry.register("gpo-ch2", Portal)
