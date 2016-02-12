@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import functools
+import decimal
 
 from lxml import etree as ET
 
@@ -87,6 +88,25 @@ class DelayInfo(object):
     if self.correlation: d.attrib["correlation"] = str(self.correlation)
     if self.distribution: d.attrib["distribution"] = self.distribution
     return d
+
+
+class LossInfo(object):
+  def __init__ (self, percent):
+    self.percent = percent
+
+  @property
+  def percent (self):
+    return self._percent
+
+  @percent.setter
+  def percent (self, val):
+    self._percent = decimal.Decimal(percent)
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
+    d.attrib["percent"] = "%s" % (self.percent)
+    return d
+
 
 ###################
 # Datapath Images #
@@ -286,19 +306,20 @@ class VFCircuit(Port):
 
 
 class InternalCircuit(Port):
-  def __init__ (self, target, vlan = None, delay_info = None):
+  def __init__ (self, target, vlan = None, delay_info = None, loss_info = None):
     super(InternalCircuit, self).__init__()
     self.vlan = vlan
     self.target = target
     self.delay_info = delay_info
+    self.loss_info = loss_info
 
   def _write (self, element):
     p = super(InternalCircuit, self)._write(element)
     p.attrib["type"] = "internal"
     if self.vlan:
       p.attrib["vlan-id"] = str(self.vlan)
-    if self.delay_info:
-      self.delay_info._write(p)
+    if self.delay_info: self.delay_info._write(p)
+    if self.loss_info: self.loss_info._write(p)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
@@ -323,7 +344,7 @@ class GRECircuit(Port):
 # Utilities #
 #############
 
-def connectInternalCircuit (dp1, dp2, delay_info = None):
+def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
   dp1v = None
   dp2v = None
 
@@ -335,8 +356,8 @@ def connectInternalCircuit (dp1, dp2, delay_info = None):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v, delay_info)
-  dp = InternalCircuit(None, dp2v, delay_info)
+  sp = InternalCircuit(None, dp1v, delay_info, loss_info)
+  dp = InternalCircuit(None, dp2v, delay_info, loss_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)
