@@ -99,6 +99,11 @@ class Connection(germ.Connection):
     r = requests.delete(url, **self.rkwargs)
     return r.json()["value"]
 
+  def getContainers (self, sliver_urn):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/containers" % (self.host, self.port, sliver_urn)
+    r = requests.get(url, **self.rkwargs)
+    return r.json()["value"]
+
   def getRequestRspec (self, sliver_urn):
     url = "https://%s:%d/core/admin/vts/sliver/%s/request-rspec" % (self.host, self.port, sliver_urn)
     r = requests.get(url, **self.rkwargs)
