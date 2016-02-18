@@ -235,6 +235,20 @@ class Tour(object):
     return td
 
 
+class ParameterSet(object):
+  def __init__ (self, parameters):
+    self.parameters = parameters
+
+  def _write (self, root):
+    td = ET.SubElement(root, "profile_parameters",
+                       nsmap={None : PGNS.PARAMS.name})
+    for param in self.parameters:
+      if 'hide' in self.parameters[param] and self.parameters[param]['hide'] == False:
+        desc = ET.SubElement(td, "parameter")
+        desc.attrib["name"] = param
+        desc.attrib["value"] = str(self.parameters[param]['value'])
+
+
 class Site(object):
   def __init__ (self, id):
     self.id = id

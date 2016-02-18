@@ -78,10 +78,14 @@ class Context (object):
       if tour.useDocstring():
         rspec.addTour(tour)
 
+    if any(self._parameters):
+      parameterSet = igext.ParameterSet(self._parameters)
+      rspec.addParameterSet(parameterSet)
+
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, typ, defaultValue, legalValues = None,
-                       longDescription = None, advanced = False, groupId = None):
+                       longDescription = None, advanced = False, groupId = None, hide=False):
     """Define a new paramter to the script.
 
     The given name will be used when parameters are bound. The description is
@@ -113,7 +117,7 @@ class Context (object):
     self._parameterOrder.append(name)
     self._parameters[name] = {'description': description, 'type': typ,
                               'defaultValue': defaultValue, 'legalValues': legalValues,
-                              'longDescription': longDescription, 'advanced': advanced }
+                              'longDescription': longDescription, 'advanced': advanced, 'hide': hide }
     if groupId is not None:
       self._parameters[name]['groupId'] = groupId
     if len(self._parameters) == 1:
@@ -230,7 +234,11 @@ class Context (object):
                           default = opts['defaultValue'],
                           choices = legal,
                           help    = opts['description'])
-    return parser.parse_args()
+    args = parser.parse_args()
+    for name in self._parameterOrder:
+      self._parameters[name]['value'] = getattr(args, name)
+
+    return args
 
   def _bindParametersEnv (self):
     namespace = Namespace()
@@ -252,6 +260,7 @@ class Context (object):
         self.reportError(ParameterError("Illegal value '%s'" % (val,), [name]))
       else:
         setattr(namespace, name, val)
+        self._parameters[name]['value'] = val
     # This might not return.
     self.verifyParameters()
     return namespace

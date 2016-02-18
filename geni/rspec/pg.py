@@ -467,6 +467,8 @@ class Namespaces(object):
   VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
+  PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
+
 
 
 class Request(geni.rspec.RSpec):
@@ -489,6 +491,10 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.EMULAB)
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
+
+  def addParameterSet (self, parameters):
+    self.addNamespace(Namespaces.EMULAB)
+    self.parameters = parameters
 
   def setCollocateFactor (self, mfactor):
     self.addNamespace(Namespaces.EMULAB)
@@ -514,6 +520,9 @@ class Request(geni.rspec.RSpec):
 
     if self.tour:
       self.tour._write(rspec)
+
+    if self.parameters:
+      self.parameters._write(rspec)
 
     for resource in self.resources:
       resource._write(rspec)
