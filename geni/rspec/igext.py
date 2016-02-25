@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,7 @@ class XenVM(Node):
   def __init__ (self, name, component_id = None, exclusive = False):
     super(XenVM, self).__init__(name, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
-    self.ram = 256
+    self.ram = 512 
     self.disk = 8
 
   def _write (self, root):
