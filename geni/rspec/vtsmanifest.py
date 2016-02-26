@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -60,6 +60,7 @@ class InternalPort(GenericPort):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
     self._macaddress = None
+    self._alias = None
 
   @property
   def macaddress (self):
@@ -72,12 +73,17 @@ class InternalPort(GenericPort):
   def macaddress (self, val):
     self._macaddress = val
 
+  @property
+  def name (self):
+    return self._alias
+
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
     p.macaddress = elem.get("mac-address")
+    p._alias = elem.get("name")
 
     return p
 
