@@ -184,18 +184,20 @@ def builddot (manifests):
           intf_map[interface.sliver_id] = (node, interface)
 
       for link in manifest.links:
-        lannode = link.client_id
+        label = link.client_id
+        name = link.client_id
 
         if link.vlan:
-          lannode = "VLAN\n%s" % (link.vlan)
+          label = "VLAN\n%s" % (link.vlan)
+          name = link.vlan
 
-        dda("\"%s\" [shape=doublecircle,fontsize=11.0]" % (lannode))
+        dda("\"%s\" [label=\"%s\",shape=doublecircle,fontsize=11.0]" % (name, label))
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
-              intf_map[ref][0].sliver_id, lannode,
+              intf_map[ref][0].sliver_id, name,
               intf_map[ref][1].component_id.split(":")[-1]))
-          dda("\"%s\" -> \"%s\"" % (lannode, intf_map[ref][0].sliver_id))
+          dda("\"%s\" -> \"%s\"" % (name, intf_map[ref][0].sliver_id))
 
 
     elif isinstance(manifest, VTSM.Manifest):
@@ -208,6 +210,9 @@ def builddot (manifests):
                                                        port.name))
           dda("\"%s\" -> \"%s\"" % (port.shared_vlan, port.dpname))
         elif isinstance(port, VTSM.InternalPort):
+          dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
+                                                       port.name))
+        elif isinstance(port, VTSM.InternalContainerPort):
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
         elif isinstance(port, VTSM.GenericPort):
