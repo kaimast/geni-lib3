@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,11 +45,12 @@ class XenVM(Node):
     self.cores = 1
     self.ram = 256
     self.disk = 8
+    self.xen_ptype = ""
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
     if self.cores or self.ram or self.disk:
-      st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
       xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
       if self.cores:
         xen.attrib["cores"] = str(self.cores)
@@ -57,6 +58,11 @@ class XenVM(Node):
         xen.attrib["ram"] = str(self.ram)
       if self.disk:
         xen.attrib["disk"] = str(self.disk)
+        pass
+    if self.xen_ptype != "":
+      pt = ET.SubElement(st, "{%s}xen_ptype" % (PGNS.EMULAB.name))
+      pt.attrib["name"] = self.xen_ptype
+      pass
     return nd
 
 
@@ -123,6 +129,9 @@ class RemoteBlockstore(pg.Node):
     bs.where = "remote"
     self._bs = bs
     self._interface = self.addInterface("if0")
+
+  def _write (self, element):
+    return self._bs._write(super(RemoteBlockstore, self)._write(element));
 
   @property
   def interface (self):
