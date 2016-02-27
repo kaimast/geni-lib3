@@ -194,6 +194,7 @@ class ManifestDatapath(object):
     self.client_id = None
     self.image = None
     self.sliver_id = None
+    self.ports = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -202,6 +203,10 @@ class ManifestDatapath(object):
     dp.client_id = elem.get("client_id")
     dp.image = elem.get("image")
     dp.sliver_id = elem.get("sliver_id")
+    ports = elem.xpath('v:port', namespaces = XPNS)
+    for port in ports:
+      p = Manifest._buildPort(port)
+      dp.ports.append(p)
     return dp
 
 
@@ -246,9 +251,12 @@ class Manifest(object):
 
   @property
   def ports (self):
-    elems = self._root.xpath("v:datapath/v:port", namespaces = XPNS)
-    for elem in elems:
-      yield Manifest._buildPort(elem)
+    for dp in self.datapaths:
+      for p in dp.ports:
+        yield p
+    for c in self.containers:
+      for p in c.ports:
+        yield p
 
   @property
   def containers (self):
