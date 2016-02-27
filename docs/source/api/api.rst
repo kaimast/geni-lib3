@@ -6,5 +6,6 @@ API
    geniportal
    genirspecigext
    genirspecpg
+   genitypes
    geniurn
    geniutil
