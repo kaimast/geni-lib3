@@ -67,7 +67,9 @@ def topo (manifests):
     manifests = [manifests]
 
   dotstr = geni.util.builddot(manifests)
-  return graphviz.Source(dotstr)
+  g = graphviz.Source(dotstr)
+  g.engine = "circo"
+  return g
 
 
 def loginInfo (manifests):
