@@ -15,6 +15,6 @@ class HTTP(object):
   """Allow MiniGCF to follow HTTP redirects (301)."""
 
   LOG_RAW_RESPONSES = False
-  """If set to a valid (log_handle, log_level) tuple, will write all raw responses
+  """If set to a valid `(log_handle, log_level)` tuple, will write all raw responses
   (before any parsing) from AM API and CH API calls to that log at the given level."""
 

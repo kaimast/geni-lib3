@@ -1,4 +1,4 @@
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,17 @@ class DPID(object):
 
   This class tries to handle all likely inputs and desired outputs, while
   providing a single internal type to work with in the code.
+
+  String representations passwd in must be represented in hex, but may contain
+  common separators (colon, dash, and period) in any configuration.
+
+  Args:
+    val (int, long, unicode, str)
+
+  Raises:
+    DPID.OutOfRangeError: If the DPID represented by `val` is larger than the spec allows
+      or less than zero.
+    DPID.InputTypeError: If `val` is not a supported data type
   """
 
   MAX = (2 ** 64) - 1
@@ -33,7 +44,7 @@ class DPID(object):
     self._dpid = None
 
     if isinstance(val, (unicode, str)):
-      val = int(val.replace(":", ""), 16)
+      val = int(val.translate(None, ":-."), 16)
 
     if isinstance(val, (int, long)):
       if val < DPID.MAX and val >= 0:
@@ -50,6 +61,10 @@ class DPID(object):
     return self._dpid
 
   def __str__ (self):
+    """
+    Returns:
+      str: Hex formatted DPID, with colons
+    """
     s = self.hexstr()
     return ":".join(["%s%s" % (s[x], s[x+1]) for x in xrange(0,15,2)])
 
@@ -62,14 +77,29 @@ class DPID(object):
   def hexstr (self):
     """Unformatted hex representation of DPID
 
-    Use `str(dpid_obj)` for a hex string with colons.
-
     Returns:
       str: Hex formatted DPID, without colons
     """
     return "%016x" % (self._dpid)
 
 class EthernetMAC (object):
+  """Utility class representing 48-bit Ethernet MAC Addresses
+
+  This class tries to handle all likely inputs and desired outputs, while
+  providing a single internal type to work with in the code.
+
+  String representations passwd in must be represented in hex, but may contain
+  common separators (colon, dash, and period) in any configuration.
+
+  Args:
+    val (int, long, unicode, str)
+
+  Raises:
+    EthernetMAC.OutOfRangeError: If the MAC represented by `val` is larger than
+      than 48-bits or less than zero.
+    EthernetMAC.InputTypeError: If `val` is not a supported data type
+  """
+
   MAX = (2 ** 48) - 1
 
   class OutOfRangeError(Exception):
@@ -109,6 +139,10 @@ class EthernetMAC (object):
     return self._mac
 
   def __str__ (self):
+    """
+    Returns:
+      str: Hex formatted MAC, with colons
+    """
     s = self.hexstr()
     return ":".join(["%s%s" % (s[x], s[x+1]) for x in range(0,11,2)])
 
@@ -119,4 +153,9 @@ class EthernetMAC (object):
     return str(self)
 
   def hexstr (self):
+    """Unformatted hex representation of MAC
+
+    Returns:
+      str: Hex formatted MAC, without separators
+    """
     return "%012x" % (self._mac)
