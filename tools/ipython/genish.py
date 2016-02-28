@@ -87,7 +87,7 @@ setattr(util, "printlogininfo", loginInfo)
 #####
 
 STP_PORT_ROW = """<tr>
-<td>%(num)d</td><td>%(stp_state)s</td><td>%(stp_role)s</td><td>%(stp_port_id)s</td><td>%(stp_sec_in_state)s</td>
+<td>%(client-id)s (%(num)d)</td><td>%(stp_state)s</td><td>%(stp_role)s</td><td>%(stp_port_id)s</td><td>%(stp_sec_in_state)s</td>
 <td>%(stp_rx_count)d</td><td>%(stp_tx_count)d</td><td>%(stp_error_count)d</td>
 </tr>"""
 
