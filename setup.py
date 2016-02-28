@@ -21,6 +21,7 @@ setup(name = 'geni-lib',
         "requests >= 2.7.0",
         "cryptography",
         "lxml",
+        "wrapt",
         ],
       classifiers = [
         "Programming Language :: Python :: 2.7",
