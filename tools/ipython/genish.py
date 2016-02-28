@@ -174,7 +174,10 @@ def getSTPInfo (self, context, sname, datapaths):
     datapaths = [datapaths]
 
   res = self._getSTPInfo(context, sname, datapaths)
-  return [STPProxy(x) for x in res]
+  retobj = {}
+  for br in res:
+    retobj[br["client-id"]] = STPProxy(br)
+  return retobj
 
 
 replaceSymbol(VTS, "dumpMACs", dumpMACs)
