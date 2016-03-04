@@ -14,7 +14,8 @@ from geni.rspec.pg import Link
 import geni.namespaces as GNS
 from geni.rspec.pg import Namespaces as PGNS
 
-_XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name}
+_XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
+         'p' : PGNS.PARAMS.name}
 
 class ManifestLink(Link):
   def __init__ (self):
@@ -106,6 +107,18 @@ class ManifestNode(object):
     return n
 
 
+class ManifestParameter(object):
+  def __init__ (self, name, value):
+    super(ManifestParameter, self).__init__()
+    self.name = name
+    self.value = value
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestParameter(elem.get('name'), elem.get('value'))
+    return n
+
+
 class Manifest(object):
   def __init__ (self, path = None, xml = None):
     if path:
@@ -131,6 +144,12 @@ class Manifest(object):
   def nodes (self):
     for node in self.root.findall("{%s}node" % (GNS.REQUEST.name)):
       yield ManifestNode._fromdom(node)
+
+  @property
+  def parameters (self):
+    for param in self.root.findall("{%s}profile_parameters/{%s}parameter"
+                                   % (PGNS.PARAMS.name,PGNS.PARAMS.name)):
+      yield ManifestParameter._fromdom(param)
 
   @property
   def text (self):
