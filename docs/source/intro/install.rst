@@ -4,4 +4,4 @@ Installation
 .. toctree::
    ubuntu
    macosx
-   windows
+   vagrant

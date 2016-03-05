@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,12 +10,13 @@ import os
 
 from lxml import etree as ET
 
-from geni.rspec.pg import Link
-import geni.namespaces as GNS
-from geni.rspec.pg import Namespaces as PGNS
+from .pg import Link
+from .. import namespaces as GNS
+from .pg import Namespaces as PGNS
+from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
-         'p' : PGNS.PARAMS.name}
+         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name}
 
 class ManifestLink(Link):
   def __init__ (self):
@@ -74,14 +75,18 @@ class ManifestNode(object):
     super(ManifestNode, self).__init__()
     self.logins = []
     self.interfaces = []
-    self.name = None
+    self.client_id = None
     self.component_id = None
     self.sliver_id = None
+
+  @property
+  def name (self):
+    return self.client_id
 
   @classmethod
   def _fromdom (cls, elem):
     n = ManifestNode()
-    n.name = elem.get("client_id")
+    n.client_id = elem.get("client_id")
     n.component_id = elem.get("component_id")
     n.sliver_id = elem.get("sliver_id")
 
@@ -136,14 +141,28 @@ class Manifest(object):
     return self._root
 
   @property
+  def latitude (self):
+    loc = self._root.xpath('i:site_info/i:location', namespaces = _XPNS)
+    if loc:
+      return loc[0].get("latitude")
+
+  @property
+  def longitude (self):
+    loc = self._root.xpath('i:site_info/i:location', namespaces = _XPNS)
+    if loc:
+      return loc[0].get("longitude")
+
+  @property
+  def expiresstr (self):
+    return self._root.get("expires")
+
+  @property
   def links (self):
-    for link in self.root.findall("{%s}link" % (GNS.REQUEST.name)):
-      yield ManifestLink._fromdom(link)
+    return XPathXRange(self.root.findall("{%s}link" % (GNS.REQUEST)), ManifestLink)
 
   @property
   def nodes (self):
-    for node in self.root.findall("{%s}node" % (GNS.REQUEST.name)):
-      yield ManifestNode._fromdom(node)
+    return XPathXRange(self.root.findall("{%s}node" % (GNS.REQUEST)), ManifestNode)
 
   @property
   def parameters (self):
@@ -154,6 +173,16 @@ class Manifest(object):
   @property
   def text (self):
     return ET.tostring(self.root, pretty_print=True)
+
+  def _repr_html_ (self):
+    return """
+<table>
+  <tr><th scope="row">Expires</th><td>%s</td></tr>
+  <tr><th scope="row">Nodes</th><td>%d</td></tr>
+  <tr><th scope="row">Links</th><td>%d</td></tr>
+  <tr><th scope="row">Location</th><td>%s, %s</td></tr>
+</table>""" % (self.expiresstr, len(self.nodes), len(self.links), 
+               self.latitude, self.longitude)
 
   def write (self, path):
     """

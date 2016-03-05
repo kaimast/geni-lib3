@@ -28,6 +28,10 @@ class RSpec (object):
       self._loclist.append(ns.name)
       self._loclist.append(ns.location)
 
+  def toXMLString (self, pretty_print = False):
+    rspec = self.getDOM()
+    return ET.tostring(rspec, pretty_print = pretty_print)
+
   def getDOM (self):
     rspec = ET.Element("rspec", nsmap = self.NSMAP)
     rspec.attrib["{%s}schemaLocation" % (GNS.XSNS.name)] = " ".join(self._loclist)

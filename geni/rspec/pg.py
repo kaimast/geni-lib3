@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,108 @@ from lxml import etree as ET
 import geni.rspec
 import geni.namespaces as GNS
 import geni.urn
+
+################################################
+# Base Request - Must be at top for EXTENSIONS #
+################################################
+
+class Request(geni.rspec.RSpec):
+  EXTENSIONS = []
+
+  def __init__ (self):
+    super(Request, self).__init__("request")
+    self.resources = []
+    self.tour = None
+    self.mfactor = None
+    self.packing_strategy = None
+    self._raw_elements = []
+
+    self.addNamespace(GNS.REQUEST, None)
+    self.addNamespace(Namespaces.CLIENT)
+
+    self._ext_children = []
+    for name,ext in Request.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
+
+  def addResource (self, rsrc):
+    for ns in rsrc.namespaces:
+      self.addNamespace(ns)
+    self.resources.append(rsrc)
+
+  def addTour (self, tour):
+    self.addNamespace(Namespaces.EMULAB)
+    self.addNamespace(Namespaces.JACKS)
+    self.tour = tour
+
+  def addParameterSet (self, parameters):
+    self.addNamespace(Namespaces.EMULAB)
+    self.parameters = parameters
+
+  def setCollocateFactor (self, mfactor):
+    self.addNamespace(Namespaces.EMULAB)
+    self.mfactor = mfactor
+
+  def setPackingStrategy (self, strategy):
+    self.addNamespace(Namespaces.EMULAB)
+    self.packing_strategy = strategy
+
+  def hasTour (self):
+    return self.tour is not None
+
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
+
+  def writeXML (self, path):
+    """Write the current request contents as an XML file that represents an rspec
+    in the GENIv3 format."""
+
+    if path is None:
+      f = sys.stdout
+    else:
+      f = open(path, "w+")
+
+    buf = self.toXMLString(True)
+    f.write(buf)
+
+    if path is not None:
+      f.close()
+
+  def toXMLString (self, pretty_print = False):
+    """Return the current request contents as an XML string that represents an rspec
+    in the GENIv3 format."""
+
+    rspec = self.getDOM()
+
+    if self.tour:
+      self.tour._write(rspec)
+
+    for resource in self.resources:
+      resource._write(rspec)
+
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
+
+    for obj in self._ext_children:
+      obj._write(rspec)
+
+    for elem in self._raw_elements:
+      rspec.append(elem)
+
+    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    return buf
 
 
 
@@ -155,11 +257,15 @@ class Link(Resource):
     self._link_multiplexing = False
     self._best_effort = False
     self._ext_children = []
+    self._raw_elements = []
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
     self.latency = Link.DEFAULT_LAT
     self.plr = Link.DEFAULT_PLR
+
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
 
   @classmethod
   def newLinkID (cls):
@@ -272,6 +378,9 @@ class Link(Resource):
     for obj in self._ext_children:
       obj._write(lnk)
 
+    for elem in self._raw_elements:
+      lnk.append(elem)
+
     return lnk
 
   def _write_link_prop(self, lnk, src, dst, bw, lat, plr):
@@ -287,7 +396,9 @@ class Link(Resource):
       if plr != Link.DEFAULT_PLR:
         prop.attrib["packet_loss"] = str(plr)
 
-    
+Request.EXTENSIONS.append(("Link", Link))
+
+
 class LAN(Link):
   def __init__ (self, name = None):
     super(LAN, self).__init__(name, "lan")
@@ -302,6 +413,9 @@ class LAN(Link):
       super(LAN, self)._write_link_prop(lnk, intf.client_id, self.client_id, bw, lat, plr)
 
     return lnk
+
+Request.EXTENSIONS.append(("LAN", LAN))
+
 
 class L3GRE(Link):
   def __init__ (self, name = None):
@@ -358,6 +472,8 @@ class Node(Resource):
     self._ext_children = []
     for name,ext in Node.EXTENSIONS:
       self._wrapext(name,ext)
+
+    self._raw_elements = []
 
   class DuplicateInterfaceName(Exception):
     def __str__ (self):
@@ -425,6 +541,9 @@ class Node(Resource):
     for obj in self._ext_children:
       obj._write(nd)
 
+    for elem in self._raw_elements:
+      nd.append(elem)
+
     return nd
 
   def addInterface (self, name = None):
@@ -447,6 +566,9 @@ class Node(Resource):
   def addService (self, svc):
     self.services.append(svc)
 
+  def addRawElement (self, elem):
+    self._raw_elements.append(elem)
+
 
 class RawPC(Node):
   def __init__ (self, name, component_id = None):
@@ -467,112 +589,9 @@ class Namespaces(object):
   VTOP  = GNS.Namespace("vtop", "http://www.protogeni.net/resources/rspec/ext/emulab/1", "vtop_extension.xsd")
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
+  INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
   PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
 
-
-
-class Request(geni.rspec.RSpec):
-  def __init__ (self):
-    super(Request, self).__init__("request")
-    self.resources = []
-    self.tour = None
-    self.mfactor = None
-    self.packing_strategy = None
-
-    self.addNamespace(GNS.REQUEST, None)
-    self.addNamespace(Namespaces.CLIENT)
-
-  def addResource (self, rsrc):
-    for ns in rsrc.namespaces:
-      self.addNamespace(ns)
-    self.resources.append(rsrc)
-
-  def addTour (self, tour):
-    self.addNamespace(Namespaces.EMULAB)
-    self.addNamespace(Namespaces.JACKS)
-    self.tour = tour
-
-  def addParameterSet (self, parameters):
-    self.addNamespace(Namespaces.EMULAB)
-    self.parameters = parameters
-
-  def setCollocateFactor (self, mfactor):
-    self.addNamespace(Namespaces.EMULAB)
-    self.mfactor = mfactor
-
-  def setPackingStrategy (self, strategy):
-    self.addNamespace(Namespaces.EMULAB)
-    self.packing_strategy = strategy
-
-  def hasTour (self):
-    return self.tour is not None
-
-  def writeXML (self, path):
-    """Write the current request contents as an XML file that represents an rspec
-    in the GENIv3 format."""
-
-    if path is None:
-      f = sys.stdout
-    else:
-      f = open(path, "w+")
-
-    rspec = self.getDOM()
-
-    if self.tour:
-      self.tour._write(rspec)
-
-    if self.parameters:
-      self.parameters._write(rspec)
-
-    for resource in self.resources:
-      resource._write(rspec)
-
-    if self.mfactor:
-      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
-      mf.attrib["count"] = str(self.mfactor)
-
-    if self.packing_strategy:
-      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
-      mf.attrib["strategy"] = str(self.packing_strategy)
-
-    f.write(ET.tostring(rspec, pretty_print=True))
-
-    if path is not None:
-      f.close()
-
-  def toXMLString (self, pretty_print = False):
-    """Return the current request contents as an XML string that represents an rspec
-    in the GENIv3 format."""
-
-    rspec = self.getDOM()
-
-    if self.tour:
-      self.tour._write(rspec)
-
-    for resource in self.resources:
-      resource._write(rspec)
-
-    if self.mfactor:
-      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
-      mf.attrib["count"] = str(self.mfactor)
-
-    if self.packing_strategy:
-      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
-      mf.attrib["strategy"] = str(self.packing_strategy)
-
-    buf = ET.tostring(rspec, pretty_print = pretty_print)
-    return buf
-
-  def write (self, path):
-    """
-.. deprecated:: 0.4
-    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
-
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
-                  GW.GENILibDeprecationWarning, 2)
-    self.writeXML(path)
 
 #### DEPRECATED #####
 class XenVM(Node):
@@ -599,4 +618,3 @@ class XenVM(Node):
     return nd
 
 VM = XenVM
-

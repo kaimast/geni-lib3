@@ -48,6 +48,10 @@ class VTS(AM):
   def addFlows (self, context, sname, flows):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:add-flows", options={"rules" : flows})
 
+  def getSTPInfo (self, context, sname, datapaths):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:stp-info",
+                           options={"datapaths" : datapaths})
+
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")

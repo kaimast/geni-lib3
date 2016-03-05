@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -8,8 +8,7 @@ import datetime
 
 import lxml.etree as ET
 
-from ..exceptions import NoUserError, SliceCredError
-from .. import tempfile
+from ..exceptions import NoUserError
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -19,10 +18,10 @@ class SlicecredProxy(object):
     return self._context._getSliceCred(name)
 
   def iteritems (self):
-    return self._context._slicecred_paths.iteritems()
+    return iter(self._context._slicecred_paths.items())
 
   def iterkeys (self):
-    return self._context._slicecred_paths.iterkeys()
+    return iter(self._context._slicecred_paths.keys())
 
   def __iter__ (self):
     for x in self._context._slicecred_paths:
@@ -43,12 +42,12 @@ class SliceCredInfo(object):
     self._path = None
     self.expires = None
     self.urn = None
+    self.type = None
+    self.version = None
     self._build()
 
   def _build (self):
-    # This really should probably be a lot more complicated/painful and be based on the "right thing"
-    # for your framework - e.g. geni-ch this should contain your project, not your user name, etc.
-    self._path = "%s/%s-%s-%s-scred.xml" % (self.context.datadir, self.context._default_user.name,
+    self._path = "%s/%s-%s-%s-scred.xml" % (self.context.datadir, self.context.cf.name,
                                             self.context.project, self.slicename)
     if not os.path.exists(self._path):
       self._downloadCredential()
@@ -75,6 +74,15 @@ class SliceCredInfo(object):
     # URN
     self.urn = r.find("credential/target_urn").text
 
+    # Type
+    tstr = r.find("credential/type").text.strip()
+    if tstr == "privilege":
+      self.type = "geni_sfa"
+      self.version = 3  # We hope
+    elif tstr == "abac":
+      self.type = "abac"
+      self.version = 1
+
   @property
   def path (self):
     checktime = datetime.datetime.now() + datetime.timedelta(days=6)
@@ -100,13 +108,12 @@ class Context(object):
   def __init__ (self):
     self._data_dir = None
     self._nick_cache_path = None
-    self._default_user = None
     self._users = set()
     self._cf = None
-    self._project = None
     self._usercred_info = None  # (path, expires, urn)
     self._slicecreds = {}
     self.debug = False
+    self.userurn = None
 
   def _getSliceCred (self, sname):
     info = self.getSliceInfo(sname)
@@ -128,20 +135,16 @@ class Context(object):
     return (False, self.cf.cert, self.cf.key, [ucred])
 
   @property
-  def userurn (self):
-    return self._ucred_info[2]
-
-  @property
   def project (self):
-    return self._project
+    return self.cf.project
 
   @project.setter
   def project (self, val):
-    self._project = val
+    self.cf.project = val
 
   @property
   def project_urn (self):
-    return self._cf.projectNameToURN(self._project)
+    return self.cf.projecturn
 
   @property
   def cf (self):
@@ -180,20 +183,17 @@ class Context(object):
   @property
   def _ucred_info (self):
     if self._usercred_info is None:
-      if self._default_user:
-        ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self._default_user.name, self.cf.name)
-        if not os.path.exists(ucpath):
-          cred = self.cf.getUserCredentials(self._default_user.urn)
+      ucpath = "%s/%s-usercred.xml" % (self.datadir, self.cf.name)
+      if not os.path.exists(ucpath):
+        cred = self.cf.getUserCredentials(self.userurn)
 
-          f = open(ucpath, "w+")
-          f.write(cred)
-          path = f.name
-          f.close()
+        f = open(ucpath, "w+")
+        f.write(cred)
+        path = f.name
+        f.close()
 
-        (expires, urn) = self._getCredInfo(ucpath)
-        self._usercred_info = (ucpath, expires, urn)
-      else:
-        raise NoUserError()
+      (expires, urn) = self._getCredInfo(ucpath)
+      self._usercred_info = (ucpath, expires, urn)
     return self._usercred_info
 
   @property
@@ -218,43 +218,18 @@ class Context(object):
 
     return self._ucred_info[0]
 
-  @property
-  def cfg_path (self):
-    l = []
-    l.append("[omni]")
-    if self.cf: l.append("default_cf = %s" % (self.cf.name))
-    if self.project: l.append("default_project = %s" % (self.project))
-    if self._users: l.append("users = %s" % (", ".join([u.name for u in self._users])))
-    l.append("")
-
-    l.extend(self.cf.getConfig())
-    l.append("")
-
-    for user in self._users:
-      l.extend(user.getConfig())
-      l.append("")
-
-    # Make tempfile with proper args
-    (tf, path) = tempfile.makeFile()
-    tf.write("\n".join(l))
-    tf.close()
-    return path
-
-  def addSliceCred (self, sname, path):
-    self.slicecred_paths[sname] = path
-
-  def addUser (self, user, default = False):
+  def addUser (self, user):
     self._users.add(user)
-    if default:
-      self._default_user = user
 
   @property
   def slicecreds (self):
     return SlicecredProxy(self)
 
-  def getSliceInfo (self, sname):
-    if not self._slicecreds.has_key(sname):
+  def getSliceInfo (self, sname, project = None):
+    if not project:
+      project = self.project
+    if not self._slicecreds.has_key("%s-%s" % (project, sname)):
       scinfo = SliceCredInfo(self, sname)
-      self._slicecreds[sname] = scinfo
-    return self._slicecreds[sname]
+      self._slicecreds["%s-%s" % (project, sname)] = scinfo
+    return self._slicecreds["%s-%s" % (project, sname)]
 

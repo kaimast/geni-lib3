@@ -1,18 +1,27 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+from __future__ import absolute_import, print_function
 
 import multiprocessing as MP
 import time
 import traceback as tb
 import tempfile
 import json
+import os.path
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
-def checkavailrawpc(context, am):
+def _getdefault (obj, attr, default):
+  if hasattr(obj, attr):
+    return obj[attr]
+  else:
+    return default
+
+def checkavailrawpc (context, am):
   """Returns a list of node objects representing available raw PCs at the
 given aggregate."""
 
@@ -25,7 +34,21 @@ given aggregate."""
   return avail
 
 
-def printlogininfo(context = None, am = None, slice = None, manifest = None):
+def _corelogininfo (manifest):
+  from .rspec.vtsmanifest import Manifest as VTSM
+  from .rspec.pgmanifest import Manifest as PGM
+
+  linfo = []
+  if isinstance(manifest, PGM):
+    for node in manifest.nodes:
+      linfo.extend([(node.client_id, x.username, x.hostname, x.port) for x in node.logins])
+  elif isinstance(manifest, VTSM):
+    for container in manifest.containers:
+      linfo.extend([(container.client_id, x.username, x.hostname, x.port) for x in container.logins])
+  return linfo
+
+
+def printlogininfo (context = None, am = None, slice = None, manifest = None):
   """Prints out host login info in the format:
 ::
   [username] hostname:port
@@ -34,20 +57,13 @@ If a manifest object is provided the information will be mined from this data,
 otherwise you must supply a context, slice, and am and a manifest will be
 requested from the given aggregate."""
 
-  from .rspec.vtsmanifest import Manifest as VTSM
-  from .rspec.pgmanifest import Manifest as PGM
-
   if not manifest:
     manifest = am.listresources(context, slice)
 
-  if isinstance(manifest, PGM):
-    for node in manifest.nodes:
-      for login in node.logins:
-        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
-  elif isinstance(manifest, VTSM):
-    for container in manifest.containers:
-      for login in container.logins:
-        print "[%s] %s:%d" % (login.username, login.hostname, login.port)
+  info = _corelogininfo(manifest)
+  for line in info:
+    print("[%s] %s: %d" % (line[1], line[2], line[3]))
+
 
 # You can't put very much information in a queue before you hang your OS
 # trying to write to the pipe, so we only write the paths and then load
@@ -168,15 +184,20 @@ def builddot (manifests):
           intf_map[interface.sliver_id] = (node, interface)
 
       for link in manifest.links:
-        lannode = link.client_id
+        label = link.client_id
+        name = link.client_id
+
         if link.vlan:
-          lannode = "%s" % (link.vlan)
+          label = "VLAN\n%s" % (link.vlan)
+          name = link.vlan
+
+        dda("\"%s\" [label=\"%s\",shape=doublecircle,fontsize=11.0]" % (name, label))
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
-              intf_map[ref][0].sliver_id, lannode,
+              intf_map[ref][0].sliver_id, name,
               intf_map[ref][1].component_id.split(":")[-1]))
-          dda("\"%s\" -> \"%s\"" % (lannode, intf_map[ref][0].sliver_id))
+          dda("\"%s\" -> \"%s\"" % (name, intf_map[ref][0].sliver_id))
 
 
     elif isinstance(manifest, VTSM.Manifest):
@@ -191,16 +212,23 @@ def builddot (manifests):
         elif isinstance(port, VTSM.InternalPort):
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
+        elif isinstance(port, VTSM.InternalContainerPort):
+          dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
+                                                       port.name))
         elif isinstance(port, VTSM.GenericPort):
           pass
         else:
           continue ### TODO: Unsupported Port Type
 
+      for dp in manifest.datapaths:
+        dda("\"%s\" [shape=rectangle]" % (dp.client_id))
+
+
   dda("}")
 
   return "\n".join(dot_data)
 
-def loadContext (path = None):
+def loadContext (path = None, key_passphrase = None):
   import geni._coreutil as GCU
   from geni.aggregate import FrameworkRegistry
   from geni.aggregate.context import Context
@@ -210,20 +238,61 @@ def loadContext (path = None):
     path = GCU.getDefaultContextPath()
 
   obj = json.load(open(path, "r"))
+  
+  version = _getdefault(obj, "version", 1)
 
-  cf = FrameworkRegistry.get(obj["framework"])()
-  cf.cert = obj["cert-path"]
-  cf.key = obj["key-path"]
+  if key_passphrase is True:
+    import getpass
+    key_passphrase = getpass.getpass("Private key passphrase: ")
 
-  user = User()
-  user.name = obj["user-name"]
-  user.urn = obj["user-urn"]
-  user.addKey(obj["user-pubkeypath"])
+  if version == 1:
+    cf = FrameworkRegistry.get(obj["framework"])()
+    cf.cert = obj["cert-path"]
+    if key_passphrase:
+      cf.setKey(obj["key-path"], key_passphrase)
+    else:
+      cf.key = obj["key-path"]
 
-  context = Context()
-  context.addUser(user, default = True)
-  context.cf = cf
-  context.project = obj["project"]
+    user = User()
+    user.name = obj["user-name"]
+    user.urn = obj["user-urn"]
+    user.addKey(obj["user-pubkeypath"])
+
+    context = Context()
+    context.addUser(user)
+    context.userurn = user.urn
+    context.cf = cf
+    context.project = obj["project"]
+
+  elif version == 2:
+    context = Context()
+
+    fobj = obj["framework-info"]
+    cf = FrameworkRegistry.get(fobj["type"])()
+    cf.cert = fobj["cert-path"]
+    if key_passphrase:
+      cf.setKey(fobj["key-path"], key_passphrase)
+    else:
+      cf.key = fobj["key-path"]
+    context.cf = cf
+    context.project = fobj["project"]
+    context.userurn = focj["user-urn"]
+
+    ulist = obj["users"]
+    for uobj in ulist:
+      user = User()
+      user.name = uobj["username"]
+      user.urn = _getdefault(uobj, "urn", None)
+      klist = uobj["keys"]
+      for keypath in klist:
+        user.addKey(keypath)
+      context.addUser(user)
 
   return context
 
+
+def hasDataContext ():
+  import geni._coreutil as GCU
+
+  path = GCU.getDefaultContextPath()
+  return os.path.exists(path)

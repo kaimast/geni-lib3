@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import functools
+import decimal
 
 from lxml import etree as ET
 
@@ -53,7 +54,10 @@ class Request(geni.rspec.RSpec):
 
   def writeXML (self, path):
     f = open(path, "w+")
+    f.write(self.toXMLString(True))
+    f.close()
 
+  def toXMLString (self, pretty_print = False):
     rspec = self.getDOM()
 
     for resource in self.resources:
@@ -62,20 +66,8 @@ class Request(geni.rspec.RSpec):
     for obj in self._ext_children:
       obj._write(rspec)
 
-
-    f.write(ET.tostring(rspec, pretty_print=True))
-    f.close()
-
-  def write (self, path):
-    """
-.. deprecated:: 0.4
-    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
-
-    import geni.warnings as GW
-    import warnings
-    warnings.warn("The Request.write() method is deprecated, please use Request.writeXML() instead",
-                  GW.GENILibDeprecationWarning, 2)
-    self.writeXML(path)
+    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    return buf
 
 
 ###################
@@ -96,6 +88,25 @@ class DelayInfo(object):
     if self.correlation: d.attrib["correlation"] = str(self.correlation)
     if self.distribution: d.attrib["distribution"] = self.distribution
     return d
+
+
+class LossInfo(object):
+  def __init__ (self, percent):
+    self.percent = percent
+
+  @property
+  def percent (self):
+    return self._percent
+
+  @percent.setter
+  def percent (self, val):
+    self._percent = decimal.Decimal(val)
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
+    d.attrib["percent"] = "%s" % (self.percent)
+    return d
+
 
 ###################
 # Datapath Images #
@@ -196,17 +207,26 @@ class SSLVPNFunction(Resource):
 Request.EXTENSIONS.append(("SSLVPNFunction", SSLVPNFunction))
 
 class Datapath(Resource):
-  def __init__ (self, image, name):
+  def __init__ (self, image, client_id):
     super(Datapath, self).__init__()
     self.image = image
     self.ports = []
-    self.name = name
+    self.client_id = client_id
+
+  @property
+  def name (self):
+    return self.client_id
+
+  @name.setter
+  def name (self, val):
+    self.client_id = val
 
   def attachPort (self, port):
-    if port.name is None:
-      port.clientid = "%s:%d" % (self.name, len(self.ports))
-    else:
-      port.clientid = "%s:%s" % (self.name, port.name)
+    if port.clientid is None:
+      if port.name is None:
+        port.clientid = "%s:%d" % (self.name, len(self.ports))
+      else:
+        port.clientid = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -286,19 +306,20 @@ class VFCircuit(Port):
 
 
 class InternalCircuit(Port):
-  def __init__ (self, target, vlan = None, delay_info = None):
+  def __init__ (self, target, vlan = None, delay_info = None, loss_info = None):
     super(InternalCircuit, self).__init__()
     self.vlan = vlan
     self.target = target
     self.delay_info = delay_info
+    self.loss_info = loss_info
 
   def _write (self, element):
     p = super(InternalCircuit, self)._write(element)
     p.attrib["type"] = "internal"
     if self.vlan:
       p.attrib["vlan-id"] = str(self.vlan)
-    if self.delay_info:
-      self.delay_info._write(p)
+    if self.delay_info: self.delay_info._write(p)
+    if self.loss_info: self.loss_info._write(p)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
@@ -323,7 +344,7 @@ class GRECircuit(Port):
 # Utilities #
 #############
 
-def connectInternalCircuit (dp1, dp2, delay_info = None):
+def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
   dp1v = None
   dp2v = None
 
@@ -335,8 +356,8 @@ def connectInternalCircuit (dp1, dp2, delay_info = None):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v, delay_info)
-  dp = InternalCircuit(None, dp2v, delay_info)
+  sp = InternalCircuit(None, dp1v, delay_info, loss_info)
+  dp = InternalCircuit(None, dp2v, delay_info, loss_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)

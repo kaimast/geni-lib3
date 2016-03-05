@@ -40,10 +40,22 @@ Add to link objects using the Link.addChild() method.
 
 
 class XenVM(Node):
-  def __init__ (self, name, component_id = None, exclusive = False):
-    super(XenVM, self).__init__(name, "emulab-xen", component_id = component_id, exclusive = exclusive)
+  """Xen-based Virtual Machine resource
+  
+  Args:
+    client_id (str): Your name for this VM.  This must be unique within a single `Request` object.
+    component_id (Optional[str]): The `component_id` of the site node you want to bind this VM to
+    exclusive (Optional[bool]): Request this VM on an isolated host used only by your sliver.
+
+  Attributes:
+    cores (int): Number of CPU cores
+    ram (int): Amount of memory in megabytes
+    disk (int): Amount of disk space in gigabytes
+  """
+  def __init__ (self, client_id, component_id = None, exclusive = False):
+    super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
-    self.ram = 256
+    self.ram = 512 
     self.disk = 8
     self.xen_ptype = ""
 
@@ -64,6 +76,8 @@ class XenVM(Node):
       pt.attrib["name"] = self.xen_ptype
       pass
     return nd
+
+pg.Request.EXTENSIONS.append(("XenVM", XenVM))
 
 
 class AddressPool(Resource):
@@ -90,6 +104,9 @@ class AddressPool(Resource):
     pl.attrib["type"] = self.type
 
     return pl
+
+pg.Request.EXTENSIONS.append(("AddressPool", AddressPool))
+
 
 class Blockstore(object):
   def __init__ (self, name, mount):
@@ -156,6 +173,8 @@ class RemoteBlockstore(pg.Node):
   @dataset.setter
   def dataset (self, val):
     self._bs.dataset = val
+
+pg.Request.EXTENSIONS.append(("RemoteBlockstore", RemoteBlockstore))
 
 
 class Firewall(object):

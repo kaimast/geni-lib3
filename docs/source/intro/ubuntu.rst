@@ -1,4 +1,4 @@
-.. Copyright (c) 2015  Barnstormer Softworks, Ltd.
+.. Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
 .. raw:: latex
 
@@ -16,8 +16,6 @@ High-Level Dependencies
 
 * Mercurial (http://mercurial.selenic.com)
 * Python 2.7.x (http://www.python.org)
-* M2Crypto
-* Python Dateutil
 * OpenSSL
 * LibXML
 
@@ -32,8 +30,8 @@ using pip if you prefer.
 
 ::
 
-  $ apt-get install mercurial python-m2crypto python-dateutil python-lxml \
-    libxmlsec1 xmlsec1 libxmlsec1-openssl python-setuptools python-openssl
+  $ apt-get install --no-install-recommends mercurial build-essential python-setuptools \
+    libxml2-dev python-dev libxslt1-dev zlib1g-dev libffi-dev libssl-dev
 
 ============
 Get geni-lib

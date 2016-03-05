@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,7 @@
 
 from __future__ import absolute_import
 
-import json
-
 from .core import APIRegistry
-from .. import tempfile
 
 class AMError(Exception):
   def __init__ (self, text, data = None):
@@ -19,43 +16,30 @@ class AMError(Exception):
   def __str__ (self):
     return self.text
 
+class GetVersionError(AMError): pass
 class DeleteSliverError(AMError): pass
 class CreateSliverError(AMError): pass
 class SliverStatusError(AMError): pass
 class RenewSliverError(AMError): pass
 class ListResourcesError(AMError): pass
 
+
 class AMAPIv3(object):
-  def _getDefaultArgs (self, context, url):
-    return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-            context.usercred_path, "-a", url, "-V", "3"]
+  @staticmethod
+  def poa (context, url, sname, action, options = None):
+    from ..minigcf import amapi3 as AM3
 
-  def poa (self, context, url, sname, action, options = None):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "poa", sname, action])
+    sinfo = context.getSliceInfo(sname)
+    res = AM3.poa(url, False, context.cf.cert, context.cf.key, [sinfo], [sinfo.urn], action, options)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
 
-    if options:
-      (tf, path) = tempfile.makeFile()
-      tf.write(json.dumps(options))
-      tf.close()
-      arglist.extend(["--optionsfile", path])
-
-    _,res = oscript.call(arglist)
-    if res.values()[0]["code"]["geni_code"] == 0:
-      return res.values()[0]["value"]
+    # TODO: Raise exception
 
 
 class AMAPIv2(object):
-  def _getDefaultArgs (self, context, url):
-    if context.debug:
-      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-              context.usercred_path, "-a", url, "-V", "2"]
-    else:
-      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-              context.usercred_path, "-a", url, "-V", "2"]
-
-  def listresources (self, context, url, sname, options = None):
+  @staticmethod
+  def listresources (context, url, sname, options = None):
     if not options: options = {}
 
     from ..minigcf import amapi2 as AM2
@@ -75,118 +59,66 @@ class AMAPIv2(object):
 
     raise ListResourcesError(res["output"], res)
 
+  @staticmethod
+  def createsliver (context, url, sname, rspec):
+    from ..minigcf import amapi2 as AM2
 
-  def createsliver (self, context, url, sname, rspec):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "createsliver", sname, rspec])
-    text,res = oscript.call(arglist)
-    if res is None:
-      raise CreateSliverError(text)
-    return res
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
 
-  def sliverstatus (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "sliverstatus", sname])
-    text, res = oscript.call(arglist)
-    if not res.values()[0]:
-      raise SliverStatusError(text)
-    return res.values()[0]
+    udata = []
+    for user in context._users:
+      data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
+      udata.append(data)
 
-  def renewsliver (self, context, url, sname, date):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
-    text, res = oscript.call(arglist)
-    if res[1]:
-      raise RenewSliverError(text)
-    return (text, res)
+    res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
+    if res["code"]["geni_code"] == 0:
+      return res
+    raise CreateSliverError(res["output"], res)
 
-  def deletesliver (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "deletesliver", sname])
-    text,res = oscript.call(arglist)
-    if res[1]:
-      raise DeleteSliverError(text)
+  @staticmethod
+  def sliverstatus (context, url, sname):
+    from ..minigcf import amapi2 as AM2
 
-  def getversion (self, context, url):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["getversion"])
-    _,res = oscript.call(arglist)
-    return res.values()[0]
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+    res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise SliverStatusError(res["output"], res)
+
+  @staticmethod
+  def renewsliver (context, url, sname, date):
+    from ..minigcf import amapi2 as AM2
+
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+    res = AM2.renewsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, date)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise RenewSliverError(res["output"], res)
+
+  @staticmethod
+  def deletesliver (context, url, sname):
+    from ..minigcf import amapi2 as AM2
+
+    sinfo = context.getSliceInfo(sname)
+    cred_data = open(sinfo.path, "rb").read()
+    res = AM2.deletesliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise DeleteSliverError(res["output"], res)
+
+  @staticmethod
+  def getversion (context, url):
+    from ..minigcf import amapi2 as AM2
+
+    res = AM2.getversion(url, False, context.cf.cert, context.cf.key)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+    raise GetVersionError(res["output"], res)
 
 
-class AMAPIv1(object):
-  def _getDefaultArgs (self, context, url):
-    if context.debug:
-      return ["--debug", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-              context.usercred_path, "-a", url, "-V", "1"]
-    else:
-      return ["--warn", "--AggNickCacheName", context.nickCache, "-c", context.cfg_path, "--usercredfile",
-              context.usercred_path, "-a", url, "-V", "1"]
-
-  def listresources (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-
-    if sname:
-      arglist.extend(["--slicecredfile", context.slicecreds[sname], "listresources", sname])
-    else:
-      arglist.append("listresources")
-
-    text,res = oscript.call(arglist)
-    if res.values()[0] and res.values()[0] != "":
-      rspec = res.values()[0]
-      return rspec
-    else:
-      raise ListResourcesError(text)
-
-  def createsliver (self, context, url, sname, rspec):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "createsliver", sname, rspec])
-    text,res = oscript.call(arglist)
-    if res is None:
-      raise CreateSliverError(text)
-    return res
-
-  def sliverstatus (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "sliverstatus", sname])
-    text, res = oscript.call(arglist)
-    if not res.values()[0]:
-      raise SliverStatusError(text)
-    return res.values()[0]
-
-  def renewsliver (self, context, url, sname, date):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "renewsliver", sname, str(date)])
-    text, res = oscript.call(arglist)
-    if res[1]:
-      raise RenewSliverError(text)
-    return (text, res)
-
-  def deletesliver (self, context, url, sname):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["--slicecredfile", context.slicecreds[sname], "deletesliver", sname])
-    text,res = oscript.call(arglist)
-    if res[1]:
-      raise DeleteSliverError(text)
-
-  def getversion (self, context, url):
-    from ..gcf import oscript
-    arglist = self._getDefaultArgs(context, url)
-    arglist.extend(["getversion"])
-    _,res = oscript.call(arglist)
-    return res.values()[0]
-
-APIRegistry.register("amapiv1", AMAPIv1())
 APIRegistry.register("amapiv2", AMAPIv2())
 APIRegistry.register("amapiv3", AMAPIv3())
 

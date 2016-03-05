@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,6 @@ from __future__ import absolute_import
 
 import os
 import os.path
-
-from .. import tempfile
 
 class _Registry(object):
   def __init__ (self):
@@ -76,8 +74,8 @@ class AM(object):
     return status
 
   def renewsliver (self, context, sname, date):
-    text,res = self.api.renewsliver(context, self.url, sname, date)
-    return text,res
+    res = self.api.renewsliver(context, self.url, sname, date)
+    return res
 
   def deletesliver (self, context, sname):
     self.api.deletesliver(context, self.url, sname)
@@ -87,13 +85,10 @@ class AM(object):
       rspec = os.path.normpath(os.path.expanduser(rspec))
       if not os.path.exists(rspec):
         raise AM.InvalidRSpecPathError(rspec)
-      path = rspec
+      rspec_data = open(rspec, "rb").read()
     else:
-      (tf, path) = tempfile.makeFile()
-      tf.close()
-      rspec.writeXML(path)
-    res = self.api.createsliver(context, self.url, sname, path)
-    os.remove(path)
+      rspec_data = rspec.toXMLString()
+    res = self.api.createsliver(context, self.url, sname, rspec_data)
     return self.amtype.parseManifest(res)
 
   def getversion (self, context):

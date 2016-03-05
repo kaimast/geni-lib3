@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,12 @@
 
 from __future__ import absolute_import
 
-import subprocess
 import os.path
 
 from .core import FrameworkRegistry
 from .. import tempfile
+
+class KeyDecryptionError(Exception): pass
 
 class ClearinghouseError(Exception):
   def __init__ (self, text, data = None):
@@ -76,30 +77,49 @@ class Framework(object):
     self._sa = None
     self._cert = None
     self._key = None
+    self._project = None
+
+  @property
+  def project (self):
+    return self._project
+
+  @project.setter
+  def project (self, val):
+    self._project = val
+
+  @property
+  def projecturn (self):
+    # TODO:  Exception
+    return None
 
   @property
   def key (self):
     return self._key
 
   @key.setter
-  def key (self, val):
-    if not os.path.exists(val):
-      raise Framework.KeyPathError(val)
-    (tf, path) = tempfile.makeFile()
+  def key (self, path):
+    self._key = path
+
+  def setKey (self, path, passwd):
+    if not os.path.exists(path):
+      raise Framework.KeyPathError(path)
+    (tf, dpath) = tempfile.makeFile()
+
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization
+
+    try:
+      key = serialization.load_pem_private_key(open(path, "rb").read(), passwd, default_backend())
+    except ValueError:
+      raise KeyDecryptionError()
+
+    data = key.private_bytes(serialization.Encoding.PEM,
+                             serialization.PrivateFormat.TraditionalOpenSSL,
+                             serialization.NoEncryption())
+    tf.write(data)
     tf.close()
-    ### TODO: WARN IF OPENSSL IS NOT PRESENT
-    ### TODO: Make ssl binary paths configurable
-    if os.name == "nt":
-      nullf = open("NUL")
-      binp = os.path.normpath("C:/OpenSSL-Win32/bin/openssl")
-      ret = subprocess.call("%s rsa -in \"%s\" -out \"%s\"" % (binp, val, path), stdout=nullf, stderr=nullf, shell=True)
-      self._key = path
-    else:
-      nullf = open("/dev/null")
-      # We really don't want shell=True here, but there are pty problems with openssl otherwise
-      ret = subprocess.call("/usr/bin/openssl rsa -in %s -out %s" % (val, path), stdout=nullf, stderr=nullf, shell=True)
-      # TODO: Test the size afterwards to make sure the password was right, or parse stderr?
-      self._key = path
+
+    self._key = dpath
 
   @property
   def cert (self):
@@ -120,11 +140,25 @@ class ProtoGENI(Framework):
 
 
 class Emulab(ProtoGENI):
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/ma"
+
   def __init__ (self):
     super(Emulab, self).__init__("emulab")
     self._type = "pgch"
     self._ch = "https://www.emulab.net:443/protogeni/xmlrpc/ch"
-    self._ca = "https://www.emulab.net:443/protogeni/xmlrpc/sa"
+    self._sa = None
+    self._ma = None
+
+  @property
+  def project (self):
+    return super(Emulab, self).project
+
+  @project.setter
+  def project (self, val):
+    super(Emulab, self).project.fset(self, val)
+    self._sa = Emulab.SA % (val)
+    self._ma = Emulab.MA % (val)
 
 
 class CHAPI1(Framework):
@@ -142,13 +176,13 @@ class CHAPI2(Framework):
     ### TODO: Exception
     return None
 
-  def sliceNameToURN (self, project, name):
+  def sliceNameToURN (self, slice_name, project = None):
     ### TODO: Exception
     return None
 
   def listProjectMembers (self, context, project_urn = None):
     if not project_urn:
-      project_urn = self.projectNameToURN(context.project)
+      project_urn = self.projecturn
 
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
@@ -190,7 +224,11 @@ class CHAPI2(Framework):
   def listSlices (self, context):
     from ..minigcf import chapi2
     ucred = open(context.usercred_path, "r").read()
-    return chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
   def getUserCredentials (self, owner_urn):
     from ..minigcf import chapi2
@@ -204,7 +242,7 @@ class CHAPI2(Framework):
     from ..minigcf import chapi2
 
     ucred = open(context.usercred_path, "r").read()
-    slice_urn = self.sliceNameToURN(context.project, slicename)
+    slice_urn = self.sliceNameToURN(slicename)
 
     res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [ucred], slice_urn)
     if res["code"] == 0:
@@ -230,47 +268,58 @@ class CHAPI2(Framework):
     ucred = open(context.usercred_path, "r").read()
 
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
-    slice_urn = self.sliceNameToURN(context.project, slicename)
+    slice_urn = self.sliceNameToURN(slicename)
 
-    ret = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
-    return ret
+    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
 
 class Portal(CHAPI2):
   def __init__ (self):
-    super(Portal, self).__init__("portal")
+    super(Portal, self).__init__("gpo-ch2")
     self._authority = "ch.geni.net"
     self._ch = "https://ch.geni.net:8444/CH"
     self._ma = "https://ch.geni.net:443/MA"
     self._sa = "https://ch.geni.net:443/SA"
 
+  @property
+  def projecturn (self):
+    return self.projectNameToURN(self.project)
+
   def projectNameToURN (self, name):
     return "urn:publicid:IDN+ch.geni.net+project+%s" % (name)
 
-  def sliceNameToURN (self, project, name):
+  def sliceNameToURN (self, name, project = None):
+    if not project:
+      project = self.project
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
-
-  def getConfig (self):
-    l = []
-    l.append("[%s]" % (self.name))
-    l.append("type = %s" % (self._type))
-    l.append("authority = %s" % (self._authority))
-    l.append("ch = %s" % (self._ch))
-    l.append("sa = %s" % (self._sa))
-    l.append("ma = %s" % (self._ma))
-    l.append("cert = %s" % (self.cert))
-    l.append("key = %s" % (self.key))
-    return l
 
 
 class EmulabCH2(CHAPI1):
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
+
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
     self._authority = ""
-    self._ch = "https://www.emulab.net:12370/protogeni/pubxmlrpc/sr"
-    self._ma = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-ma"
-    self._sa = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa"
+    self._ch = None
+    self._sa = None
+    self._ma = None
+
+  @property
+  def project (self):
+    return super(EmulabCH2, self).project
+
+  @project.setter
+  def project (self, val):
+    super(Emulab, self).project.fset(self, val)
+    self._sa = EmulabCH2.SA % (val)
+    self._ma = EmulabCH2.MA % (val)
 
 FrameworkRegistry.register("portal", Portal)
+FrameworkRegistry.register("gpo-ch2", Portal)
 FrameworkRegistry.register("pg", ProtoGENI)
 FrameworkRegistry.register("emulab-ch2", EmulabCH2)
