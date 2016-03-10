@@ -34,6 +34,8 @@ def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -48,6 +50,8 @@ def create_key_info (url, root_bundle, cert, key, cred_strings, data):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -57,6 +61,8 @@ def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -72,6 +78,8 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -81,6 +89,8 @@ def update_slice (url, root_bundle, cert, key, cred_strings, slice_urn, fields):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -92,6 +102,8 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -112,6 +124,8 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -127,6 +141,8 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 #def _update_project (url, root_bundle, cert, key, cred_strings, project_urn):
@@ -162,6 +178,8 @@ def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, membe
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 
@@ -173,6 +191,8 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
 

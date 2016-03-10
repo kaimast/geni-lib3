@@ -298,9 +298,10 @@ class Portal(CHAPI2):
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
 
 
-class EmulabCH2(CHAPI1):
-  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa"
-  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
+class EmulabCH2(CHAPI2):
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa/2"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-ma"
+#  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
 
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
@@ -310,14 +311,22 @@ class EmulabCH2(CHAPI1):
     self._ma = None
 
   @property
+  def projecturn (self):
+    return self.projectNameToURN(self.project)
+
+  def projectNameToURN (self, name):
+    return "urn:publicid:IDN+emulab.net:%s" % (name)
+
+  @property
   def project (self):
     return super(EmulabCH2, self).project
 
   @project.setter
   def project (self, val):
-    super(Emulab, self).project.fset(self, val)
+    self._project = val
     self._sa = EmulabCH2.SA % (val)
-    self._ma = EmulabCH2.MA % (val)
+    self._ma = EmulabCH2.MA
+#    self._ma = EmulabCH2.MA % (val)
 
 FrameworkRegistry.register("portal", Portal)
 FrameworkRegistry.register("gpo-ch2", Portal)

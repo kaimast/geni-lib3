@@ -18,3 +18,6 @@ class HTTP(object):
   """If set to a valid `(log_handle, log_level)` tuple, will write all raw responses
   (before any parsing) from AM API and CH API calls to that log at the given level."""
 
+  LOG_RAW_REQUESTS = False
+  """If set to a valid `(log_handle, log_level)` tuple, will write all raw requests
+  (before any parsing) to AM API and CH API calls to that log at the given level."""
