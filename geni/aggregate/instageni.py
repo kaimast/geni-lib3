@@ -68,3 +68,11 @@ def name_to_aggregate ():
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result
+
+def cmid_to_aggregate ():
+  result = dict()
+  module = sys.modules[__name__]
+  for _,obj in inspect.getmembers(module):
+    if isinstance(obj, AM):
+      result[obj._cmid] = obj
+  return result
