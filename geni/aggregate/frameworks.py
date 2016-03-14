@@ -185,8 +185,7 @@ class CHAPI2(Framework):
       project_urn = self.projecturn
 
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
-    res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [ucred], project_urn)
+    res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [context.ucred_api3], project_urn)
     if res["code"] == 0:
       members = []
       for mobj in res["value"]:
@@ -198,7 +197,6 @@ class CHAPI2(Framework):
 
   def listProjects (self, context, own = True):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     if not own:
       res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3])
@@ -213,7 +211,6 @@ class CHAPI2(Framework):
 
   def listAggregates (self, context):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key)
 
@@ -242,10 +239,9 @@ class CHAPI2(Framework):
   def getSliceCredentials (self, context, slicename):
     from ..minigcf import chapi2
 
-    ucred = open(context.usercred_path, "r").read()
     slice_urn = self.sliceNameToURN(slicename)
 
-    res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [ucred], slice_urn)
+    res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn)
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
@@ -253,12 +249,11 @@ class CHAPI2(Framework):
 
   def createSlice (self, context, slicename, project_urn = None, exp = None, desc = None):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     if project_urn is None:
       project_urn = self.projectNameToURN(context.project)
 
-    res = chapi2.create_slice(self._sa, False, self.cert, self.key, [ucred], slicename, project_urn, exp, desc)
+    res = chapi2.create_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slicename, project_urn, exp, desc)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -266,12 +261,11 @@ class CHAPI2(Framework):
 
   def renewSlice (self, context, slicename, exp):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
     slice_urn = self.sliceNameToURN(slicename)
 
-    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
+    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn, fields)
     if res["code"] == 0:
       return res["value"]
     else:

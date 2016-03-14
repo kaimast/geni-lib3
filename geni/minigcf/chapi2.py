@@ -79,7 +79,7 @@ def get_credentials (url, root_bundle, cert, key, creds, target_urn):
 def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp = None, desc = None):
   fields = {}
   fields["SLICE_NAME"] = name
-  fields["SLICE_PROJECT_URN"] = proj_urn
+  if proj_urn: fields["SLICE_PROJECT_URN"] = proj_urn
   if exp: fields["SLICE_EXPIRATION"] = exp.strftime(DATE_FMT)
   if desc: fields["SLICE_DESCRIPTION"] = desc
 
