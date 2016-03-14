@@ -260,7 +260,6 @@ def loadContext (path = None, key_passphrase = None):
 
     context = Context()
     context.addUser(user)
-    context.userurn = user.urn
     context.cf = cf
     context.project = obj["project"]
 
@@ -276,7 +275,6 @@ def loadContext (path = None, key_passphrase = None):
       cf.key = fobj["key-path"]
     context.cf = cf
     context.project = fobj["project"]
-    context.userurn = focj["user-urn"]
 
     ulist = obj["users"]
     for uobj in ulist:

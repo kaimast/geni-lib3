@@ -110,10 +110,13 @@ class Context(object):
     self._nick_cache_path = None
     self._users = set()
     self._cf = None
-    self._usercred_info = None  # (path, expires, urn)
+    self._usercred_info = None  # (path, expires, urn, type, version)
     self._slicecreds = {}
     self.debug = False
-    self.userurn = None
+
+  @property
+  def userurn (self):
+    return self._ucred_info[2]
 
   def _getSliceCred (self, sname):
     info = self.getSliceInfo(sname)
@@ -125,14 +128,32 @@ class Context(object):
     if expstr[-1] == 'Z':
       expstr = expstr[:-1]
     exp = datetime.datetime.strptime(expstr, "%Y-%m-%dT%H:%M:%S")
-    urn = r.find("credential/target_urn").text
+    urn = r.find("credential/owner_urn").text
 
-    return (exp, urn)
+    # Type
+    tstr = r.find("credential/type").text.strip()
+    if tstr == "privilege":
+      typ = "geni_sfa"
+      version = 3  # We hope
+    elif tstr == "abac":
+      typ = "abac"
+      version = 1
+
+    return (exp, urn, typ, version)
 
   @property
   def _chargs (self):
-    ucred = open(self.usercred_path, "r").read()
-    return (False, self.cf.cert, self.cf.key, [ucred])
+    ucinfo = self._ucred_info
+    ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
+    ucd["geni_value"] = open(ucinfo[0], "r").read()
+    return (False, self.cf.cert, self.cf.key, [ucd])
+
+  @property
+  def ucred_api3 (self):
+    ucinfo = self._ucred_info
+    ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
+    ucd["geni_value"] = open(ucinfo[0], "r").read()
+    return ucd
 
   @property
   def project (self):
@@ -192,8 +213,8 @@ class Context(object):
         path = f.name
         f.close()
 
-      (expires, urn) = self._getCredInfo(ucpath)
-      self._usercred_info = (ucpath, expires, urn)
+      (expires, urn, typ, version) = self._getCredInfo(ucpath)
+      self._usercred_info = (ucpath, expires, urn, typ, version)
     return self._usercred_info
 
   @property

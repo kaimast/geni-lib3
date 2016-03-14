@@ -201,9 +201,10 @@ class CHAPI2(Framework):
     ucred = open(context.usercred_path, "r").read()
 
     if not own:
-      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [ucred])
+      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3])
     else:
-      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key, [ucred], context.userurn)
+      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key,
+                                              [context.ucred_api3], context.userurn)
 
     if res["code"] == 0:
       return res["value"]
@@ -223,8 +224,8 @@ class CHAPI2(Framework):
 
   def listSlices (self, context):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
-    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key,
+                                            [context.ucred_api3], context.project_urn)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -315,7 +316,7 @@ class EmulabCH2(CHAPI2):
     return self.projectNameToURN(self.project)
 
   def projectNameToURN (self, name):
-    return "urn:publicid:IDN+emulab.net:%s" % (name)
+    return "urn:publicid:IDN+emulab.net+project+%s" % (name)
 
   @property
   def project (self):
@@ -327,6 +328,14 @@ class EmulabCH2(CHAPI2):
     self._sa = EmulabCH2.SA % (val)
     self._ma = EmulabCH2.MA
 #    self._ma = EmulabCH2.MA % (val)
+
+  def listSlices (self, context):
+    from ..minigcf import chapi2
+    res = chapi2._lookup(self._sa, False, self.cert, self.key, "SLICE", [context.ucred_api3], {})
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
 FrameworkRegistry.register("portal", Portal)
 FrameworkRegistry.register("gpo-ch2", Portal)

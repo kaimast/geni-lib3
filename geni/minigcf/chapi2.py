@@ -38,6 +38,16 @@ def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
     config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
+def get_version (url, root_bundle, cert, key, options = {}):
+  req_data = xmlrpclib.dumps(tuple(), methodname = "get_version")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
+  return xmlrpclib.loads(resp.content)[0][0]
+  
 
 def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
   options = {"match" : {"KEY_MEMBER" : user_urn} }
