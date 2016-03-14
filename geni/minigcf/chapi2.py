@@ -30,8 +30,6 @@ def headers ():
 
 def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
   req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -48,8 +46,6 @@ def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
 
 def create_key_info (url, root_bundle, cert, key, cred_strings, data):
   req_data = xmlrpclib.dumps(("KEY", cred_strings, {"fields" : data}), methodname="create")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -61,8 +57,6 @@ def create_key_info (url, root_bundle, cert, key, cred_strings, data):
 
 def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -80,8 +74,6 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
   if desc: fields["SLICE_DESCRIPTION"] = desc
 
   req_data = xmlrpclib.dumps(("SLICE", cred_strings, {"fields" : fields}), methodname = "create")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
 
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
@@ -94,8 +86,6 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
 
 def update_slice (url, root_bundle, cert, key, cred_strings, slice_urn, fields):
   req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, {"fields" : fields}), methodname = "update")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -109,8 +99,6 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
   options = {}
 
   req_data = xmlrpclib.dumps(("SLICE", member_urn, cred_strings, options), methodname = "lookup_for_member")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -133,8 +121,6 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
     fields["PROJECT_DESC"] = desc
 
   req_data = xmlrpclib.dumps(("PROJECT", cred_strings, {"fields" : fields}), methodname = "create")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -152,8 +138,6 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   options = {}
 
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "delete")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
@@ -191,8 +175,6 @@ def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, membe
   options = {}
 
   req_data = xmlrpclib.dumps(("PROJECT", member_urn, cred_strings, options), methodname = "lookup_for_member")
-  if isinstance(config.HTTP.LOG_RAW_REQUESTS, tuple):
-    config.HTTP.LOG_RAW_REQUESTS[0].log(config.HTTP.LOG_RAW_REQUESTS[1], req_data)
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
