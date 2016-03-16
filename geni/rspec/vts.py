@@ -141,6 +141,16 @@ class OVSImage(DatapathImage):
       self._features.append(val)
     # TODO: Throw exception
 
+  @property
+  def netflow (self):
+    return None
+
+  @netflow.setter
+  def netflow (self, val):
+    if isinstance(val, NetFlow):
+      self._features.append(val)
+    # TODO: Throw exception
+
 
 class OVSOpenFlowImage(OVSImage):
   def __init__ (self, controller, ofver = "1.0", dpid = None):
@@ -187,6 +197,18 @@ class SFlow(object):
     s.attrib["polling-secs"] = str(self.polling_secs)
     return s
 
+
+class NetFlow(object):
+  def __init__ (self, collector_ip):
+    self.collector_ip = collector_ip
+    self.collector_port = 6343
+    self.timeout = 20
+
+  def _write (self, element):
+    s = ET.SubElement(element, "{%s}netflow" % (Namespaces.VTS))
+    s.attrib["collector"] = "%s:%d" % (self.collector_ip, self.collector_port)
+    s.attrib["timeout"] = str(self.timeout)
+    return s
 
 ##################
 # Graph Elements #
