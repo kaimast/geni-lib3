@@ -227,7 +227,7 @@ class Context(object):
     if self._ucred_info[1] < checktime:
       # Delete the user cred and hope you already renewed it
       try:
-        os.remove(self._ucred_info[1])
+        os.remove(self._ucred_info[0])
         self._usercred_info = None
       except OSError:
         # Windows won't let us remove open files
