@@ -8,6 +8,9 @@ from __future__ import absolute_import
 
 import os.path
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+
 from .core import FrameworkRegistry
 from .. import tempfile
 
@@ -78,6 +81,7 @@ class Framework(object):
     self._cert = None
     self._key = None
     self._project = None
+    self._userurn = None
 
   @property
   def project (self):
@@ -128,6 +132,18 @@ class Framework(object):
   @cert.setter
   def cert (self, val):
     self._cert = val
+
+  @property
+  def userurn (self):
+    if not self._userurn:
+      cert = x509.load_pem_x509_certificate(open(self._cert, "rb").read(), default_backend())
+      for ext in cert.extensions:
+        if ext.oid == x509.SubjectAlternativeName.oid:
+          for uri in ext.value.get_values_for_type(x509.UniformResourceIdentifier):
+            if uri.startswith("urn:publicid"):
+              self._userurn = uri
+              break
+    return self._userurn
 
   def _update (self, context):
     pass

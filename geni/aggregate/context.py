@@ -116,6 +116,7 @@ class Context(object):
 
   @property
   def userurn (self):
+    return self._cf.userurn
     return self._ucred_info[2]
 
   def _getSliceCred (self, sname):
