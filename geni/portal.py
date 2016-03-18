@@ -31,10 +31,12 @@ class ParameterType (object):
   BANDWIDTH   = "bandwidth"     #: Floating-point number to be used for bandwidth
   LATENCY     = "latency"       #: Floating-point number to be used for latency
   SIZE        = "size"          #: Integer for size (eg. MB, GB, etc.)
+  PUBKEY      = "pubkey"        #: An RSA public key.
+  LOSSRATE    = "lossrate"      #: Floating-point number 0.0 <= N < 1.0
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
-                  LATENCY: float, SIZE: int}
+                  LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float}
 
 class Context (object):
   """Handle context for scripts being run inside a portal.

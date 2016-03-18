@@ -176,6 +176,40 @@ class RemoteBlockstore(pg.Node):
 
 pg.Request.EXTENSIONS.append(("RemoteBlockstore", RemoteBlockstore))
 
+class Bridge(pg.Node):
+  class Pipe(object):
+    def __init__ (self):
+      self.bandwidth = 0
+      self.latency   = 0
+      self.lossrate  = 0.0
+  
+  def __init__ (self, name):
+    super(Bridge, self).__init__(name, "delay")
+    self.addNamespace(PGNS.DELAY)
+    self.iface0 = self.addInterface("if0")
+    self.pipe0  = self.Pipe();
+    self.iface1 = self.addInterface("if1")
+    self.pipe1  = self.Pipe();
+
+  def _write (self, root):
+    nd = super(Bridge, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    delay = ET.SubElement(st, "{%s}sliver_type_shaping" % (PGNS.DELAY.name))
+    pipe0 = ET.SubElement(delay, "pipe")
+    pipe0.attrib["source"]    = "if0";
+    pipe0.attrib["dest"]      = "if1";
+    pipe0.attrib["capacity"]  = str(self.pipe0.bandwidth)
+    pipe0.attrib["latency"]   = str(self.pipe0.latency)
+    pipe0.attrib["lossrate"]  = str(self.pipe0.lossrate)
+    pipe1 = ET.SubElement(delay, "pipe")
+    pipe1.attrib["source"]    = "if1";
+    pipe1.attrib["dest"]      = "if0";
+    pipe1.attrib["capacity"]  = str(self.pipe1.bandwidth)
+    pipe1.attrib["latency"]   = str(self.pipe1.latency)
+    pipe1.attrib["lossrate"]  = str(self.pipe1.lossrate)
+    return nd;
+
+pg.Request.EXTENSIONS.append(("Bridge", Bridge))
 
 class Firewall(object):
   class Style(object):

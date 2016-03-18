@@ -591,6 +591,7 @@ class Namespaces(object):
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
   PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
+  DELAY =  GNS.Namespace("delay", "http://www.protogeni.net/resources/rspec/ext/delay/1")
 
 
 #### DEPRECATED #####
