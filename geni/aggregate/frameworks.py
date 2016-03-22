@@ -310,7 +310,8 @@ class Portal(CHAPI2):
 
 
 class EmulabCH2(CHAPI2):
-  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa/2"
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa/2"
+#  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa/2"
   MA = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-ma"
 #  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
 
@@ -339,13 +340,13 @@ class EmulabCH2(CHAPI2):
     self._ma = EmulabCH2.MA
 #    self._ma = EmulabCH2.MA % (val)
 
-  def listSlices (self, context):
-    from ..minigcf import chapi2
-    res = chapi2._lookup(self._sa, False, self.cert, self.key, "SLICE", [context.ucred_api3], {})
-    if res["code"] == 0:
-      return res["value"]
-    else:
-      raise ClearinghouseError(res["output"], res)
+#  def listSlices (self, context):
+#    from ..minigcf import chapi2
+#    res = chapi2._lookup(self._sa, False, self.cert, self.key, "SLICE", [context.ucred_api3], {})
+#    if res["code"] == 0:
+#      return res["value"]
+#    else:
+#      raise ClearinghouseError(res["output"], res)
 
 FrameworkRegistry.register("portal", Portal)
 FrameworkRegistry.register("gpo-ch2", Portal)

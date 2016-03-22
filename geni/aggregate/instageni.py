@@ -17,6 +17,11 @@ class IGCompute(AM):
       url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
 
+  def geniRestart (self, context, sname, urns):
+    if not isinstance(urns, list):
+      urns = [urns]
+    return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
+
 
 # TODO: Should warn if CMID from advertisement differs from one here
 
