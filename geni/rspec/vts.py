@@ -124,6 +124,20 @@ class Image(object):
       feature._write(i)
     return i
 
+class SimpleDHCPImage(Image):
+  def __init__ (self, subnet = None):
+    super(SimpleDHCPImage, self).__init__("uh.simple-dhcpd")
+    self.subnet = subnet
+
+  def _write (self, element):
+    e = super(SimpleDHCPImage, self)._write(element)
+    if self.subnet:
+      subnet = ET.SubElement(e, "{%s}image-attribute" % (Namespaces.VTS))
+      subnet.attrib["name"] = "subnet"
+      subnet.attrib["value"] = str(self.subnet)
+    return e
+
+
 class DatapathImage(Image):
   pass
 
