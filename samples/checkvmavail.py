@@ -41,7 +41,7 @@ def do_parallel ():
   while not q.empty():
     l.append(q.get())
 
-  xen_avail = xen_total = 0
+  xen_used = xen_avail = xen_total = 0
   vz_avail = vz_total = 0
 
   overload_cids = []
@@ -57,10 +57,11 @@ def do_parallel ():
         used = 100 - int(count)
         site_xen += used
         if used >= OVERLOAD:
-          overload_cids.append(cid)
+          overload_cids.append((cid, used))
         else:
-          underload_cids.append(cid)
+          underload_cids.append((cid, used))
         xen_avail += int(count)
+        xen_used += used
         xen_total += 100 
       elif typ == "OpenVZ":
         site_vz += 100 - int(count)
@@ -71,11 +72,17 @@ def do_parallel ():
     for entry in entries:
       print entry
 
+  print "Used"
+  print "----"
   print "OpenVZ: %d/%d" % (vz_avail, vz_total)
-  print "Xen: %d/%d" % (xen_avail, xen_total)
+  print "Xen: %d/%d" % (xen_used, xen_total)
+  print 
 
   print "Overloaded hosts: %d" % (len(overload_cids))
   print "Underloaded hosts: %d" % (len(underload_cids))
+
+  for cid,used in overload_cids:
+    print "%02d - %s" % (used, cid)
 
 if __name__ == '__main__':
   do_parallel()
