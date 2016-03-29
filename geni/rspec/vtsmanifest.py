@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 from __future__ import absolute_import
 
@@ -48,23 +48,24 @@ class GenericPort(object):
     ### TODO: Raise an exception here
 
 
-class InternalPort(GenericPort):
+class InternalContainerPort(GenericPort):
   class NoMACAddressError(Exception):
     def __init__ (self, cid):
-      super(InternalPort.NoMACAddressError, self).__init__()
+      super(InternalContainerPort.NoMACAddressError, self).__init__()
       self._cid = cid
     def __str__ (self):
       return "Port with client_id %s does not have MAC address." % (self._cid)
 
   def __init__ (self):
-    super(InternalPort, self).__init__("internal")
+    super(InternalContainerPort, self).__init__("internal")
     self.remote_client_id = None
     self._macaddress = None
+    self._alias = None
 
   @property
   def macaddress (self):
     if not self._macaddress:
-      raise InternalPort.NoMACAddressError(self.client_id)
+      raise InternalContainerPort.NoMACAddressError(self.client_id)
     else:
       return self._macaddress
 
@@ -72,12 +73,38 @@ class InternalPort(GenericPort):
   def macaddress (self, val):
     self._macaddress = val
 
+  @property
+  def name (self):
+    return self._alias
+
+  @classmethod
+  def _fromdom (cls, elem):
+    p = InternalContainerPort()
+    p.client_id = elem.get("client_id")
+    p.remote_client_id = elem.get("remote-clientid")
+    p.macaddress = elem.get("mac-address")
+    p._alias = elem.get("name")
+
+    return p
+
+  @property
+  def remote_dpname (self):
+    if self.remote_client_id.count(":") == 1:
+      return self.remote_client_id.split(":")[0]
+    return None
+    ### TODO: Raise an exception here
+
+
+class InternalPort(GenericPort):
+  def __init__ (self):
+    super(InternalPort, self).__init__("internal")
+    self.remote_client_id = None
+
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
-    p.macaddress = elem.get("mac-address")
 
     return p
 
@@ -145,7 +172,7 @@ class ManifestContainer(object):
 
     ports = elem.xpath('v:port', namespaces = XPNS)
     for cport in ports:
-      p = Manifest._buildPort(cport)
+      p = Manifest._buildPort(cport, True)
       c.ports.append(p)
 
     return c
@@ -167,6 +194,7 @@ class ManifestDatapath(object):
     self.client_id = None
     self.image = None
     self.sliver_id = None
+    self.ports = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -175,6 +203,10 @@ class ManifestDatapath(object):
     dp.client_id = elem.get("client_id")
     dp.image = elem.get("image")
     dp.sliver_id = elem.get("sliver_id")
+    ports = elem.xpath('v:port', namespaces = XPNS)
+    for port in ports:
+      p = Manifest._buildPort(port)
+      dp.ports.append(p)
     return dp
 
 
@@ -219,9 +251,12 @@ class Manifest(object):
 
   @property
   def ports (self):
-    elems = self._root.xpath("v:datapath/v:port", namespaces = XPNS)
-    for elem in elems:
-      yield Manifest._buildPort(elem)
+    for dp in self.datapaths:
+      for p in dp.ports:
+        yield p
+    for c in self.containers:
+      for p in c.ports:
+        yield p
 
   @property
   def containers (self):
@@ -247,7 +282,7 @@ class Manifest(object):
       return Manifest._buildPort(pelems[0])
 
   @staticmethod
-  def _buildPort (elem):
+  def _buildPort (elem, container = False):
     t = elem.get("type")
     if t == "gre":
       return GREPort._fromdom(elem)
@@ -256,7 +291,10 @@ class Manifest(object):
     elif t == "vf-port":
       return GenericPort._fromdom(elem)
     elif t == "internal":
-      return InternalPort._fromdom(elem)
+      if container:
+        return InternalContainerPort._fromdom(elem)
+      else:
+        return InternalPort._fromdom(elem)
     raise UnhandledPortTypeError(t)
 
   def write (self, path):

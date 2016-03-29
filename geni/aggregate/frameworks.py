@@ -8,6 +8,9 @@ from __future__ import absolute_import
 
 import os.path
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+
 from .core import FrameworkRegistry
 from .. import tempfile
 
@@ -78,6 +81,7 @@ class Framework(object):
     self._cert = None
     self._key = None
     self._project = None
+    self._userurn = None
 
   @property
   def project (self):
@@ -128,6 +132,18 @@ class Framework(object):
   @cert.setter
   def cert (self, val):
     self._cert = val
+
+  @property
+  def userurn (self):
+    if not self._userurn:
+      cert = x509.load_pem_x509_certificate(open(self._cert, "rb").read(), default_backend())
+      for ext in cert.extensions:
+        if ext.oid == x509.SubjectAlternativeName.oid:
+          for uri in ext.value.get_values_for_type(x509.UniformResourceIdentifier):
+            if uri.startswith("urn:publicid"):
+              self._userurn = uri
+              break
+    return self._userurn
 
   def _update (self, context):
     pass
@@ -185,8 +201,7 @@ class CHAPI2(Framework):
       project_urn = self.projecturn
 
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
-    res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [ucred], project_urn)
+    res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [context.ucred_api3], project_urn)
     if res["code"] == 0:
       members = []
       for mobj in res["value"]:
@@ -198,12 +213,12 @@ class CHAPI2(Framework):
 
   def listProjects (self, context, own = True):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     if not own:
-      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [ucred])
+      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3])
     else:
-      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key, [ucred], context.userurn)
+      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key,
+                                              [context.ucred_api3], context.userurn)
 
     if res["code"] == 0:
       return res["value"]
@@ -212,7 +227,6 @@ class CHAPI2(Framework):
 
   def listAggregates (self, context):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key)
 
@@ -223,8 +237,8 @@ class CHAPI2(Framework):
 
   def listSlices (self, context):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
-    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key, [ucred], context.project_urn)
+    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key,
+                                            [context.ucred_api3], context.project_urn)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -241,10 +255,9 @@ class CHAPI2(Framework):
   def getSliceCredentials (self, context, slicename):
     from ..minigcf import chapi2
 
-    ucred = open(context.usercred_path, "r").read()
     slice_urn = self.sliceNameToURN(slicename)
 
-    res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [ucred], slice_urn)
+    res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn)
     if res["code"] == 0:
       return res["value"][0]["geni_value"]
     else:
@@ -252,12 +265,11 @@ class CHAPI2(Framework):
 
   def createSlice (self, context, slicename, project_urn = None, exp = None, desc = None):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     if project_urn is None:
       project_urn = self.projectNameToURN(context.project)
 
-    res = chapi2.create_slice(self._sa, False, self.cert, self.key, [ucred], slicename, project_urn, exp, desc)
+    res = chapi2.create_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slicename, project_urn, exp, desc)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -265,12 +277,11 @@ class CHAPI2(Framework):
 
   def renewSlice (self, context, slicename, exp):
     from ..minigcf import chapi2
-    ucred = open(context.usercred_path, "r").read()
 
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
     slice_urn = self.sliceNameToURN(slicename)
 
-    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [ucred], slice_urn, fields)
+    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn, fields)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -298,9 +309,11 @@ class Portal(CHAPI2):
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
 
 
-class EmulabCH2(CHAPI1):
-  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa"
-  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
+class EmulabCH2(CHAPI2):
+  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa/2"
+#  SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-sa/2"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-ma"
+#  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
 
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
@@ -310,14 +323,30 @@ class EmulabCH2(CHAPI1):
     self._ma = None
 
   @property
+  def projecturn (self):
+    return self.projectNameToURN(self.project)
+
+  def projectNameToURN (self, name):
+    return "urn:publicid:IDN+emulab.net+project+%s" % (name)
+
+  @property
   def project (self):
     return super(EmulabCH2, self).project
 
   @project.setter
   def project (self, val):
-    super(Emulab, self).project.fset(self, val)
+    self._project = val
     self._sa = EmulabCH2.SA % (val)
-    self._ma = EmulabCH2.MA % (val)
+    self._ma = EmulabCH2.MA
+#    self._ma = EmulabCH2.MA % (val)
+
+#  def listSlices (self, context):
+#    from ..minigcf import chapi2
+#    res = chapi2._lookup(self._sa, False, self.cert, self.key, "SLICE", [context.ucred_api3], {})
+#    if res["code"] == 0:
+#      return res["value"]
+#    else:
+#      raise ClearinghouseError(res["output"], res)
 
 FrameworkRegistry.register("portal", Portal)
 FrameworkRegistry.register("gpo-ch2", Portal)

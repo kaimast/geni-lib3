@@ -26,11 +26,14 @@ class ListResourcesError(AMError): pass
 
 class AMAPIv3(object):
   @staticmethod
-  def poa (context, url, sname, action, options = None):
+  def poa (context, url, sname, action, urns = [], options = None):
     from ..minigcf import amapi3 as AM3
 
     sinfo = context.getSliceInfo(sname)
-    res = AM3.poa(url, False, context.cf.cert, context.cf.key, [sinfo], [sinfo.urn], action, options)
+    if not urns:
+      urns = [sinfo.urn]
+
+    res = AM3.poa(url, False, context.cf.cert, context.cf.key, [sinfo], urns, action, options)
     if res["code"]["geni_code"] == 0:
       return res["value"]
 

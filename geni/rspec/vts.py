@@ -124,6 +124,20 @@ class Image(object):
       feature._write(i)
     return i
 
+class SimpleDHCPImage(Image):
+  def __init__ (self, subnet = None):
+    super(SimpleDHCPImage, self).__init__("uh.simple-dhcpd")
+    self.subnet = subnet
+
+  def _write (self, element):
+    e = super(SimpleDHCPImage, self)._write(element)
+    if self.subnet:
+      subnet = ET.SubElement(e, "{%s}image-attribute" % (Namespaces.VTS))
+      subnet.attrib["name"] = "subnet"
+      subnet.attrib["value"] = str(self.subnet)
+    return e
+
+
 class DatapathImage(Image):
   pass
 
@@ -138,6 +152,16 @@ class OVSImage(DatapathImage):
   @sflow.setter
   def sflow (self, val):
     if isinstance(val, SFlow):
+      self._features.append(val)
+    # TODO: Throw exception
+
+  @property
+  def netflow (self):
+    return None
+
+  @netflow.setter
+  def netflow (self, val):
+    if isinstance(val, NetFlow):
       self._features.append(val)
     # TODO: Throw exception
 
@@ -187,6 +211,18 @@ class SFlow(object):
     s.attrib["polling-secs"] = str(self.polling_secs)
     return s
 
+
+class NetFlow(object):
+  def __init__ (self, collector_ip):
+    self.collector_ip = collector_ip
+    self.collector_port = 6343
+    self.timeout = 20
+
+  def _write (self, element):
+    s = ET.SubElement(element, "{%s}netflow" % (Namespaces.VTS))
+    s.attrib["collector"] = "%s:%d" % (self.collector_ip, self.collector_port)
+    s.attrib["timeout"] = str(self.timeout)
+    return s
 
 ##################
 # Graph Elements #

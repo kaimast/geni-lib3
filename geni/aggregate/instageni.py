@@ -17,6 +17,11 @@ class IGCompute(AM):
       url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
 
+  def geniRestart (self, context, sname, urns):
+    if not isinstance(urns, list):
+      urns = [urns]
+    return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
+
 
 # TODO: Should warn if CMID from advertisement differs from one here
 
@@ -47,7 +52,9 @@ Rutgers = IGCompute("ig-rutgers", "instageni.rutgers.edu", "urn:publicid:IDN+ins
 SOX = IGCompute("ig-sox", "instageni.sox.net", "urn:publicid:IDN+instageni.sox.net+authority+cm")
 Stanford = IGCompute("ig-stanford", "instageni.stanford.edu", "urn:publicid:IDN+instageni.stanford.edu+authority+cm")
 UCLA = IGCompute("ig-ucla", "instageni.idre.ucla.edu", "urn:publicid:IDN+instageni.idre.ucla.edu+authority+cm")
+UKYMCV = IGCompute('ig-ukymcv', 'mcv.sdn.uky.edu', 'urn:publicid:IDN+mcv.sdn.uky.edu+authority+cm')
 UKYPKS2 = IGCompute('ig-ukypks2', 'pks2.sdn.uky.edu', 'urn:publicid:IDN+pks2.sdn.uky.edu+authority+cm')
+UMichigan = IGCompute('ig-umich', 'instageni.research.umich.edu', 'urn:publicid:IDN+instageni.research.umich.edu+authority+cm')
 UMKC = IGCompute('ig-umkc', 'instageni.umkc.edu', 'urn:publicid:IDN+instageni.umkc.edu+authority+cm')
 Utah = IGCompute("ig-utah", "boss.utah.geniracks.net", "urn:publicid:IDN+utah.geniracks.net+authority+cm")
 UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:IDN+utahddc.geniracks.net+authority+cm")
@@ -67,4 +74,12 @@ def name_to_aggregate ():
   for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
       result[obj.name] = obj
+  return result
+
+def cmid_to_aggregate ():
+  result = dict()
+  module = sys.modules[__name__]
+  for _,obj in inspect.getmembers(module):
+    if isinstance(obj, AM):
+      result[obj._cmid] = obj
   return result

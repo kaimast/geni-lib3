@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,10 +40,22 @@ Add to link objects using the Link.addChild() method.
 
 
 class XenVM(Node):
-  def __init__ (self, name, component_id = None, exclusive = False):
-    super(XenVM, self).__init__(name, "emulab-xen", component_id = component_id, exclusive = exclusive)
+  """Xen-based Virtual Machine resource
+  
+  Args:
+    client_id (str): Your name for this VM.  This must be unique within a single `Request` object.
+    component_id (Optional[str]): The `component_id` of the site node you want to bind this VM to
+    exclusive (Optional[bool]): Request this VM on an isolated host used only by your sliver.
+
+  Attributes:
+    cores (int): Number of CPU cores
+    ram (int): Amount of memory in megabytes
+    disk (int): Amount of disk space in gigabytes
+  """
+  def __init__ (self, client_id, component_id = None, exclusive = False):
+    super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
-    self.ram = 256
+    self.ram = 512 
     self.disk = 8
 
   def _write (self, root):
