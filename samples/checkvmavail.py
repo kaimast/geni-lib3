@@ -3,10 +3,12 @@
 import multiprocessing as MP
 import time
 
-import example_config
 import geni.aggregate.instageni as IG
+import geni.util
 
-context = example_config.buildContext()
+context = geni.util.loadContext(key_passphrase = True)
+
+OVERLOAD = 38
 
 def query_aggregate (context, site, q):
   try:
@@ -42,6 +44,9 @@ def do_parallel ():
   xen_avail = xen_total = 0
   vz_avail = vz_total = 0
 
+  overload_cids = []
+  underload_cids = []
+
   for idx,pair in enumerate(l):
     site_vz = site_xen = 0
     entries = []
@@ -49,9 +54,14 @@ def do_parallel ():
     (site_name, res) = pair
     for (cid, count, typ) in res:
       if typ == "Xen":
-        site_xen += 100 - int(count)
+        used = 100 - int(count)
+        site_xen += used
+        if used >= OVERLOAD:
+          overload_cids.append(cid)
+        else:
+          underload_cids.append(cid)
         xen_avail += int(count)
-        xen_total += 100
+        xen_total += 100 
       elif typ == "OpenVZ":
         site_vz += 100 - int(count)
         vz_avail += int(count)
@@ -63,6 +73,9 @@ def do_parallel ():
 
   print "OpenVZ: %d/%d" % (vz_avail, vz_total)
   print "Xen: %d/%d" % (xen_avail, xen_total)
+
+  print "Overloaded hosts: %d" % (len(overload_cids))
+  print "Underloaded hosts: %d" % (len(underload_cids))
 
 if __name__ == '__main__':
   do_parallel()
