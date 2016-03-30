@@ -117,6 +117,45 @@ class STPProxy(wrapt.ObjectProxy):
     return "%s\n%s" % (brt,pt)
 
 
+class RetListProxy(object):
+  def __init__ (self, obj, columns, row_template):
+    self._obj = obj
+    self._columns = columns
+    self._row_template = None
+    self._col_template = "<th>%s</th>"
+
+  def __len__ (self):
+    return len(self._obj)
+
+  def __getitem__ (self, i):
+    return self._obj[i]
+
+  def __getslice__ (self, i, j):
+    i = max(i, 0); j = max(j, 0)
+    return self._obj[i:j]
+
+  def __contains__ (self, item):
+    return item in self._obj
+
+  def __iter__ (self):
+    for x in self._obj:
+      yield x
+
+  def _repr_html_ (self):
+    trlist = []
+    for row in self._obj:
+      trlist.append(self._row_template.format(**row))
+
+    collist = []
+    for column in self._columns:
+      collist.append(self._col_template(column))
+
+    return """<table>\n<tr>%s</tr>\n%s\n<table""" % ("".join(collist), "\n".join(trlist))
+      
+
+LEASEROW = "<td>{hostname}</td><td>{ip-address}</td><td>{mac-address}</td><td>{binding-state}</td><td>{end:%Y-%m-%d %H:%M:%S}</td>"
+LEASECOLS = ["Hostname", "IP Address", "MAC Address", "State", "End"]
+
 #####
 ### Core geni-lib monkeypatches
 #####
@@ -179,6 +218,16 @@ def getSTPInfo (self, context, sname, datapaths):
   retobj = {}
   for br in res:
     retobj[br["client-id"]] = STPProxy(br)
+  return retobj
+
+def getLeaseInfo (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
+  res = self._getLeaseInfo(context, sname, client_ids)
+  retobj = {}
+  for k,v in res:
+    retobj[k] = RetListProxy(v, LEASECOLS, LEASEROWS)
   return retobj
 
 

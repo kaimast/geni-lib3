@@ -52,6 +52,10 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:stp-info",
                            options={"datapaths" : datapaths})
 
+  def getLeaseInfo (self, context, sname, client_ids):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:get-leases",
+                           options = {"client-ids" : client_ids})
+
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")
