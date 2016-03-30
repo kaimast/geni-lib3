@@ -234,6 +234,7 @@ def getLeaseInfo (self, context, sname, client_ids):
 replaceSymbol(VTS, "dumpMACs", dumpMACs)
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
+replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 
 #####
 ### Extension loader
