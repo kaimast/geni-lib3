@@ -121,7 +121,7 @@ class RetListProxy(object):
   def __init__ (self, obj, columns, row_template):
     self._obj = obj
     self._columns = columns
-    self._row_template = None
+    self._row_template = row_template
     self._col_template = "<th>%s</th>"
 
   def __len__ (self):
@@ -148,12 +148,12 @@ class RetListProxy(object):
 
     collist = []
     for column in self._columns:
-      collist.append(self._col_template(column))
+      collist.append(self._col_template % (column))
 
     return """<table>\n<tr>%s</tr>\n%s\n<table""" % ("".join(collist), "\n".join(trlist))
       
 
-LEASEROW = "<td>{hostname}</td><td>{ip-address}</td><td>{mac-address}</td><td>{binding-state}</td><td>{end:%Y-%m-%d %H:%M:%S}</td>"
+LEASEROW = "<tr><td>{hostname}</td><td>{ip-address}</td><td>{mac-address}</td><td>{binding-state}</td><td>{end:%Y-%m-%d %H:%M:%S}</td></tr>"
 LEASECOLS = ["Hostname", "IP Address", "MAC Address", "State", "End"]
 
 #####
@@ -226,8 +226,8 @@ def getLeaseInfo (self, context, sname, client_ids):
 
   res = self._getLeaseInfo(context, sname, client_ids)
   retobj = {}
-  for k,v in res:
-    retobj[k] = RetListProxy(v, LEASECOLS, LEASEROWS)
+  for k,v in res.items():
+    retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
   return retobj
 
 
