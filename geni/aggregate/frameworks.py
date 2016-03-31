@@ -145,9 +145,6 @@ class Framework(object):
               break
     return self._userurn
 
-  def _update (self, context):
-    pass
-
 
 class ProtoGENI(Framework):
   def __init__ (self, name = "pg"):
