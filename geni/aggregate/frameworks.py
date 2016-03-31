@@ -45,8 +45,10 @@ class Member(object):
     self.urn = project_info["PROJECT_MEMBER"]
     self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
 
-    if project_info.has_key("PROJECT_MEMBER_UID"]:
+    try:
       self.uid = project_info["PROJECT_MEMBER_UID"]
+    except KeyError:
+      pass
 
 class _MemberRegistry(object):
   def __init__ (self):
