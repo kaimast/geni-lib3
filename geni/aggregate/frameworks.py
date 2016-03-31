@@ -336,7 +336,7 @@ class EmulabCH2(CHAPI2):
   @project.setter
   def project (self, val):
     self._project = val
-    self._sa = EmulabCH2.SA % (val)
+    self._sa = EmulabCH2.SA
     self._ma = EmulabCH2.MA
 #    self._ma = EmulabCH2.MA % (val)
 
