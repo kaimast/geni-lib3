@@ -43,8 +43,10 @@ class Member(object):
 
   def _set_from_project (self, project_info):
     self.urn = project_info["PROJECT_MEMBER"]
-    self.uid = project_info["PROJECT_MEMBER_UID"]
     self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
+
+    if project_info.has_key("PROJECT_MEMBER_UID"]:
+      self.uid = project_info["PROJECT_MEMBER_UID"]
 
 class _MemberRegistry(object):
   def __init__ (self):
