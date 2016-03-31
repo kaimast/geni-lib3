@@ -236,6 +236,8 @@ def loadContext (path = None, key_passphrase = None):
 
   if path is None:
     path = GCU.getDefaultContextPath()
+  else:
+    path = os.path.expanduser(path)
 
   obj = json.load(open(path, "r"))
   

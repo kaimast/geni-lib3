@@ -39,12 +39,21 @@ class Member(object):
   def __init__ (self):
     self.urn = None
     self.uid = None
+    self.emulab_role = None
     self.roles = {}
 
   def _set_from_project (self, project_info):
     self.urn = project_info["PROJECT_MEMBER"]
-    self.uid = project_info["PROJECT_MEMBER_UID"]
     self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
+
+    try:
+      self.uid = project_info["PROJECT_MEMBER_UID"]
+    except KeyError: pass
+
+    try:
+      self.emulab_role = project_info["PROJECT_EMULAB_ROLE"]
+    except KeyError: pass
+
 
 class _MemberRegistry(object):
   def __init__ (self):
@@ -144,9 +153,6 @@ class Framework(object):
               self._userurn = uri
               break
     return self._userurn
-
-  def _update (self, context):
-    pass
 
 
 class ProtoGENI(Framework):
@@ -280,8 +286,11 @@ class CHAPI2(Framework):
 
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
     slice_urn = self.sliceNameToURN(slicename)
+    slice_info = context.getSliceInfo(slicename)
 
-    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn, fields)
+    res = chapi2.update_slice(self._sa, False, self.cert, self.key,
+                              [slice_info.cred_api3, context.ucred_api3],
+                              slice_urn, fields)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -329,6 +338,11 @@ class EmulabCH2(CHAPI2):
   def projectNameToURN (self, name):
     return "urn:publicid:IDN+emulab.net+project+%s" % (name)
 
+  def sliceNameToURN (self, name, project = None):
+    if not project:
+      project = self.project
+    return "urn:publicid:IDN+emulab.net:%s+slice+%s" % (project, name)
+
   @property
   def project (self):
     return super(EmulabCH2, self).project
@@ -336,7 +350,7 @@ class EmulabCH2(CHAPI2):
   @project.setter
   def project (self, val):
     self._project = val
-    self._sa = EmulabCH2.SA % (val)
+    self._sa = EmulabCH2.SA
     self._ma = EmulabCH2.MA
 #    self._ma = EmulabCH2.MA % (val)
 
