@@ -94,6 +94,12 @@ class SliceCredInfo(object):
         raise SliceCredInfo.CredentialExpiredError(self.slicename, self.expires)
     return self._path
 
+  @property
+  def cred_api3 (self):
+    scd = {"geni_type" : "geni_sfa", "geni_version" : 3}
+    scd["geni_value"] = open(self.path, "r").read()
+    return scd
+
 
 class Context(object):
   DEFAULT_DIR = os.path.expanduser("~/.bssw/geni")

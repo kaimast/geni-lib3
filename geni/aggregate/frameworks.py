@@ -286,8 +286,11 @@ class CHAPI2(Framework):
 
     fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
     slice_urn = self.sliceNameToURN(slicename)
+    slice_info = context.getSliceInfo(slicename)
 
-    res = chapi2.update_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn, fields)
+    res = chapi2.update_slice(self._sa, False, self.cert, self.key,
+                              [slice_info.cred_api3, context.ucred_api3],
+                              slice_urn, fields)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -334,6 +337,11 @@ class EmulabCH2(CHAPI2):
 
   def projectNameToURN (self, name):
     return "urn:publicid:IDN+emulab.net+project+%s" % (name)
+
+  def sliceNameToURN (self, name, project = None):
+    if not project:
+      project = self.project
+    return "urn:publicid:IDN+emulab.net:%s+slice+%s" % (project, name)
 
   @property
   def project (self):
