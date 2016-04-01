@@ -8,7 +8,7 @@ import geni.util
 
 context = geni.util.loadContext(key_passphrase = True)
 
-OVERLOAD = 38
+OVERLOAD = 57
 
 def query_aggregate (context, site, q):
   try:
