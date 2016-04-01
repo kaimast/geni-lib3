@@ -71,8 +71,9 @@ class AMAPIv2(object):
     res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"]["am_type"] == "protogeni":
-      ProtoGENI.raiseError(res)
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
     raise CreateSliverError(res["output"], res)
 
   @staticmethod
