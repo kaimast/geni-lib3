@@ -9,7 +9,7 @@ from .exceptions import AMError
 class ProtoGENIError(AMError): pass
 
 class VLANUnavailableError(ProtoGENIError): pass
-class InsufficientBandwdithError(ProtoGENIError): pass
+class InsufficientBandwidthError(ProtoGENIError): pass
 class InsufficientNodesError(ProtoGENIError): pass
 class InsufficientMemoryError(ProtoGENIError): pass
 class NoMappingError(ProtoGENIError): pass
