@@ -103,10 +103,12 @@ class AdNode(object):
     self.location = None
     self.ram = None
     self.cpu = None
+    self._elem = None
 
   @classmethod
   def _fromdom (cls, elem):
     node = AdNode()
+    node._elem = elem
     node.component_id = elem.get("component_id")
     node.name = elem.get("component_name")
     node.component_manager_id = elem.get("component_manager_id")
@@ -151,14 +153,21 @@ class AdNode(object):
 
     return node
 
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
+
 class AdLink(object):
   def __init__ (self):
     self.component_id = None
     self.link_types = set()
+    self._elem = None
 
   @classmethod
   def _fromdom (cls, elem):
     link = AdLink()
+    link._elem = elem
     link.component_id = elem.get("component_id")
 
     ltypes = elem.xpath('g:link_type', namespaces = _XPNS)
@@ -166,6 +175,11 @@ class AdLink(object):
       link.link_types.add(ltype.get("name"))
 
     return link
+
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
 
 class AdSharedVLAN(object):
   def __init__ (self):
