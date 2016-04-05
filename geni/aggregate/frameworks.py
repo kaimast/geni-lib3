@@ -296,6 +296,16 @@ class CHAPI2(Framework):
     else:
       raise ClearinghouseError(res["output"], res)
 
+  def lookupSSHKeys (self, context, user_urn):
+    from ..minigcf import chapi2
+
+    res = chapi2.lookup_key_info(self._ma, False, self.cert, self.key, [context.ucred_api3], user_urn)
+    if res["code"] == 0:
+      key_list = [x["KEY_PUBLIC"] for x in res["value"].values()]
+      return key_list
+    else:
+      raise ClearinghouseError(res["output"], res)
+
 
 class Portal(CHAPI2):
   def __init__ (self):
