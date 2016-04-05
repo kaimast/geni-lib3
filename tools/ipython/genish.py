@@ -156,6 +156,9 @@ class RetListProxy(object):
 LEASEROW = "<tr><td>{hostname}</td><td>{ip-address}</td><td>{mac-address}</td><td>{binding-state}</td><td>{end:%Y-%m-%d %H:%M:%S}</td></tr>"
 LEASECOLS = ["Hostname", "IP Address", "MAC Address", "State", "End"]
 
+PINFOCOLS = ["Client ID", "ifindex", "vlan", "MTU", "Admin State", "Link State"]
+PINFOROW = "<tr><td>{client-id}</td><td>{ifindex}</td><td>{tag}</td><td>{mtu}</td><td>{admin_state}</td><td>{link_state}</td></tr>"
+
 #####
 ### Core geni-lib monkeypatches
 #####
@@ -230,11 +233,19 @@ def getLeaseInfo (self, context, sname, client_ids):
     retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
   return retobj
 
+def getPortInfo (self, context, sname, client_ids):
+  res = self._getPortInfo(context, sname, client_ids)
+  retobj = {}
+  for k,v in res.items()
+    retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
+  return retobj
+
 
 replaceSymbol(VTS, "dumpMACs", dumpMACs)
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
 replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
+replaceSymbol(VTS, "getPortInfo", getPortInfo)
 
 #####
 ### Extension loader
