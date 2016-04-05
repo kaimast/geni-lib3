@@ -53,6 +53,11 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:stp-info",
                            options={"datapaths" : datapaths})
 
+  def getPortInfo (self, context, sname, datapaths):
+    if not isinstance(datapaths, list): datapaths = [datapaths]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:get-port-info",
+                           options={"datapaths" : datapaths})
+
   def getLeaseInfo (self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
     return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:get-leases",
