@@ -16,6 +16,7 @@ class CreateSliverError(AMError): pass
 class SliverStatusError(AMError): pass
 class RenewSliverError(AMError): pass
 class ListResourcesError(AMError): pass
+class POAError(AMError): pass
 
 
 class AMAPIv3(object):
@@ -31,7 +32,7 @@ class AMAPIv3(object):
     if res["code"]["geni_code"] == 0:
       return res["value"]
 
-    # TODO: Raise exception
+    raise POAError(res["output"], res)
 
 
 class AMAPIv2(object):
