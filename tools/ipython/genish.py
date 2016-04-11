@@ -3,6 +3,7 @@
 # genish as an iPython extension for use with Jupyter
 
 import types
+import copy
 
 import graphviz
 import pandas
@@ -11,6 +12,7 @@ import wrapt
 from geni.aggregate.frameworks import KeyDecryptionError
 from geni.aggregate.vts import VTS
 import geni.util
+import geni.types
 
 ######
 ### iPython-specific Utilities
@@ -159,6 +161,12 @@ LEASECOLS = ["Hostname", "IP Address", "MAC Address", "State", "End"]
 PINFOCOLS = ["Client ID", "ifindex", "vlan", "MTU", "Admin State", "Link State", "RX Bytes (Pkts)", "TX Bytes (Pkts)"]
 PINFOROW = "<tr><td>{client-id}</td><td>{ifindex}</td><td>{tag}</td><td>{mtu}</td><td>{admin_state}</td><td>{link_state}</td><td>{statistics[rx_bytes]} ({statistics[rx_packets]})</td><td>{statistics[tx_bytes]} ({statistics[tx_packets]})</td></tr>"
 
+FLOWCOLS = ["Table", "Duration", "Packets", "Bytes", "Rule"]
+FLOWROW = "<tr><td>{table_id}</td><td>{duration}</td><td>{n_packets}</td><td>{n_bytes}</td><td>{rule}</td></tr>"
+
+MACCOLS = ["Port", "VLAN", "MAC", "Age"]
+MACROW = "<tr><td>{port}</td><td>{vlan}</td><td>{mac}</td><td>{age}</td></tr>"
+
 #####
 ### Core geni-lib monkeypatches
 #####
@@ -168,50 +176,46 @@ def replaceSymbol (module, name, func):
   setattr(module, "_%s" % (name), getattr(module, name))
   setattr(module, name, func)
 
+
 def dumpMACs (self, context, sname, datapaths):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
 
   res = self._dumpMACs(context, sname, datapaths)
-  init = False
-  data = []
-  idx_list = []
-  for k,v in res.iteritems():
-    if not init:
-      cols = v[0]
-      init = True
-    
-    if len(v) > 1:
-      idx_list.append(k)
-    for row in v[2:]:
-      idx_list.append('')
-    data.extend(v[1:])
+  retd = {}
+  for br,table in res.items():
+    rowobjs = []
+    for row in table[1:]:
+      d = {}
+      d["port"] = int(row[0])
+      d["vlan"] = int(row[1])
+      d["mac"] = geni.types.EthernetMAC(row[2])
+      d["age"] = int(row[3])
+      rowobjs.append(d)
+    retd[br] = RetListProxy(rowobjs, MACCOLS, MACROW)
+  return retd
 
-  return pandas.DataFrame.from_records(data, index = idx_list, columns=cols)
 
 def dumpFlows (self, context, sname, datapaths, **kwargs):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
 
   res = self._dumpFlows(context, sname, datapaths, **kwargs)
-  data = []
-  for k,v in res.iteritems():
-    rows = [[y.strip(",") for y in x.split(" ")] for x in v]
-    if len(rows) > 0:
-      rows[0].insert(0, k)
-    for row in rows[1:]:
-      row.insert(0, '')
-    data.extend(rows)
-
-  cols = []
-  cols.append(ColumnInfo("table_id", "table", default = 0, xform = int))
-  cols.append(ColumnInfo("duration", "duration", xform = lambda x: int(x[:-1])))
-  cols.append(ColumnInfo("priority", "priority", xform = int))
-  cols.append(ColumnInfo("n_packets", "packets", default = 0, xform = int))
-  cols.append(ColumnInfo("n_bytes", "bytes", default = 0, xform = int))
-  cols.append(ColumnInfo("_last", "rule"))
-
-  return buildTable(data, cols, ignore_last = True)
+  retd = {}
+  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
+  for brname,table in res.items():
+    rows = [[y.strip(",") for y in x.split(" ")] for x in table]
+    rmaps = []
+    for row in rows:
+      rmap = copy.copy(TEMPLATE)
+      for item in row[:-1]:
+        (key,val) = item.split("=")
+        rmap[key] = val
+      rmap["rule"] = row[-1]
+      rmaps.append(rmap)
+        
+    retd[brname] = RetListProxy(rmaps, FLOWCOLS, FLOWROW)
+  return retd
 
 def getSTPInfo (self, context, sname, datapaths):
   if not isinstance(datapaths, list):

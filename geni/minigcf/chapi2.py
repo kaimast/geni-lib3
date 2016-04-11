@@ -213,3 +213,5 @@ def lookup_aggregates (url, root_bundle, cert, key):
   return _lookup(url, root_bundle, cert, key, "SERVICE", [], options)
 
 
+# def modify_slice_membership (url, root_bundle, cert, key, cred_strings, slice, add = None, del = None, change = None)
+
