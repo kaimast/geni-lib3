@@ -115,8 +115,8 @@ class AdNode(object):
     shared (bool): True if currently being used as a shared resource
     interfaces (list): List of AdInterface objects for this Node
     location (AdLocation): None if not available
-    ram (int): Total system RAM.  None if not available.
-    cpu (int): Per-core CPU speed in Mhz.  None if not available.
+    ram (int): Currently available system RAM in megabytes.  None if not available.
+    cpu (int): Maximum Per-core CPU speed in Mhz.  None if not available.
 
   """
 
@@ -172,9 +172,9 @@ class AdNode(object):
       if name == 'pcshared':
         node.shared = True
       elif name == 'cpu':
-        node.cpu = fd.get("weight")
+        node.cpu = int(fd.get("weight"))
       elif name == 'ram':
-        node.ram = fd.get("weight")
+        node.ram = int(fd.get("weight"))
 
     for intf in elem.xpath('g:interface', namespaces = _XPNS):
       node.interfaces.append(AdInterface._fromdom(intf))
