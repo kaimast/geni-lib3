@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,6 +89,31 @@ class AdInterface(pg.Interface):
 
 
 class AdNode(object):
+  """Wrapper object for a Node in a GENIv3 advertisement.
+  
+  .. note::
+    In general this object is created on-demand through `Advertisement` objects,
+    but you can load this object from a Node XML element by using the `_fromdom`
+    classmethod.
+  
+  Attributes:
+    component_id (str): Component ID URN
+    component_manager_id (str): Component Manager ID URN
+    name (str): Friendly name provided by aggregate for this resource.
+    exclusive (bool): True if a node can be reserved as a raw PC
+    available (bool): Whether this node is currently available for reservations
+    hardware_types (dict): Mapping of { type_name : type_slots, ... }
+    sliver_types (set): Supported sliver type
+    images (dict): Mapping of { sliver_type : [supported_image_name, ...], ... }
+    shared (bool): True if currently being used as a shared resource
+    interfaces (list): List of AdInterface objects for this Node
+    location (AdLocation): None if not available
+    ram (int): Total system RAM.  None if not available.
+    cpu (int): Per-core CPU speed in Mhz.  None if not available.
+
+  """
+
+
   def __init__ (self):
     self.component_id = None
     self.component_manager_id = None
@@ -206,6 +231,15 @@ class RoutableAddresses(object):
 
 
 class Advertisement(object):
+  """Wrapper object for a GENIv3 XML advertisement.
+
+  Only one argument can be supplied (if both are provided `path` will be used)
+
+  Args:
+    path (str, unicode) - Path to XML file on disk containing an advertisement
+    xml (str, unicode) - In-memory XML byte stream containing an advertisement
+  """
+
   def __init__ (self, path = None, xml = None):
     if path:
       self._root = ET.parse(open(path))
@@ -268,6 +302,7 @@ class Advertisement(object):
 
   @property
   def text (self):
+    """Advertisement XML contents as a string, formatted with whitespace for easier reading."""
     return ET.tostring(self._root, pretty_print=True)
 
   def writeXML (self, path):
