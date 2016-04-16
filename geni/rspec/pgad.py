@@ -68,11 +68,18 @@ class Location(object):
 
 
 class AdInterface(pg.Interface):
+  """Wrapper object for a Node Interface in a GENIv3 Advertisement.
+
+  Attributes:
+    component_id (str): Component ID URN
+    role (str): The resource role of this interface (typically
+      "control" or "experimental").  None if unset.
+    name (str): Friendly name for this interface, None if unset.
+  """
   def __init__ (self, name):
     super(AdInterface, self).__init__(name, None)
     self.component_id = None
     self.role = None
-    self.addresses = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -236,8 +243,8 @@ class Advertisement(object):
   Only one argument can be supplied (if both are provided `path` will be used)
 
   Args:
-    path (str, unicode) - Path to XML file on disk containing an advertisement
-    xml (str, unicode) - In-memory XML byte stream containing an advertisement
+    path (str, unicode): Path to XML file on disk containing an advertisement
+    xml (str, unicode): In-memory XML byte stream containing an advertisement
   """
 
   def __init__ (self, path = None, xml = None):
