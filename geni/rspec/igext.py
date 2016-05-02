@@ -56,7 +56,7 @@ class XenVM(Node):
     super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
     self.ram = 512 
-    self.disk = 8
+    self.disk = 0
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)

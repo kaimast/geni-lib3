@@ -24,10 +24,12 @@ class ManifestLink(Link):
     self.interface_refs = []
     self.sliver_id = None
     self.vlan = None
+    self._elem = None
 
   @classmethod
   def _fromdom (cls, elem):
     lnk = ManifestLink()
+    lnk._elem = elem
     lnk.client_id = elem.get("client_id")
     lnk.sliver_id = elem.get("sliver_id")
     lnk.vlan = elem.get("vlantag", None)
@@ -43,6 +45,11 @@ class ManifestLink(Link):
       lnk.vlan = svlans[0].get("name")
 
     return lnk
+
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
 
 class ManifestSvcLogin(object):
   def __init__ (self):
@@ -78,6 +85,7 @@ class ManifestNode(object):
     self.client_id = None
     self.component_id = None
     self.sliver_id = None
+    self._elem = None
 
   @property
   def name (self):
@@ -86,6 +94,7 @@ class ManifestNode(object):
   @classmethod
   def _fromdom (cls, elem):
     n = ManifestNode()
+    n._elem = elem
     n.client_id = elem.get("client_id")
     n.component_id = elem.get("component_id")
     n.sliver_id = elem.get("sliver_id")
@@ -110,6 +119,10 @@ class ManifestNode(object):
       n.interfaces.append(i)
 
     return n
+
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
 
 
 class Manifest(object):

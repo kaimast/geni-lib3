@@ -60,6 +60,6 @@ def poa (url, root_bundle, cert, key, creds, urns, action, options = None):
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
     config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
 
-  return xmlrpclib.loads(resp.content)[0][0]
+  return xmlrpclib.loads(resp.content, use_datetime=True)[0][0]
 
 

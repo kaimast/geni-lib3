@@ -51,7 +51,7 @@ def _corelogininfo (manifest):
 def printlogininfo (context = None, am = None, slice = None, manifest = None):
   """Prints out host login info in the format:
 ::
-  [username] hostname:port
+  [client_id][username] hostname:port
 
 If a manifest object is provided the information will be mined from this data,
 otherwise you must supply a context, slice, and am and a manifest will be
@@ -62,7 +62,7 @@ requested from the given aggregate."""
 
   info = _corelogininfo(manifest)
   for line in info:
-    print("[%s] %s: %d" % (line[1], line[2], line[3]))
+    print("[%s][%s] %s: %d" % (line[0], line[1], line[2], line[3]))
 
 
 # You can't put very much information in a queue before you hang your OS
@@ -236,6 +236,8 @@ def loadContext (path = None, key_passphrase = None):
 
   if path is None:
     path = GCU.getDefaultContextPath()
+  else:
+    path = os.path.expanduser(path)
 
   obj = json.load(open(path, "r"))
   

@@ -133,3 +133,10 @@ class Connection(germ.Connection):
     r = requests.post(url, d, **self.rkwargs)
     return r.json()["value"]
 
+  def setURNLock (self, sliver_urn, user_urn):
+    url = "https://%s:%d/core/admin/vts/sliver/%s/lock" % (self.host, self.port, sliver_urn)
+    d = json.dumps({"user-urn" : user_urn})
+    r = requests.put(url, d, **self.rkwargs)
+    return r.json()["value"]
+
+    

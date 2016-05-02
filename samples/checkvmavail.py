@@ -8,7 +8,7 @@ import geni.util
 
 context = geni.util.loadContext(key_passphrase = True)
 
-OVERLOAD = 38
+OVERLOAD = 57
 
 def query_aggregate (context, site, q):
   try:
@@ -52,22 +52,25 @@ def do_parallel ():
     entries = []
 
     (site_name, res) = pair
-    for (cid, count, typ) in res:
-      if typ == "Xen":
-        used = 100 - int(count)
-        site_xen += used
-        if used >= OVERLOAD:
-          overload_cids.append((cid, used))
-        else:
-          underload_cids.append((cid, used))
-        xen_avail += int(count)
-        xen_used += used
-        xen_total += 100 
-      elif typ == "OpenVZ":
-        site_vz += 100 - int(count)
-        vz_avail += int(count)
-        vz_total += 100
-      entries.append("   [%s] %s/100 (%s)" % (cid, count, typ))
+    try:
+      for (cid, count, typ) in res:
+        if typ == "Xen":
+          used = 100 - int(count)
+          site_xen += used
+          if used >= OVERLOAD:
+            overload_cids.append((cid, used))
+          else:
+            underload_cids.append((cid, used))
+          xen_avail += int(count)
+          xen_used += used
+          xen_total += 100 
+        elif typ == "OpenVZ":
+          site_vz += 100 - int(count)
+          vz_avail += int(count)
+          vz_total += 100
+        entries.append("   [%s] %s/100 (%s)" % (cid, count, typ))
+    except Exception:
+      print res
     print "%02d %s (Used: %d Xen, %d OpenVZ)" % (idx+1, site_name, site_xen, site_vz)
     for entry in entries:
       print entry

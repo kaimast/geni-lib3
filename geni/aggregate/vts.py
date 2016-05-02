@@ -49,8 +49,40 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:add-flows", options={"rules" : flows})
 
   def getSTPInfo (self, context, sname, datapaths):
+    if not isinstance(datapaths, list): datapaths = [datapaths]
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:stp-info",
                            options={"datapaths" : datapaths})
+
+  def getPortInfo (self, context, sname, datapaths):
+    if not isinstance(datapaths, list): datapaths = [datapaths]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:get-port-info",
+                           options={"datapaths" : datapaths})
+
+  def getLeaseInfo (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:get-leases",
+                           options = {"client-ids" : client_ids})
+
+  def setPortVLAN (self, context, sname, port_tuples):
+    if not isinstance(port_tuples, list): port_tuples = [port_tuples]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:set-vlan",
+                           options = {"ports" : port_tuples})
+
+  def addSSHKeys (self, context, sname, client_ids, keys):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    if not isinstance(keys, list): keys = [keys]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:container:add-keys",
+                           options = {"client-ids" : client_ids, "ssh-keys" : keys})
+
+  def setDHCPSubnet (self, context, sname, subnet_tuples):
+    if not isinstance(subnet_tuples, list): subnet_tuples = [subnet_tuples]
+    clid_map = {}
+    for clid,subnet in subnet_tuples:
+      clid_map[clid] = subnet
+
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:set-subnet",
+                           options = {"client-id-map" : clid_map})
+
 
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")

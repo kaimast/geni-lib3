@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,11 +68,18 @@ class Location(object):
 
 
 class AdInterface(pg.Interface):
+  """Wrapper object for a Node Interface in a GENIv3 Advertisement.
+
+  Attributes:
+    component_id (str): Component ID URN
+    role (str): The resource role of this interface (typically
+      "control" or "experimental").  None if unset.
+    name (str): Friendly name for this interface, None if unset.
+  """
   def __init__ (self, name):
     super(AdInterface, self).__init__(name, None)
     self.component_id = None
     self.role = None
-    self.addresses = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -89,6 +96,31 @@ class AdInterface(pg.Interface):
 
 
 class AdNode(object):
+  """Wrapper object for a Node in a GENIv3 advertisement.
+  
+  .. note::
+    In general this object is created on-demand through `Advertisement` objects,
+    but you can load this object from a Node XML element by using the `_fromdom`
+    classmethod.
+  
+  Attributes:
+    component_id (str): Component ID URN
+    component_manager_id (str): Component Manager ID URN
+    name (str): Friendly name provided by aggregate for this resource.
+    exclusive (bool): True if a node can be reserved as a raw PC
+    available (bool): Whether this node is currently available for reservations
+    hardware_types (dict): Mapping of { type_name : type_slots, ... }
+    sliver_types (set): Supported sliver type
+    images (dict): Mapping of { sliver_type : [supported_image_name, ...], ... }
+    shared (bool): True if currently being used as a shared resource
+    interfaces (list): List of AdInterface objects for this Node
+    location (AdLocation): None if not available
+    ram (int): Currently available system RAM in megabytes.  None if not available.
+    cpu (int): Maximum Per-core CPU speed in Mhz.  None if not available.
+
+  """
+
+
   def __init__ (self):
     self.component_id = None
     self.component_manager_id = None
@@ -103,10 +135,12 @@ class AdNode(object):
     self.location = None
     self.ram = None
     self.cpu = None
+    self._elem = None
 
   @classmethod
   def _fromdom (cls, elem):
     node = AdNode()
+    node._elem = elem
     node.component_id = elem.get("component_id")
     node.name = elem.get("component_name")
     node.component_manager_id = elem.get("component_manager_id")
@@ -138,9 +172,9 @@ class AdNode(object):
       if name == 'pcshared':
         node.shared = True
       elif name == 'cpu':
-        node.cpu = fd.get("weight")
+        node.cpu = int(fd.get("weight"))
       elif name == 'ram':
-        node.ram = fd.get("weight")
+        node.ram = int(fd.get("weight"))
 
     for intf in elem.xpath('g:interface', namespaces = _XPNS):
       node.interfaces.append(AdInterface._fromdom(intf))
@@ -151,14 +185,21 @@ class AdNode(object):
 
     return node
 
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
+
 class AdLink(object):
   def __init__ (self):
     self.component_id = None
     self.link_types = set()
+    self._elem = None
 
   @classmethod
   def _fromdom (cls, elem):
     link = AdLink()
+    link._elem = elem
     link.component_id = elem.get("component_id")
 
     ltypes = elem.xpath('g:link_type', namespaces = _XPNS)
@@ -166,6 +207,11 @@ class AdLink(object):
       link.link_types.add(ltype.get("name"))
 
     return link
+
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
 
 class AdSharedVLAN(object):
   def __init__ (self):
@@ -192,6 +238,15 @@ class RoutableAddresses(object):
 
 
 class Advertisement(object):
+  """Wrapper object for a GENIv3 XML advertisement.
+
+  Only one argument can be supplied (if both are provided `path` will be used)
+
+  Args:
+    path (str, unicode): Path to XML file on disk containing an advertisement
+    xml (str, unicode): In-memory XML byte stream containing an advertisement
+  """
+
   def __init__ (self, path = None, xml = None):
     if path:
       self._root = ET.parse(open(path))
@@ -254,6 +309,7 @@ class Advertisement(object):
 
   @property
   def text (self):
+    """Advertisement XML contents as a string, formatted with whitespace for easier reading."""
     return ET.tostring(self._root, pretty_print=True)
 
   def writeXML (self, path):

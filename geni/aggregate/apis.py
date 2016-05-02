@@ -7,14 +7,8 @@
 from __future__ import absolute_import
 
 from .core import APIRegistry
-
-class AMError(Exception):
-  def __init__ (self, text, data = None):
-    super(AMError, self).__init__()
-    self.text = text
-    self.data = data
-  def __str__ (self):
-    return self.text
+from .exceptions import AMError
+from . import pgutil as ProtoGENI
 
 class GetVersionError(AMError): pass
 class DeleteSliverError(AMError): pass
@@ -22,6 +16,7 @@ class CreateSliverError(AMError): pass
 class SliverStatusError(AMError): pass
 class RenewSliverError(AMError): pass
 class ListResourcesError(AMError): pass
+class POAError(AMError): pass
 
 
 class AMAPIv3(object):
@@ -37,7 +32,7 @@ class AMAPIv3(object):
     if res["code"]["geni_code"] == 0:
       return res["value"]
 
-    # TODO: Raise exception
+    raise POAError(res["output"], res)
 
 
 class AMAPIv2(object):
@@ -77,6 +72,9 @@ class AMAPIv2(object):
     res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
     if res["code"]["geni_code"] == 0:
       return res
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
     raise CreateSliverError(res["output"], res)
 
   @staticmethod
