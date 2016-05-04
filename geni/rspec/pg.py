@@ -258,6 +258,7 @@ class Link(Resource):
     self._best_effort = False
     self._ext_children = []
     self._raw_elements = []
+    self.protocol = None
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
@@ -332,6 +333,8 @@ class Link(Resource):
     # pylint: disable=too-many-branches
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
     lnk.attrib["client_id"] = self.client_id
+    if self.protocol:
+      lnk.attrib["protocol"] = self.protocol
 
     for intf in self.interfaces:
       ir = ET.SubElement(lnk, "{%s}interface_ref" % (GNS.REQUEST.name))
