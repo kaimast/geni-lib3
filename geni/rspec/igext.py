@@ -70,11 +70,9 @@ class XenVM(Node):
         xen.attrib["ram"] = str(self.ram)
       if self.disk:
         xen.attrib["disk"] = str(self.disk)
-        pass
     if self.xen_ptype != "":
       pt = ET.SubElement(st, "{%s}xen_ptype" % (PGNS.EMULAB.name))
       pt.attrib["name"] = self.xen_ptype
-      pass
     return nd
 
 pg.Request.EXTENSIONS.append(("XenVM", XenVM))
@@ -127,7 +125,6 @@ class Blockstore(object):
     if self.size:
       if re.match(r"^\d+$", self.size):
         self.size = str(self.size) + "GB"
-        pass
       bse.attrib["size"] = self.size
     bse.attrib["placement"] = self.placement
     if self.readonly:
