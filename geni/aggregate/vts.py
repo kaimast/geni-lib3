@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,6 +67,11 @@ class VTS(AM):
     if not isinstance(port_tuples, list): port_tuples = [port_tuples]
     return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:set-vlan",
                            options = {"ports" : port_tuples})
+
+  def setPortTrunk (self, context, sname, port_list):
+    if not isinstance(port_list, list): port_list = [port_list]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:set-trunk",
+                           options = {"ports" : port_list})
 
   def addSSHKeys (self, context, sname, client_ids, keys):
     if not isinstance(client_ids, list): client_ids = [client_ids]
