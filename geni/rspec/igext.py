@@ -125,7 +125,10 @@ class Blockstore(object):
     bse.attrib["mountpoint"] = self.mount
     bse.attrib["class"] = self.where
     if self.size:
-      bse.attrib["size"] = "%dGB" % (self.size)
+      if re.match(r"^\d+$", self.size):
+        self.size = str(self.size) + "GB"
+        pass
+      bse.attrib["size"] = self.size
     bse.attrib["placement"] = self.placement
     if self.readonly:
       bse.attrib["readonly"] = "true"
