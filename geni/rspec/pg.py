@@ -56,6 +56,10 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
 
+  def addParameterSet (self, parameters):
+    self.addNamespace(Namespaces.EMULAB)
+    self.parameters = parameters
+
   def setCollocateFactor (self, mfactor):
     self.addNamespace(Namespaces.EMULAB)
     self.mfactor = mfactor
@@ -254,6 +258,7 @@ class Link(Resource):
     self._best_effort = False
     self._ext_children = []
     self._raw_elements = []
+    self.protocol = None
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
     self.bandwidth = Link.DEFAULT_BW
@@ -328,6 +333,8 @@ class Link(Resource):
     # pylint: disable=too-many-branches
     lnk = ET.SubElement(root, "{%s}link" % (GNS.REQUEST.name))
     lnk.attrib["client_id"] = self.client_id
+    if self.protocol:
+      lnk.attrib["protocol"] = self.protocol
 
     for intf in self.interfaces:
       ir = ET.SubElement(lnk, "{%s}interface_ref" % (GNS.REQUEST.name))
@@ -586,5 +593,32 @@ class Namespaces(object):
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
+  PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
+  DELAY =  GNS.Namespace("delay", "http://www.protogeni.net/resources/rspec/ext/delay/1")
 
 
+#### DEPRECATED #####
+class XenVM(Node):
+  """
+.. deprecated:: 0.4
+   Use :py:class:`geni.rspec.igext.XenVM` instead."""
+  def __init__ (self, name, component_id = None, exclusive = False):
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("geni.rspec.pg.XenVM is deprecated, please use geni.rspec.igext.XenVM instead",
+                  GW.GENILibDeprecationWarning)
+    super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
+    self.cores = 1
+    self.ram = 256
+    self.disk = 8
+
+  def _write (self, root):
+    nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    xen = ET.SubElement(st, "{%s}xen" % (Namespaces.EMULAB.name))
+    xen.attrib["cores"] = str(self.cores)
+    xen.attrib["ram"] = str(self.ram)
+    xen.attrib["disk"] = str(self.disk)
+    return nd
+
+VM = XenVM

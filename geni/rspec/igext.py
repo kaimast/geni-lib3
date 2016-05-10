@@ -57,11 +57,12 @@ class XenVM(Node):
     self.cores = 1
     self.ram = 512 
     self.disk = 0
+    self.xen_ptype = ""
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
     if self.cores or self.ram or self.disk:
-      st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
       xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
       if self.cores:
         xen.attrib["cores"] = str(self.cores)
@@ -69,6 +70,9 @@ class XenVM(Node):
         xen.attrib["ram"] = str(self.ram)
       if self.disk:
         xen.attrib["disk"] = str(self.disk)
+    if self.xen_ptype != "":
+      pt = ET.SubElement(st, "{%s}xen_ptype" % (PGNS.EMULAB.name))
+      pt.attrib["name"] = self.xen_ptype
     return nd
 
 pg.Request.EXTENSIONS.append(("XenVM", XenVM))
@@ -119,7 +123,9 @@ class Blockstore(object):
     bse.attrib["mountpoint"] = self.mount
     bse.attrib["class"] = self.where
     if self.size:
-      bse.attrib["size"] = "%dGB" % (self.size)
+      if re.match(r"^\d+$", self.size):
+        self.size = str(self.size) + "GB"
+      bse.attrib["size"] = self.size
     bse.attrib["placement"] = self.placement
     if self.readonly:
       bse.attrib["readonly"] = "true"
@@ -140,6 +146,9 @@ class RemoteBlockstore(pg.Node):
     bs.where = "remote"
     self._bs = bs
     self._interface = self.addInterface("if0")
+
+  def _write (self, element):
+    return self._bs._write(super(RemoteBlockstore, self)._write(element));
 
   @property
   def interface (self):
@@ -167,6 +176,40 @@ class RemoteBlockstore(pg.Node):
 
 pg.Request.EXTENSIONS.append(("RemoteBlockstore", RemoteBlockstore))
 
+class Bridge(pg.Node):
+  class Pipe(object):
+    def __init__ (self):
+      self.bandwidth = 0
+      self.latency   = 0
+      self.lossrate  = 0.0
+  
+  def __init__ (self, name):
+    super(Bridge, self).__init__(name, "delay")
+    self.addNamespace(PGNS.DELAY)
+    self.iface0 = self.addInterface("if0")
+    self.pipe0  = self.Pipe();
+    self.iface1 = self.addInterface("if1")
+    self.pipe1  = self.Pipe();
+
+  def _write (self, root):
+    nd = super(Bridge, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    delay = ET.SubElement(st, "{%s}sliver_type_shaping" % (PGNS.DELAY.name))
+    pipe0 = ET.SubElement(delay, "pipe")
+    pipe0.attrib["source"]    = self.iface0.name
+    pipe0.attrib["dest"]      = self.iface1.name
+    pipe0.attrib["capacity"]  = str(self.pipe0.bandwidth)
+    pipe0.attrib["latency"]   = str(self.pipe0.latency)
+    pipe0.attrib["lossrate"]  = str(self.pipe0.lossrate)
+    pipe1 = ET.SubElement(delay, "pipe")
+    pipe1.attrib["source"]    = self.iface1.name
+    pipe1.attrib["dest"]      = self.iface0.name
+    pipe1.attrib["capacity"]  = str(self.pipe1.bandwidth)
+    pipe1.attrib["latency"]   = str(self.pipe1.latency)
+    pipe1.attrib["lossrate"]  = str(self.pipe1.lossrate)
+    return nd;
+
+pg.Request.EXTENSIONS.append(("Bridge", Bridge))
 
 class Firewall(object):
   class Style(object):
@@ -252,6 +295,20 @@ class Tour(object):
       inst.text = self.instructions
       inst.attrib["type"] = self.instructions_type
     return td
+
+
+class ParameterSet(object):
+  def __init__ (self, parameters):
+    self.parameters = parameters
+
+  def _write (self, root):
+    td = ET.SubElement(root, "profile_parameters",
+                       nsmap={None : PGNS.PARAMS.name})
+    for param in self.parameters:
+      if 'hide' in self.parameters[param] and self.parameters[param]['hide'] == False:
+        desc = ET.SubElement(td, "parameter")
+        desc.attrib["name"] = param
+        desc.attrib["value"] = str(self.parameters[param]['value'])
 
 
 class Site(object):

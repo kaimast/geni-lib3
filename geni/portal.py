@@ -17,6 +17,7 @@ import argparse
 from argparse import Namespace
 
 from .rspec import igext
+from .rspec import pgmanifest
 
 class ParameterType (object):
   """Parameter types understood by Context.defineParameter()."""
@@ -30,10 +31,12 @@ class ParameterType (object):
   BANDWIDTH   = "bandwidth"     #: Floating-point number to be used for bandwidth
   LATENCY     = "latency"       #: Floating-point number to be used for latency
   SIZE        = "size"          #: Integer for size (eg. MB, GB, etc.)
+  PUBKEY      = "pubkey"        #: An RSA public key.
+  LOSSRATE    = "lossrate"      #: Floating-point number 0.0 <= N < 1.0
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
-                  LATENCY: float, SIZE: int}
+                  LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float}
 
 class Context (object):
   """Handle context for scripts being run inside a portal.
@@ -78,10 +81,14 @@ class Context (object):
       if tour.useDocstring():
         rspec.addTour(tour)
 
+    if any(self._parameters):
+      parameterSet = igext.ParameterSet(self._parameters)
+      rspec.addParameterSet(parameterSet)
+
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, typ, defaultValue, legalValues = None,
-                       longDescription = None, advanced = False, groupId = None):
+                       longDescription = None, advanced = False, groupId = None, hide=False):
     """Define a new paramter to the script.
 
     The given name will be used when parameters are bound. The description is
@@ -113,7 +120,7 @@ class Context (object):
     self._parameterOrder.append(name)
     self._parameters[name] = {'description': description, 'type': typ,
                               'defaultValue': defaultValue, 'legalValues': legalValues,
-                              'longDescription': longDescription, 'advanced': advanced }
+                              'longDescription': longDescription, 'advanced': advanced, 'hide': hide }
     if groupId is not None:
       self._parameters[name]['groupId'] = groupId
     if len(self._parameters) == 1:
@@ -133,7 +140,7 @@ class Context (object):
     """
     self._parameterGroups[groupId] = groupName
 
-  def bindParameters (self):
+  def bindParameters (self,altParamSrc=None):
     """Returns values for the parameters defined by defineParameter().
 
     Returns a Namespace (like argparse), so if you call foo = bindParameters(), a
@@ -142,9 +149,31 @@ class Context (object):
 
     If run standaline (not in the portal), parameters are pulled from the command
     line (try running with --help); if run in the portal, they are pulled from
-    the portal itself."""
+    the portal itself.  Or, if you provide the altParamSrc argument, you can
+    specify your own parameters.  If altParamSrc is a dict, we will bind the
+    params as a dict, using the keys as parameter names, and the values as
+    parameter values.  If altParamSrc is a geni.rspec.pgmanifest.Manifest, we
+    will extract the parameters and their values from the Manifest.  Finally,
+    if altParamSrc is a string, we'll try to parse it as a PG manifest xml
+    document.  No other forms of altParamSrc are currently specified."""
     self._bindingDone = True
-    if self._standalone:
+    if altParamSrc:
+      if type(altParamSrc) == dict:
+        return self._bindParametersDict(altParamSrc)
+      elif type(altParamSrc) == pgmanifest.Manifest:
+        return self._bindParametersManifest(manifestObj)
+      elif type(altParamSrc) == str:
+        try:
+          manifestObj = pgmanifest.Manifest(xml=altParamSrc)
+          return self._bindParametersManifest(manifestObj)
+        except:
+          ex = sys.exc_info()[0]
+          raise ParameterBindError("assumed str altParamSrc was xml manifest, but"
+                                   " parse error: %s" % (str(ex),))
+      else:
+        raise ParameterBindError("unknown altParamSrc type: %s"
+                                 % (str(type(altParamSrc)),))
+    elif self._standalone:
       return self._bindParametersCmdline()
     else:
       if self._dumpParamsPath:
@@ -230,7 +259,11 @@ class Context (object):
                           default = opts['defaultValue'],
                           choices = legal,
                           help    = opts['description'])
-    return parser.parse_args()
+    args = parser.parse_args()
+    for name in self._parameterOrder:
+      self._parameters[name]['value'] = getattr(args, name)
+
+    return args
 
   def _bindParametersEnv (self):
     namespace = Namespace()
@@ -252,9 +285,52 @@ class Context (object):
         self.reportError(ParameterError("Illegal value '%s'" % (val,), [name]))
       else:
         setattr(namespace, name, val)
+        self._parameters[name]['value'] = val
     # This might not return.
     self.verifyParameters()
     return namespace
+    
+  def _bindParametersDict(self,paramValues):
+    namespace = Namespace()
+    for name in self._parameterOrder:
+      opts = self._parameters[name]
+      val = paramValues.get(name, opts['defaultValue'])
+      try:
+        if type(opts['defaultValue']) == bool:
+          if val == "False" or val == "false":
+            val = False
+          elif val == "True" or val == "true":
+            val = True
+          else:
+            val = ParameterType.argparsemap[opts['type']](val)
+            pass
+          pass
+        else:
+          val = ParameterType.argparsemap[opts['type']](val)
+          pass
+        pass
+      except:
+        print "ERROR: Could not coerce '%s' to '%s'" % (val, opts['type'])
+        continue
+      if opts['legalValues'] and \
+        val not in Context._legalList(opts['legalValues']):
+        print "ERROR: Illegal value '%s'" % (val,),[name]
+      else:
+        setattr(namespace, name, val)
+        self._parameters[name]['value'] = val
+        pass
+      pass
+    # This might not return. 
+    self.verifyParameters()
+    self._bindingDone = True
+    return namespace
+    
+  def _bindParametersManifest(self,manifest):
+    pdict = {}
+    for manifestParameter in manifest.parameters:
+      pdict[manifestParameter.name] = manifestParameter.value
+      pass
+    return self._bindParametersDict(pdict)
 
   def _dumpParamsJSON (self):
     #
@@ -389,3 +465,12 @@ class IllegalParameterDefaultError (PortalError):
 
   def __str__ (self):
     return "% given as a default value, but is not listed as a legal value" % self._val
+
+
+class ParameterBindError (PortalError):
+  def __init__ (self,val):
+    super(ParameterBindError, self).__init__("no message?")
+    self._val = val
+
+  def __str__ (self):
+    return "bad parameter binding: %s" % str(self._val,)

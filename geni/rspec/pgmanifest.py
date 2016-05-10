@@ -16,7 +16,7 @@ from .pg import Namespaces as PGNS
 from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
-         'i' : PGNS.INFO.name }
+         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name}
 
 class ManifestLink(Link):
   def __init__ (self):
@@ -125,6 +125,18 @@ class ManifestNode(object):
     return ET.tostring(self._elem, pretty_print=True)
 
 
+class ManifestParameter(object):
+  def __init__ (self, name, value):
+    super(ManifestParameter, self).__init__()
+    self.name = name
+    self.value = value
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestParameter(elem.get('name'), elem.get('value'))
+    return n
+
+
 class Manifest(object):
   def __init__ (self, path = None, xml = None):
     if path:
@@ -164,6 +176,12 @@ class Manifest(object):
   @property
   def nodes (self):
     return XPathXRange(self.root.findall("{%s}node" % (GNS.REQUEST)), ManifestNode)
+
+  @property
+  def parameters (self):
+    for param in self.root.findall("{%s}profile_parameters/{%s}parameter"
+                                   % (PGNS.PARAMS.name,PGNS.PARAMS.name)):
+      yield ManifestParameter._fromdom(param)
 
   @property
   def text (self):
