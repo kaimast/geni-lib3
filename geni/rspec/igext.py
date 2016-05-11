@@ -157,6 +157,26 @@ class RemoteBlockstore(pg.Node):
   def mountpoint (self):
     return self._bs.mount
 
+  @mountpoint.setter
+  def mountpoint (self, val):
+    self._bs.mount = val
+
+  @property
+  def readonly (self):
+    return self._bs.readonly
+
+  @readonly.setter
+  def readonly (self, val):
+    self._bs.readonly = val
+
+  @property
+  def placement (self):
+    return self._bs.placement
+
+  @placement.setter
+  def placement (self, val):
+    self._bs.placement = val
+
   @property
   def dataset (self):
     return self._bs.dataset
@@ -264,6 +284,20 @@ class Site(object):
     return site
 
 pg.Node.EXTENSIONS.append(("Site", Site))
+
+
+class Desire(object):
+  def __init__ (self, name, weight):
+    self.name = name
+    self.weight = weight
+
+  def _write (self, node):
+    fd = ET.SubElement(node, "{%s}fd" % (PGNS.EMULAB))
+    fd.attrib["name"] = self.name
+    fd.attrib["weight"] = self.weight
+    return fd
+
+pg.Node.EXTENSIONS.append(("Desire", Desire))
 
 
 class Password(Resource):
