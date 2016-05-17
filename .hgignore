@@ -1,0 +1,7 @@
+\.pyc$
+\.swp$
+\.swo$
+docs/build/
+build/
+dist/
+geni_lib.egg-info/
