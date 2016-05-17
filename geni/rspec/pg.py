@@ -204,7 +204,7 @@ class Interface(object):
     def __str__ (self):
       return "Type (%s) is invalid for interface addresses." % (type(self.addr))
 
-  def __init__ (self, name, node):
+  def __init__ (self, name, node, address = None):
     self.client_id = name
     self.node = node
     self.addresses = []
@@ -212,6 +212,8 @@ class Interface(object):
     self.bandwidth = None
     self.latency = None
     self.plr = None
+    if address:
+      self.addAddress(address)
 
   @property
   def name (self):
@@ -549,7 +551,7 @@ class Node(Resource):
 
     return nd
 
-  def addInterface (self, name = None):
+  def addInterface (self, name = None, address = None):
     existingNames = [x.name for x in self.interfaces]
     if name is not None:
       intfName = "%s:%s" % (self.client_id, name)
@@ -562,7 +564,7 @@ class Node(Resource):
     if intfName in existingNames:
       raise Node.DuplicateInterfaceName()
 
-    intf = Interface(intfName, self)
+    intf = Interface(intfName, self, address)
     self.interfaces.append(intf)
     return intf
 
