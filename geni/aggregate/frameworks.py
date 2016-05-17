@@ -8,8 +8,8 @@ from __future__ import absolute_import
 
 import os.path
 
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
+#from cryptography import x509
+#from cryptography.hazmat.backends import default_backend
 
 from .core import FrameworkRegistry
 from .. import tempfile
@@ -145,6 +145,8 @@ class Framework(object):
   @property
   def userurn (self):
     if not self._userurn:
+      from cryptography import x509
+      from cryptography.hazmat.backends import default_backend
       cert = x509.load_pem_x509_certificate(open(self._cert, "rb").read(), default_backend())
       for ext in cert.extensions:
         if ext.oid == x509.SubjectAlternativeName.oid:
