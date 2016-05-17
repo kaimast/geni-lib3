@@ -140,12 +140,14 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 
 
 class RemoteBlockstore(pg.Node):
-  def __init__ (self, name, mount):
+  def __init__ (self, name, mount, ifacename = None):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
     bs = Blockstore("%s-bs" % (self.name), mount)
     bs.where = "remote"
     self._bs = bs
-    self._interface = self.addInterface("if0")
+    if ifacename == None:
+      ifacename = "if0";
+    self._interface = self.addInterface(ifacename)
 
   def _write (self, element):
     return self._bs._write(super(RemoteBlockstore, self)._write(element));
