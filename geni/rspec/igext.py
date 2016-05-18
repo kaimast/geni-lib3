@@ -140,13 +140,11 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 
 
 class RemoteBlockstore(pg.Node):
-  def __init__ (self, name, mount, ifacename = None):
+  def __init__ (self, name, mount, ifacename = "if0"):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
     bs = Blockstore("%s-bs" % (self.name), mount)
     bs.where = "remote"
     self._bs = bs
-    if ifacename == None:
-      ifacename = "if0";
     self._interface = self.addInterface(ifacename)
 
   def _write (self, element):
@@ -205,12 +203,13 @@ class Bridge(pg.Node):
       self.latency   = 0
       self.lossrate  = 0.0
   
-  def __init__ (self, name):
+  def __init__ (self, name, if0name = "if0", if1name = "if1"):
     super(Bridge, self).__init__(name, "delay")
     self.addNamespace(PGNS.DELAY)
-    self.iface0 = self.addInterface("if0")
+    
+    self.iface0 = self.addInterface(if0name)
     self.pipe0  = self.Pipe();
-    self.iface1 = self.addInterface("if1")
+    self.iface1 = self.addInterface(if1name)
     self.pipe1  = self.Pipe();
 
   def _write (self, root):
@@ -230,6 +229,19 @@ class Bridge(pg.Node):
     pipe1.attrib["latency"]   = str(self.pipe1.latency)
     pipe1.attrib["lossrate"]  = str(self.pipe1.lossrate)
     return nd;
+
+  def pipe (self, which):
+    if int(which) == 0:
+      return self.pipe0
+    else:
+      return self.pipe1
+  
+  def interface (self, which):
+    which = self.client_id + ":" + which
+    if self.iface0.name == which:
+      return self.iface0
+    else:
+      return self.iface1
 
 pg.Request.EXTENSIONS.append(("Bridge", Bridge))
 
