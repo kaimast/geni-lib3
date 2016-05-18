@@ -230,8 +230,10 @@ class Bridge(pg.Node):
     pipe1.attrib["lossrate"]  = str(self.pipe1.lossrate)
     return nd;
 
+  # pipe0 goes with iface0, and pipe1 goes with iface1
   def pipe (self, which):
-    if int(which) == 0:
+    which = self.client_id + ":" + which
+    if self.iface0.name == which:
       return self.pipe0
     else:
       return self.pipe1
