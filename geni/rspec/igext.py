@@ -216,13 +216,13 @@ class Bridge(pg.Node):
     nd = super(Bridge, self)._write(root)
     st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
     delay = ET.SubElement(st, "{%s}sliver_type_shaping" % (PGNS.DELAY.name))
-    pipe0 = ET.SubElement(delay, "pipe")
+    pipe0 = ET.SubElement(delay, "{%s}pipe" % (PGNS.DELAY.name))
     pipe0.attrib["source"]    = self.iface0.name
     pipe0.attrib["dest"]      = self.iface1.name
     pipe0.attrib["capacity"]  = str(self.pipe0.bandwidth)
     pipe0.attrib["latency"]   = str(self.pipe0.latency)
     pipe0.attrib["lossrate"]  = str(self.pipe0.lossrate)
-    pipe1 = ET.SubElement(delay, "pipe")
+    pipe1 = ET.SubElement(delay, "{%s}pipe" % (PGNS.DELAY.name))
     pipe1.attrib["source"]    = self.iface1.name
     pipe1.attrib["dest"]      = self.iface0.name
     pipe1.attrib["capacity"]  = str(self.pipe1.bandwidth)
