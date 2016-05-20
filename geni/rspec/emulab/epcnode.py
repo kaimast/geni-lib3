@@ -22,6 +22,7 @@ class _EPCDEFS(object):
 #
 class _EPCBaseNode(object):
     _hwtype = None
+    _image = PNDEFS.PNETIMG_URN_PREFIX + PNDEFS.DEF_BINOEPC_IMG
     _rspec = None
 
     def __init__ (self, client_id, role, hname = None, component_id = None,
@@ -33,7 +34,6 @@ class _EPCBaseNode(object):
         super(_EPCBaseNode, self).__init__(client_id, component_id = component_id)
         self.role = role
         self.hname = hname
-        self.disk_image = PNDEFS.PNETIMG_URN_PREFIX + PNDEFS.DEF_BINOEPC_IMG
         self.startscript = _EPCDEFS.OEPC_STARTSCRIPT
         self.prehook = prehook
         self.posthook = posthook
@@ -45,6 +45,10 @@ class _EPCBaseNode(object):
         klass._hwtype = hwtype
 
     @classmethod
+    def setImage(klass, img):
+        klass._image = img
+
+    @classmethod
     def bindRSpec(klass, rspec):
         if type(rspec) != Request:
             raise InvalidRequestRSpec()
@@ -53,6 +57,8 @@ class _EPCBaseNode(object):
     def _write(self, root):
         if not self.hardware_type and self._hwtype:
             self.hardware_type = self._hwtype
+        if not self.disk_image and self._image:
+            self.disk_image = self._image
         startcmd = "%s %s -r %s" % (_EPCDEFS.SUDOBIN, self.startscript, 
                                     self.role)
         if self.hname:
