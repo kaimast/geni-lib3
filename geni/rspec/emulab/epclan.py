@@ -52,8 +52,8 @@ class EPClan(LAN):
     def isMember(self, node):
         for intf in self.interfaces:
             if intf.node == node:
-                return 1
-        return 0
+                return True
+        return False
 
     def addMember(self, node, bandwidth = 0, latency = 0):
         intf = node.addInterface(self.client_id)
