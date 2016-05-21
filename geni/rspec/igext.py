@@ -51,13 +51,14 @@ class XenVM(Node):
     cores (int): Number of CPU cores
     ram (int): Amount of memory in megabytes
     disk (int): Amount of disk space in gigabytes
+    xen_ptype (str): Physical node type on which to instantiate the VM. Types are AM-specific.
   """
   def __init__ (self, client_id, component_id = None, exclusive = False):
     super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
     self.ram = 512 
     self.disk = 0
-    self.xen_ptype = ""
+    self.xen_ptype = None
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)
@@ -70,7 +71,7 @@ class XenVM(Node):
         xen.attrib["ram"] = str(self.ram)
       if self.disk:
         xen.attrib["disk"] = str(self.disk)
-    if self.xen_ptype != "":
+    if self.xen_ptype is not None:
       pt = ET.SubElement(st, "{%s}xen_ptype" % (PGNS.EMULAB.name))
       pt.attrib["name"] = self.xen_ptype
     return nd
