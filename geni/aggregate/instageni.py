@@ -15,6 +15,8 @@ class IGCompute(AM):
   def __init__ (self, name, host, cmid = None, url = None):
     if url is None:
       url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
+    self.urlv3 = "%s3.0" % (url[:-3])
+    self._apiv3 = APIRegistry.get("amapiv3")
     super(IGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
 
   def geniRestart (self, context, sname, urns):

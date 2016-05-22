@@ -6,6 +6,7 @@
 
 from .exceptions import AMError
 
+# pylint: disable=multiple-statements
 class ProtoGENIError(AMError): pass
 
 class VLANUnavailableError(ProtoGENIError): pass
@@ -13,6 +14,7 @@ class InsufficientBandwidthError(ProtoGENIError): pass
 class InsufficientNodesError(ProtoGENIError): pass
 class InsufficientMemoryError(ProtoGENIError): pass
 class NoMappingError(ProtoGENIError): pass
+# pylint: enable=multiple-statements
 
 def raiseError(res):
   amcode = res["code"]["am_code"]
