@@ -27,7 +27,7 @@ class HTTP(object):
 def dumps_with_log (*args, **kwargs):
   req_data = xmlrpclib._dumps(*args, **kwargs)
   if isinstance(HTTP.LOG_RAW_REQUESTS, tuple):
-    HTTP.LOG_RAW_REQUESTS[0].log(HTTP.LOG_RAW_REQUESTS[1], req_data)
+    HTTP.LOG_RAW_REQUESTS[0].log(HTTP.LOG_RAW_REQUESTS[1], req_data) # pylint: disable=unsubscriptable-object
   return req_data
 
 setattr(xmlrpclib, "_dumps", getattr(xmlrpclib, "dumps"))

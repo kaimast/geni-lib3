@@ -28,6 +28,7 @@ class TLS1HttpAdapter(HTTPAdapter):
 def headers ():
   return GCU.defaultHeaders()
 
+# pylint: disable=unsubscriptable-object
 def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
   req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
   s = requests.Session()
