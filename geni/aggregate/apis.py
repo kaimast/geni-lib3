@@ -23,7 +23,7 @@ class POAError(AMError): pass
 
 class AMAPIv3(object):
   @staticmethod
-  def poa (context, url, sname, action, urns = [], options = None):
+  def poa (context, url, sname, action, urns = None, options = None):
     from ..minigcf import amapi3 as AM3
 
     sinfo = context.getSliceInfo(sname)

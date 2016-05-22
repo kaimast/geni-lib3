@@ -195,8 +195,8 @@ def builddot (manifests):
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
-              intf_map[ref][0].sliver_id, name,
-              intf_map[ref][1].component_id.split(":")[-1]))
+            intf_map[ref][0].sliver_id, name,
+            intf_map[ref][1].component_id.split(":")[-1]))
           dda("\"%s\" -> \"%s\"" % (name, intf_map[ref][0].sliver_id))
 
 
@@ -240,7 +240,7 @@ def loadContext (path = None, key_passphrase = None):
     path = os.path.expanduser(path)
 
   obj = json.load(open(path, "r"))
-  
+
   version = _getdefault(obj, "version", 1)
 
   if key_passphrase is True:

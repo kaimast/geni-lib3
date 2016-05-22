@@ -48,11 +48,13 @@ class Member(object):
 
     try:
       self.uid = project_info["PROJECT_MEMBER_UID"]
-    except KeyError: pass
+    except KeyError:
+      pass
 
     try:
       self.emulab_role = project_info["PROJECT_EMULAB_ROLE"]
-    except KeyError: pass
+    except KeyError:
+     pass
 
 
 class _MemberRegistry(object):
