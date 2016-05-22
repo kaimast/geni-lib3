@@ -41,7 +41,7 @@ Add to link objects using the Link.addChild() method.
 
 class XenVM(Node):
   """Xen-based Virtual Machine resource
-  
+
   Args:
     client_id (str): Your name for this VM.  This must be unique within a single `Request` object.
     component_id (Optional[str]): The `component_id` of the site node you want to bind this VM to
@@ -55,7 +55,7 @@ class XenVM(Node):
   def __init__ (self, client_id, component_id = None, exclusive = False):
     super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
-    self.ram = 512 
+    self.ram = 512
     self.disk = 0
 
   def _write (self, root):
@@ -236,12 +236,12 @@ class Tour(object):
     # Type can markdown
     self.instructions_type = Tour.TEXT
 
-  def Description(self, type, desc):
-    self.description_type = type
+  def Description(self, typ, desc):
+    self.description_type = typ
     self.description = desc
 
-  def Instructions(self, type, inst):
-    self.instructions_type = type
+  def Instructions(self, typ, inst):
+    self.instructions_type = typ
     self.instructions = inst
 
   def useDocstring(self, module = None):

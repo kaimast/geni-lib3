@@ -10,6 +10,7 @@ from .core import APIRegistry
 from .exceptions import AMError
 from . import pgutil as ProtoGENI
 
+# pylint: disable=multiple-statements
 class GetVersionError(AMError): pass
 class DeleteSliverError(AMError): pass
 class CreateSliverError(AMError): pass
@@ -17,6 +18,7 @@ class SliverStatusError(AMError): pass
 class RenewSliverError(AMError): pass
 class ListResourcesError(AMError): pass
 class POAError(AMError): pass
+# pylint: enable=multiple-statements
 
 
 class AMAPIv3(object):

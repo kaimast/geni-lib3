@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@ from __future__ import absolute_import
 import inspect
 import sys
 
-from .core import AM
+from .core import AM, APIRegistry
 
 class IGCompute(AM):
   def __init__ (self, name, host, cmid = None, url = None):
