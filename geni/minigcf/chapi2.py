@@ -39,7 +39,8 @@ def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
     config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
 
-def get_version (url, root_bundle, cert, key, options = {}):
+def get_version (url, root_bundle, cert, key, options = None):
+  if not options: options = {}
   req_data = xmlrpclib.dumps(tuple(), methodname = "get_version")
   s = requests.Session()
   s.mount(url, TLS1HttpAdapter())

@@ -286,7 +286,8 @@ class Link(Resource):
   def enableVlanTagging (self):
     import geni.warnings as GW
     import warnings
-    warnings.warn("Link.enableVlanTagging() is deprecated, please use the Link.vlan_tagging attribute instead.")
+    warnings.warn("Link.enableVlanTagging() is deprecated, please use the Link.vlan_tagging attribute instead.",
+                  GW.GENILibDeprecationWarning, 2)
     self.vlan_tagging = True
 
   @property

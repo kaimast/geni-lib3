@@ -97,12 +97,12 @@ class AdInterface(pg.Interface):
 
 class AdNode(object):
   """Wrapper object for a Node in a GENIv3 advertisement.
-  
+
   .. note::
     In general this object is created on-demand through `Advertisement` objects,
     but you can load this object from a Node XML element by using the `_fromdom`
     classmethod.
-  
+
   Attributes:
     component_id (str): Component ID URN
     component_manager_id (str): Component Manager ID URN

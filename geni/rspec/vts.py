@@ -92,6 +92,7 @@ class DelayInfo(object):
 
 class LossInfo(object):
   def __init__ (self, percent):
+    self._percent = None
     self.percent = percent
 
   @property

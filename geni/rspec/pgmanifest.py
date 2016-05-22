@@ -176,7 +176,7 @@ class Manifest(object):
   <tr><th scope="row">Nodes</th><td>%d</td></tr>
   <tr><th scope="row">Links</th><td>%d</td></tr>
   <tr><th scope="row">Location</th><td>%s, %s</td></tr>
-</table>""" % (self.expiresstr, len(self.nodes), len(self.links), 
+</table>""" % (self.expiresstr, len(self.nodes), len(self.links),
                self.latitude, self.longitude)
 
   def write (self, path):
