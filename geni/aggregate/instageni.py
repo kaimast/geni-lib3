@@ -63,6 +63,7 @@ UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:ID
 UTC = IGCompute("ig-utc", "instageni.utc.edu", "urn:publicid:IDN+instageni.utc.edu+authority+cm")
 UWashington = IGCompute("ig-uwashington", "instageni.washington.edu", "urn:publicid:IDN+instageni.washington.edu+authority+cm")
 Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+instageni.wisc.edu+authority+cm")
+UKYMCV = IGCompute('ig-ukymcv', 'mcv.sdn.uky.edu', 'urn:publicid:IDN+mcv.sdn.uky.edu+authority+cm')
 
 def aggregates ():
   module = sys.modules[__name__]
