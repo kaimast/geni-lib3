@@ -4,6 +4,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
+import geni.urn
+import geni.aggregate.protogeni
+
 #
 # Static set of EPC roles
 #
@@ -30,6 +35,5 @@ class EPCLANS(object):
 # Other global constants
 #
 class PNDEFS(object):
-    PNETIMG_URN_PREFIX = "urn:publicid:IDN+emulab.net+image+PhantomNet:"
-    SYSTEMIMG_URN_PREFIX = "urn:publicid:IDN+emulab.net+image+emulab-ops:"
-    DEF_BINOEPC_IMG = PNETIMG_URN_PREFIX + "UBUNTU12-64-BINOEPC"
+    PNET_AM = geni.aggregate.protogeni.UTAH_PG
+    DEF_BINOEPC_IMG = geni.urn.Image(PNET_AM, "PhantomNet:UBUNTU12-64-BINOEPC")

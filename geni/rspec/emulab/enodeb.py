@@ -6,8 +6,9 @@
 
 from __future__ import absolute_import
 
-from ..pg import RawPC
+from ..pg import RawPC, Request
 from .pndefs import PNDEFS
+import geni.urn
 
 class eNodeB(RawPC):
     _ENODEB_OS = "GENERICDEV-NOVLANS"
@@ -15,4 +16,6 @@ class eNodeB(RawPC):
     def __init__ (self, client_id, component_id = None):
         super(eNodeB, self).__init__(client_id, component_id = component_id)
         self.hardware_type = "enodeb"  # set hwtype to general eNB node class.
-        self.disk_image = PNDEFS.SYSTEMIMG_URN_PREFIX + eNodeB._ENODEB_OS
+        self.disk_image = geni.urn.Image(PNDEFS.PNET_AM, eNodeB._ENODEB_OS)
+
+Request.EXTENSIONS.append(("eNodeB", eNodeB))

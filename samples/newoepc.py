@@ -9,6 +9,7 @@ import geni.rspec.emulab.pnext as PN
 # Global variables that should remain relatively static
 #
 class GLOBALS(object):
+    EPCIMG = PN.PNDEFS.DEF_BINOEPC_IMG
     VM_COLLOCATE_FACTOR = 10  # Number of VMs to pack onto a phys node.
 
 #
@@ -16,18 +17,6 @@ class GLOBALS(object):
 # to request in our experiment, and their configuration.
 #
 rspec = PG.Request()
-
-#
-# Setup some aliases.
-#
-NET_MGMT = PN.EPCLANS.MGMT
-NET_A    = PN.EPCLANS.NET_A
-NET_B    = PN.EPCLANS.NET_B
-NET_C    = PN.EPCLANS.NET_C
-NET_D    = PN.EPCLANS.NET_D
-AN_LTE   = PN.EPCLANS.AN_LTE
-
-addtolan = PN.EPClan.addToLAN
 
 #
 # This geni-lib script is designed to run in the PhantomNet Portal.
@@ -94,7 +83,7 @@ pc.defineParameter("HWTYPE","Node Hardware Type",
                    longDescription="Specify which node resource type to use for OpenEPC nodes. Note that only those types that are compatible with the OpenEPC image(s) are listed.")
 
 pc.defineParameter("LINKBW","Default Link Bandwidth (Mbps)",
-                   portal.ParameterType.BANDWIDTH, 0,
+                   portal.ParameterType.INTEGER, 0,
                    longDescription="Specify the default LAN bandwidth in Mbps for all EPC LANs. Leave at \"0\" to indicate \"best effort\". Values that do not line up with common physical interface speeds (e.g. 10, 100, or 1000) WILL cause the insertion of link shaping elements.",
                    advanced=True)
 
@@ -133,69 +122,79 @@ pc.verifyParameters()
 params.LINKBW *= 1000
 
 #
-# Bind node class alias to use physical nodes by default.
-#
-epcnode = PN.EPCNode
-
-#
 # Switch up some settings if VMs were requested.
 #
+usevms = False
 if params.HWTYPE.find("vm") >= 0:
+    usevms = True
+    PN.EPCNodeFactorySettings.use_vm_nodes = True
     params.HWTYPE = params.HWTYPE.replace("vm","")
     rspec.setCollocateFactor(GLOBALS.VM_COLLOCATE_FACTOR)
     rspec.setPackingStrategy("pack")
-    PN.EPClan.usevmlans(1) # Tell EPC LAN class we are using VMs.
-    mynode = PN.EPCVMNode  # Bind alias to VM node class.
 
 #
-# Bind the rspec to the convenience classes before we use them below.
+# Set the hardware and image for the epc node factory function
 #
-epcnode.bindRSpec(rspec)
-PN.EPClan.bindRSpec(rspec)
+PN.EPCNodeFactorySettings.hardware_type = params.HWTYPE
+PN.EPCNodeFactorySettings.disk_image = GLOBALS.EPCIMG
 
 #
-# Bind the hardware type and image URN in the EPC node convenience class.
-# Doing this is not strictly necessary; the hwtype and image can be set
-# on nodes individually.  However, since normally the EPC node image
-# and hardware type will be homogeneous, we set these here for conciseness.
+# Create the lans we need
 #
-epcnode.setHWType(params.HWTYPE)
-epcnode.setImage(PN.PNDEFS.DEF_BINOEPC_IMG)
+mgmt = rspec.EPClan(PN.EPCLANS.MGMT, vmlan = usevms)
+net_a = rspec.EPClan(PN.EPCLANS.NET_A, vmlan = usevms)
+net_a.bandwidth = params.LINKBW
+net_b = rspec.EPClan(PN.EPCLANS.NET_B, vmlan = usevms)
+net_b.bandwidth = params.LINKBW
+net_d = rspec.EPClan(PN.EPCLANS.NET_D, vmlan = usevms)
+net_d.bandwidth = params.LINKBW
+an_lte = rspec.EPClan(PN.EPCLANS.AN_LTE, vmlan = usevms)
+an_lte.bandwidth = params.LINKBW
 
 #
 # Add the core EPC nodes
 #
 
 # epc-enablers node
-epcen = epcnode("epc", PN.EPCROLES.ENABLERS)
-addtolan(NET_A, epcen)
+epcen = PN.mkepcnode("epc", PN.EPCROLES.ENABLERS)
+rspec.addResource(epcen)
+mgmt.addMember(epcen)
+net_a.addMember(epcen)
 
 # pgw node
-pgw = epcnode("pgw", PN.EPCROLES.PGW)
-addtolan(NET_A, pgw)
-addtolan(NET_B, pgw)
+pgw = PN.mkepcnode("pgw", PN.EPCROLES.PGW)
+rspec.addResource(pgw)
+mgmt.addMember(pgw)
+net_a.addMember(pgw)
+net_b.addMember(pgw)
 
 # sgw-mme-sgsn node
-sgw = epcnode("sgw", PN.EPCROLES.SGW_MME_SGSN)
-addtolan(NET_B, sgw)
-addtolan(NET_D, sgw)
+sgw = PN.mkepcnode("sgw", PN.EPCROLES.SGW_MME_SGSN)
+rspec.addResource(sgw)
+mgmt.addMember(sgw)
+net_b.addMember(sgw)
+net_d.addMember(sgw)
 
 #
 # Create the requested number of eNodeB nodes
 #
 for i in range(1, params.NUMENB + 1):
     ename = "enb%d" % i
-    enb = epcnode(ename, PN.EPCROLES.ENODEB, hname = ename)
-    addtolan(NET_D, enb)
-    addtolan(AN_LTE, enb)
+    enb = PN.mkepcnode(ename, PN.EPCROLES.ENODEB, hname = ename)
+    rspec.addResource(enb)
+    mgmt.addMember(enb)
+    net_d.addMember(enb)
+    an_lte.addMember(enb)
 
 #
 # Now pop in the requested number of emulated clients (UEs).
 #
 for i in range(1, params.NUMCLI + 1):
     cname = "client%d" % i
-    client = epcnode(cname, PN.EPCROLES.CLIENT, hname = cname)
-    addtolan(AN_LTE, client)
+    client = PN.mkepcnode(cname, PN.EPCROLES.CLIENT, hname = cname)
+    rspec.addResource(client)
+    mgmt.addMember(client)
+    an_lte.addMember(client)
 
 #
 # Print and go!

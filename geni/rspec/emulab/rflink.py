@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import
 
-from ..pg import Link
+from ..pg import Link, Request
 
 #
 # Class to hide the idiosynchrasies of PhantomNet RF links.
@@ -20,3 +20,5 @@ class RFLink(Link):
         lnk = super(RFLink, self)._write(root)
         lnk.attrib["protocol"] = "P2PLTE"
         return lnk
+
+Request.EXTENSIONS.append(("RFLink", RFLink))
