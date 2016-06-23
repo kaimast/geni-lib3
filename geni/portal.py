@@ -18,6 +18,7 @@ from argparse import Namespace
 
 from .rspec import igext
 from .rspec import pgmanifest
+from .rspec.pg import Request
 
 class ParameterType (object):
   """Parameter types understood by Context.defineParameter()."""
@@ -63,6 +64,7 @@ class Context (object):
       return cls._instance
 
   def __init__ (self):
+    self._request = None
     self._parameters = {}
     self._parameterGroups = {}
     self._parameterOrder = []
@@ -81,8 +83,25 @@ class Context (object):
       self._standalone = True
       self._portalRequestPath = None
 
-  def printRequestRSpec (self, rspec):
-    """Print the given request RSpec.
+  def bindRequestRSpec (self, rspec):
+    """Bind the given request RSpec to the context, so that it can be
+    automatically used with methods like printRequestRSpec.
+
+    At the present time, only one request can be bound to a context"""
+    if self._request is None:
+      self._request = rspec
+    else:
+      raise MultipleRSpecError
+
+  def makeRequestRSpec (self):
+    """Make a new request RSpec, bind it to this context, and return it"""
+    rspec = Request()
+    self.bindRequestRSpec(rspec)
+    return rspec
+
+  def printRequestRSpec (self, rspec = None):
+    """Print the given request RSpec, or the one bound to this context if none
+    is given.
 
     If run standalone (not in the portal), the request will be printed to the
     standard output; if run in the portal, it will be placed someplace the
@@ -90,6 +109,12 @@ class Context (object):
 
     If the given rspec does not have a Tour object, this will attempt to
     build one from the file's docstring"""
+    if rspec is None:
+      if self._request is not None:
+        rspec = self._request
+      else:
+        raise NoRSpecError("None supplied or bound to context")
+
     if not rspec.hasTour():
       tour = igext.Tour()
       if tour.useDocstring():
@@ -496,3 +521,18 @@ class ParameterBindError (PortalError):
     return "bad parameter binding: %s" % str(self._val,)
 
 
+class NoRSpecError (PortalError):
+  def __init__ (self,val):
+    super(NoRSpecError, self).__init__("no message?")
+    self._val = val
+
+  def __str__ (self):
+    return "No RSpec given: %s" % str(self._val,)
+
+class MultipleRSpecError (PortalError):
+  def __init__ (self,val):
+    super(MultipleRSpecError, self).__init__("no message?")
+    self._val = val
+
+  def __str__ (self):
+    return "Only one RSpec can be bound to a portal.Context"
