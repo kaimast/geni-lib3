@@ -48,6 +48,16 @@ class Context (object):
   portal), in which case they take parameters on the command line and put
   RSpecs on the standard output."""
 
+  """This is a singleton class; only one can exist at a time
+
+  This is implemented by overriding __new__"""
+  _instance = None
+  def __new__(cls, *args, **kwargs):
+      if not cls._instance:
+          cls._instance = super(Context, cls).__new__(
+                  cls, *args, **kwargs)
+      return cls._instance
+
   def __init__ (self):
     self._parameters = {}
     self._parameterGroups = {}
@@ -362,6 +372,12 @@ class Context (object):
       warnings.warn("Parameters were defined, but never bound with " +
                     " bindParameters()", RuntimeWarning)
 
+#
+# Module-global context object - most users of this module should simply use
+# this rather than trying to create a new Context object
+#
+context = Context()
+
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):
     if isinstance(o,PortalError):
@@ -474,3 +490,5 @@ class ParameterBindError (PortalError):
 
   def __str__ (self):
     return "bad parameter binding: %s" % str(self._val,)
+
+
