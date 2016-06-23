@@ -58,10 +58,9 @@ class Context (object):
   This is implemented by overriding __new__"""
   _instance = None
   def __new__(cls, *args, **kwargs):
-      if not cls._instance:
-          cls._instance = super(Context, cls).__new__(
-                  cls, *args, **kwargs)
-      return cls._instance
+    if not cls._instance:
+      cls._instance = super(Context, cls).__new__(cls, *args, **kwargs)
+    return cls._instance
 
   def __init__ (self):
     self._request = None
