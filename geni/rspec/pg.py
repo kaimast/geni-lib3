@@ -574,12 +574,13 @@ class Node(Resource):
   def addRawElement (self, elem):
     self._raw_elements.append(elem)
 
+Request.EXTENSIONS.append(("Node", Node))
 
 class RawPC(Node):
   def __init__ (self, name, component_id = None):
     super(RawPC, self).__init__(name, NodeType.RAW, component_id = component_id, exclusive = True)
 
-
+Request.EXTENSIONS.append(("RawPC", RawPC))
 
 class VZContainer(Node):
   def __init__ (self, name, exclusive = False):
