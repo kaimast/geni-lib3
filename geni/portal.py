@@ -43,11 +43,15 @@ class Context (object):
   """Handle context for scripts being run inside a portal.
 
   This class handles context for the portal, including where to put output
-  RSpecs and handling parameterized scripts.
+  RSpecs and handling parameterized scripts. 
 
   Scripts using this class can also be run "standalone" (ie. not by the
   portal), in which case they take parameters on the command line and put
   RSpecs on the standard output.
+
+  If a request RSpec is bound to a Context (using bindRequestRSpec() or
+  makeRequestRSpec()), the object arranges for the request to automatically
+  be output at the termination of the program.
   
   This class is a singleton. Most programs should access it through the
   portal.context variable; any additional "instances" of the object will
@@ -64,6 +68,7 @@ class Context (object):
 
   def __init__ (self):
     self._request = None
+    self._suppressAutoPrint = False
     self._parameters = {}
     self._parameterGroups = {}
     self._parameterOrder = []
@@ -89,6 +94,7 @@ class Context (object):
     At the present time, only one request can be bound to a context"""
     if self._request is None:
       self._request = rspec
+      atexit.register(self._autoPrintRequest)
     else:
       raise MultipleRSpecError
 
@@ -122,6 +128,8 @@ class Context (object):
     if any(self._parameters):
       parameterSet = igext.ParameterSet(self._parameters)
       rspec.addParameterSet(parameterSet)
+
+    self._suppressAutoPrint = True
 
     rspec.writeXML(self._portalRequestPath)
 
@@ -399,6 +407,10 @@ class Context (object):
     if len(self._parameters) > 0 and not self._bindingDone:
       warnings.warn("Parameters were defined, but never bound with " +
                     " bindParameters()", RuntimeWarning)
+
+  def _autoPrintRequest (self):
+    if not self._suppressAutoPrint:
+      self.printRequestRSpec()
 
 #
 # Module-global context object - most users of this module should simply use
