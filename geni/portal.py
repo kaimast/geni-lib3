@@ -46,7 +46,11 @@ class Context (object):
 
   Scripts using this class can also be run "standalone" (ie. not by the
   portal), in which case they take parameters on the command line and put
-  RSpecs on the standard output."""
+  RSpecs on the standard output.
+  
+  This class is a singleton. Most programs should access it through the
+  portal.context variable; any additional "instances" of the object will
+  be references to this."""
 
   """This is a singleton class; only one can exist at a time
 
