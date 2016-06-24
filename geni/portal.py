@@ -49,10 +49,6 @@ class Context (object):
   portal), in which case they take parameters on the command line and put
   RSpecs on the standard output.
 
-  If a request RSpec is bound to a Context (using bindRequestRSpec() or
-  makeRequestRSpec()), the object arranges for the request to automatically
-  be output at the termination of the program.
-  
   This class is a singleton. Most programs should access it through the
   portal.context variable; any additional "instances" of the object will
   be references to this."""
@@ -94,7 +90,10 @@ class Context (object):
     At the present time, only one request can be bound to a context"""
     if self._request is None:
       self._request = rspec
-      atexit.register(self._autoPrintRequest)
+      # This feature removed until we can think through all the corner cases
+      # better
+      #sys.excepthook = self._make_excepthook()
+      #atexit.register(self._autoPrintRequest)
     else:
       raise MultipleRSpecError
 
@@ -419,7 +418,12 @@ class Context (object):
     if not self._suppressAutoPrint:
       self.printRequestRSpec()
 
-
+  def _make_excepthook (self):
+    old_excepthook = sys.excepthook
+    def _excepthook(type, value, traceback):
+      self.suppressAutoPrint()
+      return old_excepthook(type, value, traceback)
+    return _excepthook
 
 #
 # Module-global context object - most users of this module should simply use
