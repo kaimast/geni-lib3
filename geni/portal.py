@@ -288,6 +288,13 @@ class Context (object):
       retcode += len(self._parameterWarnings)
     sys.exit(100+retcode)
 
+  def suppressAutoPrint (self):
+    """
+    Suppress the automatic printing of the bound RSpec that normally happens
+    when the program exits.
+    """
+    self._suppressAutoPrint = True
+
   @staticmethod
   def _legalList(l):
     return [x if not isinstance(x, tuple) else x[0] for x in l]
@@ -411,6 +418,8 @@ class Context (object):
   def _autoPrintRequest (self):
     if not self._suppressAutoPrint:
       self.printRequestRSpec()
+
+
 
 #
 # Module-global context object - most users of this module should simply use
