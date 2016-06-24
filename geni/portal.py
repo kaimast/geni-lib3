@@ -94,6 +94,7 @@ class Context (object):
     At the present time, only one request can be bound to a context"""
     if self._request is None:
       self._request = rspec
+      sys.excepthook = self._make_excepthook()
       atexit.register(self._autoPrintRequest)
     else:
       raise MultipleRSpecError
@@ -419,7 +420,12 @@ class Context (object):
     if not self._suppressAutoPrint:
       self.printRequestRSpec()
 
-
+  def _make_excepthook (self):
+    old_excepthook = sys.excepthook
+    def _excepthook(type, value, traceback):
+      self.suppressAutoPrint()
+      return old_excepthook(type, value, traceback)
+    return _excepthook
 
 #
 # Module-global context object - most users of this module should simply use
