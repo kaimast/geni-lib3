@@ -11,7 +11,7 @@ from .pndefs import PNDEFS
 import geni.urn
 
 class eNodeB(RawPC):
-    _ENODEB_OS = "GENERICDEV-NOVLANS"
+    _ENODEB_OS = "emulab-ops:GENERICDEV-NOVLANS"
 
     def __init__ (self, client_id, component_id = None):
         super(eNodeB, self).__init__(client_id, component_id = component_id)
