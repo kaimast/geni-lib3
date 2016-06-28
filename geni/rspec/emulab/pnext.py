@@ -13,4 +13,3 @@ from .epcnode import *
 from .enodeb import *
 from .ue import *
 from .rflink import *
-from .userdata import *
