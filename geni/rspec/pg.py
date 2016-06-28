@@ -264,7 +264,7 @@ class Link(Resource):
     self.latency = Link.DEFAULT_LAT
     self.plr = Link.DEFAULT_PLR
 
-    for name,ext in Node.EXTENSIONS:
+    for name,ext in Link.EXTENSIONS:
       self._wrapext(name,ext)
 
   def _wrapext (self, name, klass):
