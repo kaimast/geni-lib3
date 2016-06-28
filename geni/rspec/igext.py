@@ -334,18 +334,25 @@ class Tour(object):
     return td
 
 
-class ParameterSet(object):
+class ParameterData(object):
   def __init__ (self, parameters):
     self.parameters = parameters
 
   def _write (self, root):
-    td = ET.SubElement(root, "profile_parameters",
+    td = ET.SubElement(root, "data_set",
                        nsmap={None : PGNS.PARAMS.name})
     for param in self.parameters:
-      if 'hide' in self.parameters[param] and self.parameters[param]['hide'] == False:
-        desc = ET.SubElement(td, "parameter")
-        desc.attrib["name"] = param
-        desc.attrib["value"] = str(self.parameters[param]['value'])
+      that = self.parameters[param]
+      if 'hide' in that and that['hide'] is False:
+        desc = ET.SubElement(td, "data_item")
+        desc.attrib["name"] = that['prefix'] + param
+
+        if isinstance(that['value'], ET._Element):
+          desc.append(that['value'])
+        else:
+          desc.text = str(that['value'])
+
+pg.Request.EXTENSIONS.append(("ParameterData", ParameterData))
 
 
 class Site(object):

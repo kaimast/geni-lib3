@@ -56,10 +56,6 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
 
-  def addParameterSet (self, parameters):
-    self.addNamespace(Namespaces.EMULAB)
-    self.parameters = parameters
-
   def setCollocateFactor (self, mfactor):
     self.addNamespace(Namespaces.EMULAB)
     self.mfactor = mfactor
@@ -239,6 +235,7 @@ class Interface(object):
 
 
 class Link(Resource):
+  EXTENSIONS = []
   LNKID = 0
   DEFAULT_BW = -1
   DEFAULT_LAT = 0
@@ -266,6 +263,17 @@ class Link(Resource):
     self.bandwidth = Link.DEFAULT_BW
     self.latency = Link.DEFAULT_LAT
     self.plr = Link.DEFAULT_PLR
+
+    for name,ext in Link.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
 
   def addRawElement (self, elem):
     self._raw_elements.append(elem)
@@ -596,7 +604,7 @@ class Namespaces(object):
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
-  PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
+  PARAMS = GNS.Namespace("data", "http://www.protogeni.net/resources/rspec/ext/user-data/1")
   DELAY =  GNS.Namespace("delay", "http://www.protogeni.net/resources/rspec/ext/delay/1")
 
 
