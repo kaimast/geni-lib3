@@ -27,6 +27,8 @@ class Request(geni.rspec.RSpec):
     super(Request, self).__init__("request")
     self.resources = []
     self.tour = None
+    self.mfactor = None
+    self.packing_strategy = None
     self._raw_elements = []
 
     self.addNamespace(GNS.REQUEST, None)
@@ -57,6 +59,14 @@ class Request(geni.rspec.RSpec):
   def addParameterSet (self, parameters):
     self.addNamespace(Namespaces.EMULAB)
     self.parameters = parameters
+
+  def setCollocateFactor (self, mfactor):
+    self.addNamespace(Namespaces.EMULAB)
+    self.mfactor = mfactor
+
+  def setPackingStrategy (self, strategy):
+    self.addNamespace(Namespaces.EMULAB)
+    self.packing_strategy = strategy
 
   def hasTour (self):
     return self.tour is not None
@@ -90,6 +100,14 @@ class Request(geni.rspec.RSpec):
 
     for resource in self.resources:
       resource._write(rspec)
+
+    if self.mfactor:
+      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
+      mf.attrib["count"] = str(self.mfactor)
+
+    if self.packing_strategy:
+      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
+      mf.attrib["strategy"] = str(self.packing_strategy)
 
     for obj in self._ext_children:
       obj._write(rspec)
