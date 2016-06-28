@@ -350,7 +350,7 @@ class ParameterData(object):
         if isinstance(that['value'], ET._Element):
           desc.append(that['value'])
         else:
-          desc.text = that['value']
+          desc.text = str(that['value'])
 
 pg.Request.EXTENSIONS.append(("ParameterData", ParameterData))
 
