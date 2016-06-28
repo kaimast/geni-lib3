@@ -34,10 +34,12 @@ class ParameterType (object):
   SIZE        = "size"          #: Integer for size (eg. MB, GB, etc.)
   PUBKEY      = "pubkey"        #: An RSA public key.
   LOSSRATE    = "lossrate"      #: Floating-point number 0.0 <= N < 1.0
+  XML         = "xml"           #: lxml element
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
-                  LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float}
+                  LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float,
+                  XML: igext.ET._Element}
 
 class Context (object):
   """Handle context for scripts being run inside a portal.
@@ -125,15 +127,15 @@ class Context (object):
         rspec.addTour(tour)
 
     if any(self._parameters):
-      parameterSet = igext.ParameterSet(self._parameters)
-      rspec.addParameterSet(parameterSet)
+      rspec.ParameterData(self._parameters)
 
     self._suppressAutoPrint = True
 
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, typ, defaultValue, legalValues = None,
-                       longDescription = None, advanced = False, groupId = None, hide=False):
+                       longDescription = None, advanced = False, groupId = None, hide=False,
+                       prefix="emulab.net.parameter."):
     """Define a new paramter to the script.
 
     The given name will be used when parameters are bound. The description is
@@ -165,7 +167,8 @@ class Context (object):
     self._parameterOrder.append(name)
     self._parameters[name] = {'description': description, 'type': typ,
                               'defaultValue': defaultValue, 'legalValues': legalValues,
-                              'longDescription': longDescription, 'advanced': advanced, 'hide': hide }
+                              'longDescription': longDescription, 'advanced': advanced,
+                              'hide': hide, 'prefix': prefix}
     if groupId is not None:
       self._parameters[name]['groupId'] = groupId
     if len(self._parameters) == 1:
