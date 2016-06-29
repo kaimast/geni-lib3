@@ -33,10 +33,20 @@ class EPCNodeFactorySettings(object):
 
 def mkepcnode(*args, **kwargs):
     node = None
+    request = None
+    if "request" in kwargs:
+        request = kwargs["request"]
+        del kwargs["request"]
     if EPCNodeFactorySettings.use_vm_nodes:
-        node = EPCVMNode(*args, **kwargs)
+        if request:
+            node = request.EPCVMNode(*args, **kwargs)
+        else:
+            node = EPCVMNode(*args, **kwargs)
     else:
-        node = EPCNode(*args, **kwargs)
+        if request:
+            node = request.EPCNode(*args, **kwargs)
+        else:
+            node = EPCNode(*args, **kwargs)
     if EPCNodeFactorySettings.hardware_type:
         node.hardware_type = EPCNodeFactorySettings.hardware_type
     if EPCNodeFactorySettings.disk_image:
@@ -89,6 +99,7 @@ class EPCVMNode(_EPCBaseNode,XenVM):
                   prehook = None, posthook = None):
         super(EPCVMNode, self).__init__(client_id, role, hname, component_id, 
                                         prehook, posthook)
+        self.exclusive = True # NEVER run on a shared host.
         self.disk = 0 # No thin provisioning when set!
         self.ram = _EPCDEFS.VM_RAM
 

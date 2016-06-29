@@ -179,7 +179,7 @@ class Manifest(object):
 
   @property
   def parameters (self):
-    for param in self.root.findall("{%s}profile_parameters/{%s}parameter"
+    for param in self.root.findall("{%s}data_set/{%s}data_item"
                                    % (PGNS.PARAMS.name,PGNS.PARAMS.name)):
       yield ManifestParameter._fromdom(param)
 

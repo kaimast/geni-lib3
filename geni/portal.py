@@ -18,6 +18,7 @@ from argparse import Namespace
 
 from .rspec import igext
 from .rspec import pgmanifest
+from .rspec.pg import Request
 
 class ParameterType (object):
   """Parameter types understood by Context.defineParameter()."""
@@ -36,19 +37,40 @@ class ParameterType (object):
 
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
-                  LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float}
+                  LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float }
 
 class Context (object):
   """Handle context for scripts being run inside a portal.
 
   This class handles context for the portal, including where to put output
-  RSpecs and handling parameterized scripts.
+  RSpecs and handling parameterized scripts. 
 
   Scripts using this class can also be run "standalone" (ie. not by the
   portal), in which case they take parameters on the command line and put
-  RSpecs on the standard output."""
+  RSpecs on the standard output.
+
+  This class is a singleton. Most programs should access it through the
+  portal.context variable; any additional "instances" of the object will
+  be references to this."""
+
+  """This is a singleton class; only one can exist at a time
+
+  This is implemented by overriding __new__"""
+  _instance = None
+  _initialized = False
+  def __new__(cls, *args, **kwargs):
+    if not cls._instance:
+      cls._instance = super(Context, cls).__new__(cls, *args, **kwargs)
+    return cls._instance
 
   def __init__ (self):
+    # If someone accidentally calls the constructor on the singleton, this
+    # prevents us for wiping out its previous state
+    if self.__class__._initialized:
+      return
+
+    self._request = None
+    self._suppressAutoPrint = False
     self._parameters = {}
     self._parameterGroups = {}
     self._parameterOrder = []
@@ -66,9 +88,31 @@ class Context (object):
     else:
       self._standalone = True
       self._portalRequestPath = None
+    self.__class__._initialized = True
 
-  def printRequestRSpec (self, rspec):
-    """Print the given request RSpec.
+  def bindRequestRSpec (self, rspec):
+    """Bind the given request RSpec to the context, so that it can be
+    automatically used with methods like printRequestRSpec.
+
+    At the present time, only one request can be bound to a context"""
+    if self._request is None:
+      self._request = rspec
+      # This feature removed until we can think through all the corner cases
+      # better
+      #sys.excepthook = self._make_excepthook()
+      #atexit.register(self._autoPrintRequest)
+    else:
+      raise MultipleRSpecError
+
+  def makeRequestRSpec (self):
+    """Make a new request RSpec, bind it to this context, and return it"""
+    rspec = Request()
+    self.bindRequestRSpec(rspec)
+    return rspec
+
+  def printRequestRSpec (self, rspec = None):
+    """Print the given request RSpec, or the one bound to this context if none
+    is given.
 
     If run standalone (not in the portal), the request will be printed to the
     standard output; if run in the portal, it will be placed someplace the
@@ -76,19 +120,27 @@ class Context (object):
 
     If the given rspec does not have a Tour object, this will attempt to
     build one from the file's docstring"""
+    if rspec is None:
+      if self._request is not None:
+        rspec = self._request
+      else:
+        raise NoRSpecError("None supplied or bound to context")
+
     if not rspec.hasTour():
       tour = igext.Tour()
       if tour.useDocstring():
         rspec.addTour(tour)
 
     if any(self._parameters):
-      parameterSet = igext.ParameterSet(self._parameters)
-      rspec.addParameterSet(parameterSet)
+      rspec.ParameterData(self._parameters)
+
+    self._suppressAutoPrint = True
 
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, typ, defaultValue, legalValues = None,
-                       longDescription = None, advanced = False, groupId = None, hide=False):
+                       longDescription = None, advanced = False, groupId = None, hide=False,
+                       prefix="emulab.net.parameter."):
     """Define a new paramter to the script.
 
     The given name will be used when parameters are bound. The description is
@@ -120,7 +172,8 @@ class Context (object):
     self._parameterOrder.append(name)
     self._parameters[name] = {'description': description, 'type': typ,
                               'defaultValue': defaultValue, 'legalValues': legalValues,
-                              'longDescription': longDescription, 'advanced': advanced, 'hide': hide }
+                              'longDescription': longDescription, 'advanced': advanced,
+                              'hide': hide, 'prefix': prefix}
     if groupId is not None:
       self._parameters[name]['groupId'] = groupId
     if len(self._parameters) == 1:
@@ -242,6 +295,13 @@ class Context (object):
       retcode += len(self._parameterWarnings)
     sys.exit(100+retcode)
 
+  def suppressAutoPrint (self):
+    """
+    Suppress the automatic printing of the bound RSpec that normally happens
+    when the program exits.
+    """
+    self._suppressAutoPrint = True
+
   @staticmethod
   def _legalList(l):
     return [x if not isinstance(x, tuple) else x[0] for x in l]
@@ -362,6 +422,26 @@ class Context (object):
       warnings.warn("Parameters were defined, but never bound with " +
                     " bindParameters()", RuntimeWarning)
 
+  def _autoPrintRequest (self):
+    if not self._suppressAutoPrint:
+      self.printRequestRSpec()
+
+  def _make_excepthook (self):
+    old_excepthook = sys.excepthook
+    def _excepthook(type, value, traceback):
+      self.suppressAutoPrint()
+      return old_excepthook(type, value, traceback)
+    return _excepthook
+
+#
+# Module-global context object - most users of this module should simply use
+# this rather than trying to create a new Context object
+#
+context = Context()
+
+def get_context():
+    return context
+
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):
     if isinstance(o,PortalError):
@@ -474,3 +554,20 @@ class ParameterBindError (PortalError):
 
   def __str__ (self):
     return "bad parameter binding: %s" % str(self._val,)
+
+
+class NoRSpecError (PortalError):
+  def __init__ (self,val):
+    super(NoRSpecError, self).__init__("no message?")
+    self._val = val
+
+  def __str__ (self):
+    return "No RSpec given: %s" % str(self._val,)
+
+class MultipleRSpecError (PortalError):
+  def __init__ (self,val):
+    super(MultipleRSpecError, self).__init__("no message?")
+    self._val = val
+
+  def __str__ (self):
+    return "Only one RSpec can be bound to a portal.Context"

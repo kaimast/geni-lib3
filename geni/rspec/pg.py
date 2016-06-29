@@ -54,10 +54,6 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
 
-  def addParameterSet (self, parameters):
-    self.addNamespace(Namespaces.EMULAB)
-    self.parameters = parameters
-
   def hasTour (self):
     return self.tour is not None
 
@@ -221,6 +217,7 @@ class Interface(object):
 
 
 class Link(Resource):
+  EXTENSIONS = []
   LNKID = 0
   DEFAULT_BW = -1
   DEFAULT_LAT = 0
@@ -248,6 +245,17 @@ class Link(Resource):
     self.bandwidth = Link.DEFAULT_BW
     self.latency = Link.DEFAULT_LAT
     self.plr = Link.DEFAULT_PLR
+
+    for name,ext in Link.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
 
   def addRawElement (self, elem):
     self._raw_elements.append(elem)
@@ -556,12 +564,13 @@ class Node(Resource):
   def addRawElement (self, elem):
     self._raw_elements.append(elem)
 
+Request.EXTENSIONS.append(("Node", Node))
 
 class RawPC(Node):
   def __init__ (self, name, component_id = None):
     super(RawPC, self).__init__(name, NodeType.RAW, component_id = component_id, exclusive = True)
 
-
+Request.EXTENSIONS.append(("RawPC", RawPC))
 
 class VZContainer(Node):
   def __init__ (self, name, exclusive = False):
@@ -578,6 +587,7 @@ class Namespaces(object):
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
   PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
+  PARAMS = GNS.Namespace("data", "http://www.protogeni.net/resources/rspec/ext/user-data/1")
   DELAY =  GNS.Namespace("delay", "http://www.protogeni.net/resources/rspec/ext/delay/1")
 
 

@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 from ..igext import *
+from .emuext import *
+from .userdata import *
 
 from . import pnext
-from . import emuext
