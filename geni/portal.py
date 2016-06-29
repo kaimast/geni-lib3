@@ -438,6 +438,9 @@ class Context (object):
 #
 context = Context()
 
+def get_context():
+    return context
+
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):
     if isinstance(o,PortalError):
