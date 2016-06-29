@@ -57,12 +57,18 @@ class Context (object):
 
   This is implemented by overriding __new__"""
   _instance = None
+  _initialized = False
   def __new__(cls, *args, **kwargs):
     if not cls._instance:
       cls._instance = super(Context, cls).__new__(cls, *args, **kwargs)
     return cls._instance
 
   def __init__ (self):
+    # If someone accidentally calls the constructor on the singleton, this
+    # prevents us for wiping out its previous state
+    if self.__class__._initialized:
+      return
+
     self._request = None
     self._suppressAutoPrint = False
     self._parameters = {}
@@ -82,6 +88,7 @@ class Context (object):
     else:
       self._standalone = True
       self._portalRequestPath = None
+    self.__class__._initialized = True
 
   def bindRequestRSpec (self, rspec):
     """Bind the given request RSpec to the context, so that it can be
@@ -431,6 +438,9 @@ class Context (object):
 # this rather than trying to create a new Context object
 #
 context = Context()
+
+def get_context():
+    return context
 
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):
