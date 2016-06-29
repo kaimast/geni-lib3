@@ -59,8 +59,11 @@ class VTS(AM):
                            options={"datapaths" : datapaths})
 
   def setPortBehaviour (self, context, sname, port_list):
+    port_json_list = []
+    for (port,obj) in port_list:
+      port_json_list.append((port, obj.__json__()))
     return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:set-port-behaviour",
-                           options={"ports" : port_list})
+                           options={"ports" : port_json_list})
 
   def getLeaseInfo (self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
