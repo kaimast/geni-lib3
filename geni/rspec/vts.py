@@ -112,7 +112,7 @@ class LossInfo(object):
     self._percent = decimal.Decimal(val)
 
   def __json__ (self):
-    return {"type" : "egress-loss", "percent" : self.percent}
+    return {"type" : "egress-loss", "percent" : "%s" % (self.percent)}
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
