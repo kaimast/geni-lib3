@@ -29,7 +29,7 @@ class setCollocateFactor(object):
         self.mfactor = setCollocateFactor._mfactor = mfactor
     
     def _write(self, root):
-        el = ET.SubElement(rspec,
+        el = ET.SubElement(root,
                            "{%s}collocate_factor" % (Namespaces.EMULAB.name))
         el.attrib["count"] = str(self.mfactor)
         return root
