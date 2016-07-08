@@ -63,4 +63,18 @@ def poa (url, root_bundle, cert, key, creds, urns, action, options = None):
 
   return xmlrpclib.loads(resp.content, use_datetime=True)[0][0]
 
+def paa (url, root_bundle, cert, key, action, options = None):
+  if not options: options = {}
+
+  req_data = xmlrpclib.dumps((action, options),
+                             methodname="PerformAggregateAction")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
+
+  return xmlrpclib.loads(resp.content, use_datetime=True)[0][0]
 

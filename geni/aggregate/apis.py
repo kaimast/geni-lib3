@@ -36,6 +36,16 @@ class AMAPIv3(object):
 
     raise POAError(res["output"], res)
 
+  @staticmethod
+  def paa (context, url, action, options = None):
+    from ..minigcf import amapi3 as AM3
+
+    res = AM3.paa(url, False, context.cf.cert, context.cf.key, action, options)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+
+    raise POAError(res["output"], res)
+
 
 class AMAPIv2(object):
   @staticmethod
