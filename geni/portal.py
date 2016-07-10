@@ -433,10 +433,10 @@ class Context (object):
       return old_excepthook(type, value, traceback)
     return _excepthook
 
-#
-# Module-global context object - most users of this module should simply use
-# this rather than trying to create a new Context object
-#
+"""
+Module-global Context object - most users of this module should simply use
+this rather than trying to create a new Context object
+"""
 context = Context()
 
 def get_context():

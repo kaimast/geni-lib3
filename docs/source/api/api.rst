@@ -7,6 +7,7 @@ API
    genirspecigext
    genirspecpg
    genirspecpgad
+   genirspecemulab
    genitypes
    geniurn
    geniutil
