@@ -15,7 +15,7 @@ from lxml import etree as ET
 
 class EmulabExtensionDuplicateStatement(Exception):
     """This extension gets thrown if something that was only supposed to get
-    added to a Request, Node, Link, etc. gets added multiple times."""
+    added once to a Request, Node, Link, etc. gets added multiple times."""
     def __init__ (self, classname):
         self._classname = classname
 
