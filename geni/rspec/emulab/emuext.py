@@ -4,26 +4,34 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+"""
+Common set of RSpec extensions supported by many Emulab-based aggregates
+"""
+
 from __future__ import absolute_import
 
 from ..pg import Request, Namespaces
 from lxml import etree as ET
 
 class EmulabExtensionDuplicateStatement(Exception):
+    """This exception gets thrown if something that was only supposed to get
+    added once to a Request, Node, Link, etc. gets added multiple times."""
     def __init__ (self, classname):
         self._classname = classname
 
     def __str__ (self):
         return "%s may be used only once!" % str(self._classname,)
 
-#
-# Classs for icky emulab extension stuff, mostly to support existing
-# NS file syntax.
-#
 class setCollocateFactor(object):
+    """Added to a top-level Request object, this extension limits the number
+    of VMs from one experiment that Emulab will collocate on each physical
+    host.
+    """
     _mfactor = None
     
     def __init__(self, mfactor):
+        """mfactor is an integer, giving the maximum number of VMs to multiplex
+        on each physical host."""
         if setCollocateFactor._mfactor:
             raise EmulabExtensionDuplicateStatement("setCollocateFactor")
         self.mfactor = setCollocateFactor._mfactor = mfactor
@@ -37,6 +45,10 @@ class setCollocateFactor(object):
 Request.EXTENSIONS.append(("setCollocateFactor", setCollocateFactor))
 
 class setPackingStrategy(object):
+    """Added to a top-level Request object, this extension controls the
+    strategy used for distributing VMs across physical hosts
+    """
+
     _strategy = None
     
     def __init__(self, strategy):
@@ -53,6 +65,10 @@ class setPackingStrategy(object):
 Request.EXTENSIONS.append(("setPackingStrategy", setPackingStrategy))
     
 class setRoutingStyle(object):
+    """Added to a top-level Request object, this extension controls the
+    routing that is automatically configured on the experiment (data-plane)
+    side of the network.
+    """
     _style = None
     
     def __init__(self, style):
@@ -69,9 +85,15 @@ class setRoutingStyle(object):
 Request.EXTENSIONS.append(("setRoutingStyle", setRoutingStyle))
 
 class setDelayImage(object):
+    """Added to a top-level Request object, this extension sets the disk image
+    that will be used for all delay nodes configured for the experiment.
+    """
     _urn = None
     
     def __init__(self, urn):
+        """urn: URN of any image - to perform the intnded function, the 
+        image must be capable of setting up bridging and/or traffic shaping.
+        """
         if setDelayImage._urn:
             raise EmulabExtensionDuplicateStatement("setDelayImage")
         self.urn = setDelayImage._urn = urn
