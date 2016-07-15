@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,12 @@ class Connection(object):
   def setConfig (self, key, value):
     url = "%s/core/admin/set-config" % (self.baseurl)
     d = json.dumps({"key":key, "value":value})
+    r = requests.post(url, d, **self.rkwargs)
+    return r.json()["value"]
+
+  def setLocation (self, country, latitude, longitude):
+    url = "%s/core/admin/set-location" % (self.baseurl)
+    d = json.dumps({"country" : country, "long" : longitude, "lat" : latitude})
     r = requests.post(url, d, **self.rkwargs)
     return r.json()["value"]
 
