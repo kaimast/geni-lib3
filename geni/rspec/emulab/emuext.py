@@ -10,7 +10,7 @@ Common set of RSpec extensions supported by many Emulab-based aggregates
 
 from __future__ import absolute_import
 
-from ..pg import Request, Namespaces
+from ..pg import Request, Namespaces, Link
 from lxml import etree as ET
 
 class EmulabExtensionDuplicateStatement(Exception):
@@ -105,3 +105,23 @@ class setDelayImage(object):
         return root
 
 Request.EXTENSIONS.append(("setDelayImage", setDelayImage))
+
+class setForceShaping(object):
+    """Added to a Link or LAN object, this extension forces Emulab link
+    shaping to be enabled, even if it is not strictly necessary. This
+    allows the link properties to be changed dynamically via the Emulab event
+    system.
+    """
+    _enabled = False
+    
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root, "{%s}force_shaping" % (Namespaces.EMULAB.name))
+        el.attrib["enabled"] = "true"
+        return root
+
+Link.EXTENSIONS.append(("setForceShaping", setForceShaping))
