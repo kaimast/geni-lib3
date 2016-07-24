@@ -6,12 +6,13 @@
 
 from __future__ import absolute_import, print_function
 
+import datetime
+import json
 import multiprocessing as MP
+import os.path
 import time
 import traceback as tb
 import tempfile
-import json
-import os.path
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
@@ -288,6 +289,11 @@ def loadContext (path = None, key_passphrase = None):
         user.addKey(keypath)
       context.addUser(user)
 
+  from cryptography import x509
+  from cryptography.hazmat.backends import default_backend
+  cert = x509.load_pem_x509_certificate(open(context._cf.cert, "rb").read(), default_backend())
+  if cert.not_valid_after < datetime.datetime.now():
+    print("***WARNING*** Client SSL certificate supplied in this context is expired")
   return context
 
 
