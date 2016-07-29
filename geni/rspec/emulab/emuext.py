@@ -125,3 +125,24 @@ class setForceShaping(object):
         return root
 
 Link.EXTENSIONS.append(("setForceShaping", setForceShaping))
+
+class setUseTypeDefaultImage(object):
+    """Added to a node that does not specify a disk image, this extension
+    forces Emulab to use the hardware type default image instead of the
+    standard geni default image. Useful with special hardware that should
+    run a special image.
+    """
+    _enabled = False
+    
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root, "{%s}use_type_default_image"
+                           % (Namespaces.EMULAB.name))
+        el.attrib["enabled"] = "true"
+        return root
+
+Node.EXTENSIONS.append(("setUseTypeDefaultImage", setUseTypeDefaultImage))
