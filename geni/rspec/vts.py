@@ -81,6 +81,14 @@ class DelayInfo(object):
     self.correlation = correlation
     self.distribution = distribution
 
+  def __json__ (self):
+    d = {"type" : "egress-delay"}
+    if self.time: d["time"] = self.time
+    if self.jitter: d["jitter"] = self.jitter
+    if self.correlation: d["correlation"] = self.correlation
+    if self.distribution: d["distribution"] = self.distribution
+    return d
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-delay" % (Namespaces.VTS.name))
     if self.time: d.attrib["time"] = str(self.time)
@@ -102,6 +110,9 @@ class LossInfo(object):
   @percent.setter
   def percent (self, val):
     self._percent = decimal.Decimal(val)
+
+  def __json__ (self):
+    return {"type" : "egress-loss", "percent" : "%s" % (self.percent)}
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))

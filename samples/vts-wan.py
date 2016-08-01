@@ -1,5 +1,9 @@
 # Copyright (c) 2014  Barnstormer Softworks, Ltd.
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 # Builds two vms at different sites, each connected to a local L2 datapath
 # The datapaths at each site are then connected to each other over the WAN
 # using a GRE tunnel over the "geni-core" circuit plane
