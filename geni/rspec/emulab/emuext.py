@@ -10,7 +10,7 @@ Common set of RSpec extensions supported by many Emulab-based aggregates
 
 from __future__ import absolute_import
 
-from ..pg import Request, Namespaces, Link
+from ..pg import Request, Namespaces, Link, Node
 from lxml import etree as ET
 
 class EmulabExtensionDuplicateStatement(Exception):
