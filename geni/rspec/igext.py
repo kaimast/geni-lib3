@@ -375,7 +375,7 @@ class Desire(object):
   def _write (self, node):
     fd = ET.SubElement(node, "{%s}fd" % (PGNS.EMULAB))
     fd.attrib["name"] = self.name
-    fd.attrib["weight"] = self.weight
+    fd.attrib["weight"] = str(self.weight)
     return fd
 
 pg.Node.EXTENSIONS.append(("Desire", Desire))
