@@ -223,13 +223,22 @@ class Link(Resource):
   DEFAULT_LAT = 0
   DEFAULT_PLR = 0.0
 
-  def __init__ (self, name = None, ltype = ""):
+  def __init__ (self, name = None, ltype = "", members = None):
     super(Link, self).__init__()
     if name is None:
       self.client_id = Link.newLinkID()
     else:
       self.client_id = name
+
     self.interfaces = []
+
+    if members is not None:
+      for member in members:
+        if isinstance(member,Interface):
+          self.addInterface(member)
+        else:
+          self.addInterface(member.addInterface())
+
     self.type = ltype
     self.shared_vlan = None
     self._mac_learning = True
@@ -270,6 +279,9 @@ class Link(Resource):
 
   def addInterface (self, intf):
     self.interfaces.append(intf)
+
+  def addNode (self, node):
+    self.interfaces.append(node.addInterface())
 
   def connectSharedVlan (self, name):
     self.namespaces.append(GNS.SVLAN)
