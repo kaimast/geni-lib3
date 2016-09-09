@@ -155,7 +155,7 @@ class ProgramAgent(Service):
     event system. Optional argument 'directory' specifies where to invoke
     the command from. Optional argument 'onexpstart' says to invoke the
     command when the experiment starts (time=0 in event speak). This is
-    different then the Execute service, which runs every time the node boots.
+    different than the Execute service, which runs every time the node boots.
     """
     def __init__ (self, name, command, directory = None, onexpstart = False):
         super(ProgramAgent, self).__init__()
