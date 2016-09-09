@@ -172,11 +172,8 @@ class ProgramAgent(Service):
             exc.attrib["command"] = self.command.resolve()
         else:
             exc.attrib["command"] = self.command
-            pass
         if self.directory:
             exc.attrib["directory"] = self.directory
-            pass
         if self.onexpstart:
             exc.attrib["onexpstart"] = "true"
-            pass
         return exc
