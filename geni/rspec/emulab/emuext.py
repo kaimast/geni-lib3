@@ -146,3 +146,37 @@ class setUseTypeDefaultImage(object):
         return root
 
 Node.EXTENSIONS.append(("setUseTypeDefaultImage", setUseTypeDefaultImage))
+
+#
+# Emulab Program Agents.
+#
+class ProgramAgent(Service):
+    """Add an Emulab Program Agent, which can be controlled via the Emulab
+    event system. Optional argument 'directory' specifies where to invoke
+    the command from. Optional argument 'onexpstart' says to invoke the
+    command when the experiment starts (time=0 in event speak). This is
+    different then the Execute service, which runs every time the node boots.
+    """
+    def __init__ (self, name, command, directory = None, onexpstart = False):
+        super(ProgramAgent, self).__init__()
+        self.name = name
+        self.command = command
+        self.directory = directory
+        self.onexpstart = onexpstart
+
+    def _write (self, element):
+        exc = ET.SubElement(element,
+                            "{%s}program-agent" % (Namespaces.EMULAB.name))
+        exc.attrib["name"] = self.name
+        if isinstance(self.command, Command):
+            exc.attrib["command"] = self.command.resolve()
+        else:
+            exc.attrib["command"] = self.command
+            pass
+        if self.directory:
+            exc.attrib["directory"] = self.directory
+            pass
+        if self.onexpstart:
+            exc.attrib["onexpstart"] = "true"
+            pass
+        return exc
