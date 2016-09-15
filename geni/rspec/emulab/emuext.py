@@ -10,7 +10,8 @@ Common set of RSpec extensions supported by many Emulab-based aggregates
 
 from __future__ import absolute_import
 
-from ..pg import Request, Namespaces, Link, Node
+from ..pg import Request, Namespaces, Link, Node, Service, Command, RawPC
+import geni.namespaces as GNS
 from lxml import etree as ET
 
 class EmulabExtensionDuplicateStatement(Exception):
@@ -177,3 +178,39 @@ class ProgramAgent(Service):
         if self.onexpstart:
             exc.attrib["onexpstart"] = "true"
         return exc
+
+class InstantiateOn(object):
+    """Added to a node to specify that it a Xen VM should be bound to
+    (instantiated on) another node in the topology.  Argument is the
+    node instance or the client id of another node in the topology.
+    """
+    class InvalidParent(Exception):
+        def __init__ (self, parent):
+            super(InstantiateOn.InvalidParent, self).__init__()
+            self.parent = parent
+            def __str__ (self):
+                return "%s is not a Raw PC" % (self.parent.name)
+    
+    _parent = None
+    
+    def __init__(self, parent):
+        if isinstance(parent, Node):
+            # Xen VMs have to be bound to a raw PC.
+            if not isinstance(parent, RawPC):
+                raise InvalidParent(parent)
+            self._parent = parent.name
+        else:
+            # Allow plain name to be used. At the moment the NS converter
+            # is not trying to order nodes, so the vhost might not be
+            # first. 
+            self._parent = parent
+            
+    def _write(self, root):
+        if self._parent == None:
+            return root
+        el = ET.SubElement(root, "{%s}relation" % (GNS.REQUEST.name))
+        el.attrib["type"] = "instantiate_on"
+        el.attrib["client_id"] = self._parent
+        return root
+
+Node.EXTENSIONS.append(("InstantiateOn", InstantiateOn))
