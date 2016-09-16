@@ -55,6 +55,9 @@ def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
   options = {"match" : {"KEY_MEMBER" : user_urn} }
   return _lookup(url, root_bundle, cert, key, "KEY", cred_strings, options)
 
+def lookup_member_info (url, root_bundle, cert, key, cred_strings, user_urn):
+  options = {"match" : {"MEMBER_URN" : user_urn} }
+  return _lookup(url, root_bundle, cert, key, "MEMBER", cred_strings, options)
 
 def create_key_info (url, root_bundle, cert, key, cred_strings, data):
   req_data = xmlrpclib.dumps(("KEY", cred_strings, {"fields" : data}), methodname="create")
