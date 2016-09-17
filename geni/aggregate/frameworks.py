@@ -247,8 +247,20 @@ class CHAPI2(Framework):
 
   def listSlices (self, context):
     from ..minigcf import chapi2
-    res = chapi2.lookup_slices_for_project (self._sa, False, self.cert, self.key,
-                                            [context.ucred_api3], context.project_urn)
+    res = chapi2.lookup_slices_for_project(self._sa, False, self.cert, self.key,
+                                           [context.ucred_api3], context.project_urn)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def listSliceMembers (self, context, slicename):
+    from ..minigcf import chapi2
+
+    slice_urn = self.sliceNameToURN(slicename)
+
+    res = chapi2.lookup_slice_members(self._sa, False, self.cert, self.key,
+                                      [context.ucred_api3], slice_urn)
     if res["code"] == 0:
       return res["value"]
     else:
