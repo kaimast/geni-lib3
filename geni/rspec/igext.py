@@ -117,6 +117,7 @@ class Blockstore(object):
     self.readonly = False
     self.placement = "any"  # any|sysvol|nonsysvol
     self.dataset = None
+    self.rwclone = False    # Only for remote blockstores.
 
   def _write (self, element):
     bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
@@ -130,6 +131,8 @@ class Blockstore(object):
     bse.attrib["placement"] = self.placement
     if self.readonly:
       bse.attrib["readonly"] = "true"
+    if self.rwclone:
+      bse.attrib["rwclone"] = "true"
     if self.dataset:
       if isinstance(self.dataset, (str, unicode)):
         bse.attrib["dataset"] = self.dataset
@@ -178,6 +181,14 @@ class RemoteBlockstore(pg.Node):
   @readonly.setter
   def readonly (self, val):
     self._bs.readonly = val
+
+  @property
+  def rwclone (self):
+    return self._bs.rwclone
+
+  @rwclone.setter
+  def rwclone (self, val):
+    self._bs.rwclone = val
 
   @property
   def placement (self):
