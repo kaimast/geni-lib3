@@ -29,7 +29,7 @@ class Request(geni.rspec.RSpec):
 
   def __init__ (self):
     super(Request, self).__init__("request")
-    self.resources = []
+    self._resources = []
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.VTS)
@@ -50,7 +50,7 @@ class Request(geni.rspec.RSpec):
   def addResource (self, rsrc):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
-    self.resources.append(rsrc)
+    self._resources.append(rsrc)
 
   def writeXML (self, path):
     f = open(path, "w+")
@@ -60,7 +60,7 @@ class Request(geni.rspec.RSpec):
   def toXMLString (self, pretty_print = False):
     rspec = self.getDOM()
 
-    for resource in self.resources:
+    for resource in self._resources:
       resource._write(rspec)
 
     for obj in self._ext_children:

@@ -12,16 +12,16 @@ from . import RSpec
 class Request(RSpec):
   def __init__ (self):
     super(Request, self).__init__("request")
-    self.resources = []
+    self._resources = []
 
   def addGroup (self, name):
     group = Group(name)
-    self.resources.append(group)
+    self._resources.append(group)
     return group
 
   def buildMatch (self):
     match = Match()
-    self.resources.append(match)
+    self._resources.append(match)
     return match
 
 class Datapath(object):

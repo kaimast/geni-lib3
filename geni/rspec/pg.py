@@ -25,7 +25,7 @@ class Request(geni.rspec.RSpec):
 
   def __init__ (self):
     super(Request, self).__init__("request")
-    self.resources = []
+    self._resources = []
     self.tour = None
     self.mfactor = None
     self.packing_strategy = None
@@ -49,7 +49,7 @@ class Request(geni.rspec.RSpec):
   def addResource (self, rsrc):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
-    self.resources.append(rsrc)
+    self._resources.append(rsrc)
 
   def addTour (self, tour):
     self.addNamespace(Namespaces.EMULAB)
@@ -94,7 +94,7 @@ class Request(geni.rspec.RSpec):
     if self.tour:
       self.tour._write(rspec)
 
-    for resource in self.resources:
+    for resource in self._resources:
       resource._write(rspec)
 
     if self.mfactor:
