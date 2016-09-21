@@ -69,6 +69,9 @@ class Request(geni.rspec.RSpec):
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
 
+  @property
+  def resources(self):
+      return self._resources + self._ext_children
 
 ###################
 # Utility Objects #

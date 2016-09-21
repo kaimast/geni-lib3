@@ -24,6 +24,10 @@ class Request(RSpec):
     self._resources.append(match)
     return match
 
+  @property
+  def resources(self):
+    return self._resources
+
 class Datapath(object):
   def __init__ (self, ad_dp = None):
     self._ad_dp = ad_dp

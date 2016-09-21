@@ -51,6 +51,10 @@ class Request(geni.rspec.RSpec):
       self.addNamespace(ns)
     self._resources.append(rsrc)
 
+  @property
+  def resources(self):
+    return self._resources + self._ext_children
+
   def addTour (self, tour):
     self.addNamespace(Namespaces.EMULAB)
     self.addNamespace(Namespaces.JACKS)
