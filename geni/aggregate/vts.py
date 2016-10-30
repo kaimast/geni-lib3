@@ -95,6 +95,9 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:set-subnet",
                            options = {"client-id-map" : clid_map})
 
+  def setDeleteLock (self, context, sname):
+    return self._apiv3.poa(context, self.urlv3, sname, "geni:set-delete-lock", {})
+
 
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
