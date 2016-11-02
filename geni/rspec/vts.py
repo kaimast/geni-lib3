@@ -415,3 +415,5 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
 
   sp.target = dp.clientid
   dp.target = sp.clientid
+
+  return (sp, dp)
