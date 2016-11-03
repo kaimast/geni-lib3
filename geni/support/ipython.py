@@ -10,7 +10,6 @@ import types
 import copy
 
 import graphviz
-import pandas
 import wrapt
 
 from geni.aggregate.frameworks import KeyDecryptionError
@@ -47,10 +46,6 @@ LOGINCOLS = ["Client-ID", "Username", "Host", "Port"]
 
 def loginInfo (manifests):
   linfo = geni.util._corelogininfo(manifests)
-#  df = pandas.DataFrame.from_records([x[1:] for x in linfo],
-#                                     index = [x[0] for x in linfo],
-#                                     columns = ["username", "host", "port"])
-#  return df
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
 
