@@ -223,8 +223,8 @@ def builddot (manifests):
           if isinstance(dp, VTSM.ManifestDatapath):
             if port.remote_client_id == dp.mirror:
               remote_port_name = port.remote_client_id.split(":")[-1]
-              dda("\"%s\" -> \"%s\" [headlabel=\"%s\",taillabel=\"%s\"]" % (port.remote_dpname, port.dpname,
-                                                                            port.name, remote_port_name))
+              dda("\"%s\" -> \"%s\" [headlabel=\"%s\",taillabel=\"%s\",style=dashed]" % (
+                            port.remote_dpname, port.dpname, port.name, remote_port_name))
               continue
 
           # No mirror, draw as normal
