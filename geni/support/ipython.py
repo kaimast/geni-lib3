@@ -51,7 +51,7 @@ def loginInfo (manifests):
 #                                     index = [x[0] for x in linfo],
 #                                     columns = ["username", "host", "port"])
 #  return df
-  return RetListProxy(linfo, LOGINCOLS, LOGINROW)
+  return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
 
 util = types.ModuleType("geni_ipython_util")
@@ -92,11 +92,12 @@ class STPProxy(wrapt.ObjectProxy):
 
 
 class RetListProxy(object):
-  def __init__ (self, obj, columns, row_template):
+  def __init__ (self, obj, columns, row_template, tupl = False):
     self._obj = obj
     self._columns = columns
     self._row_template = row_template
     self._col_template = "<th>%s</th>"
+    self._tuple = tupl
 
   def __len__ (self):
     return len(self._obj)
@@ -118,7 +119,10 @@ class RetListProxy(object):
   def _repr_html_ (self):
     trlist = []
     for row in self._obj:
-      trlist.append(self._row_template.format(**row))
+      if self._tuple:
+        trlist.append(self._row_template.format(row))
+      else:
+        trlist.append(self._row_template.format(**row))
 
     collist = []
     for column in self._columns:
