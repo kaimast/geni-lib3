@@ -120,7 +120,7 @@ class RetListProxy(object):
     trlist = []
     for row in self._obj:
       if self._tuple:
-        trlist.append(self._row_template.format(row))
+        trlist.append(self._row_template.format(*row))
       else:
         trlist.append(self._row_template.format(**row))
 
