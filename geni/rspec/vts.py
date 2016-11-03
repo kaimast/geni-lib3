@@ -293,11 +293,11 @@ class Datapath(Resource):
     self.client_id = val
 
   def attachPort (self, port):
-    if port.clientid is None:
+    if port.client_id is None:
       if port.name is None:
-        port.clientid = "%s:%d" % (self.name, len(self.ports))
+        port.client_id = "%s:%d" % (self.name, len(self.ports))
       else:
-        port.clientid = "%s:%s" % (self.name, port.name)
+        port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -321,9 +321,9 @@ class Container(Resource):
 
   def attachPort (self, port):
     if port.name is None:
-      port.clientid = "%s:%d" % (self.name, len(self.ports))
+      port.client_id = "%s:%d" % (self.name, len(self.ports))
     else:
-      port.clientid = "%s:%s" % (self.name, port.name)
+      port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -340,12 +340,12 @@ Request.EXTENSIONS.append(("Container", Container))
 
 class Port(object):
   def __init__ (self, name = None):
-    self.clientid = None
+    self.client_id = None
     self.name = name
 
   def _write (self, element):
     p = ET.SubElement(element, "{%s}port" % (Namespaces.VTS.name))
-    p.attrib["client_id"] = self.clientid
+    p.attrib["client_id"] = self.client_id
     return p
 
 
@@ -433,7 +433,7 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
   dp1.attachPort(sp)
   dp2.attachPort(dp)
 
-  sp.target = dp.clientid
-  dp.target = sp.clientid
+  sp.target = dp.client_id
+  dp.target = sp.client_id
 
   return (sp, dp)
