@@ -131,12 +131,20 @@ class Image(object):
   def __init__ (self, name):
     self.name = name
     self._features = []
+    self._image_attrs = []
+
+  def setImageAttribute (self, name, val):
+    self._image_attrs.append((name, val))
 
   def _write (self, element):
     i = ET.SubElement(element, "{%s}image" % (Namespaces.VTS.name))
     i.attrib["name"] = self.name
     for feature in self._features:
       feature._write(i)
+    for (name,val) in self._image_attrs:
+      ae = ET.SubElement(i, "{%s}image-attribute" % (Namespaces.VTS))
+      ae.attrib["name"] = name
+      ae.attrib["value"] = str(val)
     return i
 
 class SimpleDHCPImage(Image):
@@ -179,6 +187,9 @@ class OVSImage(DatapathImage):
     if isinstance(val, NetFlow):
       self._features.append(val)
     # TODO: Throw exception
+
+  def setMirror (self, port):
+    self._features.append(MirrorPort(port))
 
 
 class OVSOpenFlowImage(OVSImage):
@@ -237,6 +248,15 @@ class NetFlow(object):
     s = ET.SubElement(element, "{%s}netflow" % (Namespaces.VTS))
     s.attrib["collector"] = "%s:%d" % (self.collector_ip, self.collector_port)
     s.attrib["timeout"] = str(self.timeout)
+    return s
+
+class MirrorPort(object):
+  def __init__ (self, port):
+    self.target = port.client_id
+
+  def _write (self, element):
+    s = ET.SubElement(element, "{%s}mirror" % (Namespaces.VTS))
+    s.attrib["target"] = self.target
     return s
 
 ##################
