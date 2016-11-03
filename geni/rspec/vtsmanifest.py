@@ -199,6 +199,7 @@ class ManifestDatapath(object):
     self.image = None
     self.sliver_id = None
     self.ports = []
+    self.mirror = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -207,6 +208,11 @@ class ManifestDatapath(object):
     dp.client_id = elem.get("client_id")
     dp.image = elem.get("image")
     dp.sliver_id = elem.get("sliver_id")
+
+    mirror = elem.xpath('v:mirror', namespaces = XPNS)
+    if mirror:
+      dp.mirror = mirror[0].get("target")
+
     ports = elem.xpath('v:port', namespaces = XPNS)
     for port in ports:
       p = Manifest._buildPort(port)
@@ -279,6 +285,15 @@ class Manifest(object):
     elems = self._root.xpath("v:datapath", namespaces = XPNS)
     for elem in elems:
       yield ManifestDatapath._fromdom(elem)
+
+  def findTarget (self, client_id):
+    dpelems = self._root.xpath("v:datapath[@client_id='%s']" % (client_id), namespaces = XPNS)
+    if dpelems:
+      return ManifestDatapath._fromdom(dpelems[0])
+
+    ctelems = self._root.xpath("v:container[@client_id='%s']" % (client_id), namespaces = XPNS)
+    if ctelems:
+      return ManifestContainer._fromdom(ctelems[0])
 
   def findPort (self, client_id):
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)

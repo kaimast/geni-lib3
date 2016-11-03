@@ -211,9 +211,23 @@ def builddot (manifests):
                                                        port.name))
           dda("\"%s\" -> \"%s\"" % (port.shared_vlan, port.dpname))
         elif isinstance(port, VTSM.InternalPort):
+          dp = manifest.findTarget(port.dpname)
+          if dp.mirror == port.client_id:
+            continue # The other side will handle it, oddly
+          # TODO: Handle mirroring into another datapath
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
         elif isinstance(port, VTSM.InternalContainerPort):
+          # Check to see if the other side is a mirror into us
+          dp = manifest.findTarget(port.remote_dpname)
+          if isinstance(dp, VTSM.ManifestDatapath):
+            if port.remote_client_id == dp.mirror:
+              remote_port_name = port.remote_client_id.split(":")[-1]
+              dda("\"%s\" -> \"%s\" [headlabel=\"%s\",taillabel=\"%s\"]" % (port.remote_dpname, port.dpname,
+                                                                            port.name, remote_port_name))
+              continue
+
+          # No mirror, draw as normal
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
         elif isinstance(port, VTSM.GenericPort):
