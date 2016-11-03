@@ -131,12 +131,20 @@ class Image(object):
   def __init__ (self, name):
     self.name = name
     self._features = []
+    self._image_attrs = []
+
+  def setImageAttribute (self, name, val):
+    self._image_attrs.append((name, val))
 
   def _write (self, element):
     i = ET.SubElement(element, "{%s}image" % (Namespaces.VTS.name))
     i.attrib["name"] = self.name
     for feature in self._features:
       feature._write(i)
+    for (name,val) in self._image_attrs:
+      ae = ET.SubElement(i, "{%s}image-attribute" % (Namespaces.VTS))
+      ae.attrib["name"] = name
+      ae.attrib["value"] = str(val)
     return i
 
 class SimpleDHCPImage(Image):
@@ -179,6 +187,9 @@ class OVSImage(DatapathImage):
     if isinstance(val, NetFlow):
       self._features.append(val)
     # TODO: Throw exception
+
+  def setMirror (self, port):
+    self._features.append(MirrorPort(port))
 
 
 class OVSOpenFlowImage(OVSImage):
@@ -239,6 +250,15 @@ class NetFlow(object):
     s.attrib["timeout"] = str(self.timeout)
     return s
 
+class MirrorPort(object):
+  def __init__ (self, port):
+    self.target = port.client_id
+
+  def _write (self, element):
+    s = ET.SubElement(element, "{%s}mirror" % (Namespaces.VTS))
+    s.attrib["target"] = self.target
+    return s
+
 ##################
 # Graph Elements #
 ##################
@@ -273,11 +293,11 @@ class Datapath(Resource):
     self.client_id = val
 
   def attachPort (self, port):
-    if port.clientid is None:
+    if port.client_id is None:
       if port.name is None:
-        port.clientid = "%s:%d" % (self.name, len(self.ports))
+        port.client_id = "%s:%d" % (self.name, len(self.ports))
       else:
-        port.clientid = "%s:%s" % (self.name, port.name)
+        port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -301,9 +321,9 @@ class Container(Resource):
 
   def attachPort (self, port):
     if port.name is None:
-      port.clientid = "%s:%d" % (self.name, len(self.ports))
+      port.client_id = "%s:%d" % (self.name, len(self.ports))
     else:
-      port.clientid = "%s:%s" % (self.name, port.name)
+      port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -320,12 +340,12 @@ Request.EXTENSIONS.append(("Container", Container))
 
 class Port(object):
   def __init__ (self, name = None):
-    self.clientid = None
+    self.client_id = None
     self.name = name
 
   def _write (self, element):
     p = ET.SubElement(element, "{%s}port" % (Namespaces.VTS.name))
-    p.attrib["client_id"] = self.clientid
+    p.attrib["client_id"] = self.client_id
     return p
 
 
@@ -413,7 +433,7 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
   dp1.attachPort(sp)
   dp2.attachPort(dp)
 
-  sp.target = dp.clientid
-  dp.target = sp.clientid
+  sp.target = dp.client_id
+  dp.target = sp.client_id
 
   return (sp, dp)
