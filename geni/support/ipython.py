@@ -41,13 +41,17 @@ def topo (manifests):
   g.engine = "circo"
   return g
 
+LOGINROW = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td></tr>"
+LOGINCOLS = ["Client-ID", "Username", "Host", "Port"]
+
 
 def loginInfo (manifests):
   linfo = geni.util._corelogininfo(manifests)
-  df = pandas.DataFrame.from_records([x[1:] for x in linfo],
-                                     index = [x[0] for x in linfo],
-                                     columns = ["username", "host", "port"])
-  return df
+#  df = pandas.DataFrame.from_records([x[1:] for x in linfo],
+#                                     index = [x[0] for x in linfo],
+#                                     columns = ["username", "host", "port"])
+#  return df
+  return RetListProxy(linfo, LOGINCOLS, LOGINROW)
 
 
 util = types.ModuleType("geni_ipython_util")
