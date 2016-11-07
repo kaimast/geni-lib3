@@ -123,9 +123,23 @@ class Request(geni.rspec.RSpec):
 class Resource(object):
   def __init__ (self):
     self.namespaces = []
+    self._ext_children = []
 
   def addNamespace (self, ns):
     self.namespaces.append(ns)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
+
+  def _write (self, element):
+    for obj in self._ext_children:
+      obj.write(element)
+    return element
 
 
 class NodeType(object):

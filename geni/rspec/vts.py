@@ -313,11 +313,16 @@ Request.EXTENSIONS.append(("Datapath", Datapath))
 
 
 class Container(Resource):
+  EXTENSIONS = []
+
   def __init__ (self, image, name):
     super(Container, self).__init__()
     self.image = image
     self.ports =[]
     self.name = name
+
+    for name,ext in Container.EXTENSIONS:
+      self._wrapext(name, ext)
 
   def attachPort (self, port):
     if port.name is None:
@@ -333,6 +338,7 @@ class Container(Resource):
     self.image._write(d)
     for port in self.ports:
       port._write(d)
+    super(Container, self)._write(d)
     return d
 
 Request.EXTENSIONS.append(("Container", Container))
@@ -409,6 +415,28 @@ class GRECircuit(Port):
     p.attrib["endpoint"] = self.endpoint
     return p
 
+
+######################
+# Element Extensions #
+######################
+
+class HgMount(Resource):
+  def __init__ (self, name, source, mount_path, branch = "default"):
+    self.name = name
+    self.source = source
+    self.mount_path = mount_path
+    self.branch = branch
+
+  def _write (self, element):
+    melem = ET.SubElement(element, "{%s}mount" % (Namespaces.VTS))
+    melem.attrib["type"] = "hg"
+    melem.attrib["name"] = self.name
+    melem.attrib["path"] = self.mount_path
+    melem.attrib["source"] = self.source
+    melem.attrib["branch"] = self.branch
+    return melem
+
+ Container.EXTENSIONS(("HgMount", HgMount))
 
 
 #############
