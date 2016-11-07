@@ -138,7 +138,7 @@ class Resource(object):
 
   def _write (self, element):
     for obj in self._ext_children:
-      obj.write(element)
+      obj._write(element)
     return element
 
 
