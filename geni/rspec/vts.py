@@ -436,7 +436,7 @@ class HgMount(Resource):
     melem.attrib["branch"] = self.branch
     return melem
 
- Container.EXTENSIONS(("HgMount", HgMount))
+Container.EXTENSIONS(("HgMount", HgMount))
 
 
 #############
