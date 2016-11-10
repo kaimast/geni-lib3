@@ -127,6 +127,26 @@ class setForceShaping(object):
 
 Link.EXTENSIONS.append(("setForceShaping", setForceShaping))
 
+class setNoInterSwitchLinks(object):
+    """Added to a Link or LAN object, this extension forces the Emulab mapper
+    to disallow mapping a link in the request topology to an inter-switch
+    link.  This allows users to require that specific nodes in their
+    topology be attached to the same switch(es).
+    """
+    _enabled = False
+    
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root, "{%s}interswitch" % (Namespaces.EMULAB.name))
+        el.attrib["allow"] = "false"
+        return root
+
+Link.EXTENSIONS.append(("setNoInterSwitchLinks", setNoInterSwitchLinks))
+
 class setUseTypeDefaultImage(object):
     """Added to a node that does not specify a disk image, this extension
     forces Emulab to use the hardware type default image instead of the
