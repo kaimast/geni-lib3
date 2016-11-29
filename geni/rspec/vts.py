@@ -416,7 +416,7 @@ class ContainerPort(InternalCircuit):
     return p
 
   def addIPv4Address (self, value):
-    self._v4addressess.append(ipaddress.IPv4Interface(value))
+    self._v4addresses.append(ipaddress.IPv4Interface(value))
 
 
 class GRECircuit(Port):
