@@ -335,7 +335,7 @@ class Container(Resource):
     return port
 
   def addIPRoute (self, network, gateway):
-    self.routes.append(ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway)))
+    self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
