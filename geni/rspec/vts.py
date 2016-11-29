@@ -321,6 +321,7 @@ class Container(Resource):
     self.image = image
     self.ports =[]
     self.name = name
+    self.routes = []
 
     for name,ext in Container.EXTENSIONS:
       self._wrapext(name, ext)
@@ -333,12 +334,19 @@ class Container(Resource):
     self.ports.append(port)
     return port
 
+  def addIPRoute (self, network, gateway):
+    self.routes.append(ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway)))
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
     self.image._write(d)
     for port in self.ports:
       port._write(d)
+    for net,gw in self.routes:
+      re = ET.SubElement(d, "{%s}route" % (Namespaces.VTS))
+      re.attrib["network"] = str(net)
+      re.attrib["gateway"] = str(gw)
     super(Container, self)._write(d)
     return d
 
