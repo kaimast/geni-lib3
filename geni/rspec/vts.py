@@ -411,7 +411,7 @@ class ContainerPort(InternalCircuit):
   def _write (self, element):
     p = super(ContainerPort, self)._write(element)
     for addr in self._v4addresses:
-      ae = ET.SubElement(p, "{%s}ipv4-address")
+      ae = ET.SubElement(p, "{%s}ipv4-address" % (Namespaces.VTS))
       ae.attrib["value"] = str(addr)
     return p
 
