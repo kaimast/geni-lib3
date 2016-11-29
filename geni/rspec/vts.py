@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import functools
 import decimal
 
+import ipaddress
 from lxml import etree as ET
 
 import geni.rspec
@@ -402,6 +403,22 @@ class InternalCircuit(Port):
     return p
 
 
+class ContainerPort(InternalCircuit):
+  def __init__ (self, target, vlan = None, delay_info = None, loss_info = None):
+    super(ContainerPort, self).__init__(target, vlan, delay_info, loss_info)
+    self._v4addresses = []
+
+  def _write (self, element):
+    p = super(ContainerPort, self)._write(element)
+    for addr in self._v4addresses:
+      ae = ET.SubElement(p, "{%s}ipv4-address")
+      ae.attrib["value"] = str(addr)
+    return p
+
+  def addIPv4Address (self, value):
+    self._v4addressess.append(ipaddress.IPv4Interface(value))
+
+
 class GRECircuit(Port):
   def __init__ (self, circuit_plane, endpoint):
     super(GRECircuit, self).__init__()
@@ -455,8 +472,15 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v, delay_info, loss_info)
-  dp = InternalCircuit(None, dp2v, delay_info, loss_info)
+  if isinstance(dp1, Container):
+    sp = ContainerPort(None, dp1v, delay_info, loss_info)
+  elif isinstance(dp1, Datapath):
+    sp = InternalCircuit(None, dp1v, delay_info, loss_info)
+
+  if isinstance(dp2, Container):
+    dp = ContainerPort(None, dp2v, delay_info, loss_info)
+  elif isinstance(dp2, Datapath):
+    dp = InternalCircuit(None, dp2v, delay_info, loss_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)
