@@ -84,7 +84,7 @@ class _EPCBaseNode(object):
         if self.posthook:
             startcmd += " -T %s" & self.posthook
         if self.syncstart:
-            self.addService(ProgramAgent('oepc0', startcmd, None, True))
+            self.addService(ProgramAgent(self.client_id + '_epc0', startcmd, None, True))
         else:
             self.addService(Execute(shell="csh", command=startcmd))
         return super(_EPCBaseNode, self)._write(root)
