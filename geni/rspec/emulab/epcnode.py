@@ -80,9 +80,9 @@ class _EPCBaseNode(object):
         if self.hname:
             startcmd += " -h %s" % self.hname
         if self.prehook:
-            startcmd += " -P %s" & self.prehook
+            startcmd += " -P %s" % self.prehook
         if self.posthook:
-            startcmd += " -T %s" & self.posthook
+            startcmd += " -T %s" % self.posthook
         if self.syncstart:
             self.addService(ProgramAgent(self.client_id + '_epc0', startcmd, None, True))
         else:
