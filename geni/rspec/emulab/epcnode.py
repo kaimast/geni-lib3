@@ -10,6 +10,7 @@ from ..pg import RawPC, Execute, Request
 from ..igext import XenVM
 from .epcexc import InvalidRole
 from .pndefs import EPCROLES, PNDEFS
+from .emuext import ProgramAgent
 
 #
 # Defaults/constants used below
@@ -30,6 +31,7 @@ class EPCNodeFactorySettings(object):
     use_vm_nodes = False
     hardware_type = None
     disk_image = PNDEFS.DEF_BINOEPC_IMG
+    do_sync_start = False
 
 def mkepcnode(*args, **kwargs):
     node = None
@@ -51,6 +53,8 @@ def mkepcnode(*args, **kwargs):
         node.hardware_type = EPCNodeFactorySettings.hardware_type
     if EPCNodeFactorySettings.disk_image:
         node.disk_image = EPCNodeFactorySettings.disk_image
+    if EPCNodeFactorySettings.do_sync_start:
+        node.syncstart = EPCNodeFactorySettings.do_sync_start
     return node
 
 #
@@ -68,6 +72,7 @@ class _EPCBaseNode(object):
         self.startscript = _EPCDEFS.OEPC_STARTSCRIPT
         self.prehook = prehook
         self.posthook = posthook
+        self.syncstart = False
 
     def _write(self, root):
         startcmd = "%s %s -r %s" % (_EPCDEFS.SUDOBIN, self.startscript, 
@@ -78,7 +83,10 @@ class _EPCBaseNode(object):
             startcmd += " -P %s" & self.prehook
         if self.posthook:
             startcmd += " -T %s" & self.posthook
-        self.addService(Execute(shell="csh", command=startcmd))
+        if self.syncstart:
+            self.addService(ProgramAgent(self.client_id + '_epc0', startcmd, None, True))
+        else:
+            self.addService(Execute(shell="csh", command=startcmd))
         return super(_EPCBaseNode, self)._write(root)
 
 
