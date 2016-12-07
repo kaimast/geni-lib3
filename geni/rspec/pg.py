@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import itertools
 import sys
 import functools
+import importlib
 
 from lxml import etree as ET
 

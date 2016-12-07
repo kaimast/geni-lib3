@@ -234,3 +234,114 @@ class InstantiateOn(object):
         return root
 
 Node.EXTENSIONS.append(("InstantiateOn", InstantiateOn))
+
+#
+# A Bridged Link is syntatic sugar for two links separated by a bridge
+# node acting as a delay node.
+#
+# Unfortunately, there is no way to get a handle on the parent object
+# of an extension, so we need to get that explicitly.
+#
+class BridgedLink(object):
+  """A bridged link is syntactic sugar used to create two links
+separated by an Emulab delay (bridge) node. The BridgedLink class will
+create the following topology:
+
+	      left-link          right-link
+	node1 =========== bridge ============ node2
+
+The bridge is a special node type (sliver_type="delay") that tells the
+CM to insert an Emulab delay node instead of a plain (router) node. A
+delay node is a transparent Ethernet bridge between the left and right
+segments above, but on which the traffic can be shaped wrt. bandwidth,
+latency, and loss. For example:
+
+        # Create the bridged link between the two nodes.
+        link = request.BridgedLink("link")
+        # Add two interfaces
+        link.addInterface(iface1)
+        link.addInterface(iface2)
+        # Give the link (bridge) some shaping parameters.
+        link.bandwidth = 10000
+        link.latency   = 15
+        link.plr       = 0.01"""
+
+  # This tells the Request class to pass the request object as the first
+  # argument to the __init__ function, from the extensions wrapper function.
+  __WANTPARENT__ = True;
+  
+  def __init__ (self, request, name = None):
+    if name is None:
+      self.name = Link.newLinkID()
+    else:
+      self.name = name
+
+    self.request     = request
+    self.bridge_name = name + "_bridge"
+    self.bridge      = request.Bridge(self.bridge_name)
+    self.left_name   = name + "_left"
+    self.left_link   = request.Link(self.left_name)
+    self.left_link.addInterface(self.bridge.iface0);
+    self.left_iface  = None
+    self.right_name  = name + "_right"
+    self.right_link  = request.Link(self.right_name)
+    self.right_link.addInterface(self.bridge.iface1);
+    self.right_iface = None
+    self._bandwidth  = Link.DEFAULT_BW
+    self._latency    = Link.DEFAULT_LAT
+    self._plr        = Link.DEFAULT_PLR
+
+  def addInterface(self, interface):
+      if self.left_iface == None:
+          self.left_link.addInterface(interface)
+          self.left_iface = interface
+      else:
+          self.right_link.addInterface(interface)
+          self.right_iface = interface
+
+  @property
+  def bandwidth (self):
+    return self._bandwidth
+
+  @bandwidth.setter
+  def bandwidth (self, val):
+    self.bridge.pipe0.bandwidth = val;
+    self.bridge.pipe1.bandwidth = val;
+    self._bandwidth = val
+
+  @property
+  def latency (self):
+    return self._latency
+
+  @latency.setter
+  def latency (self, val):
+    self.bridge.pipe0.latency = val;
+    self.bridge.pipe1.latency = val;
+    self._latency = val
+
+  @property
+  def plr (self):
+    return self._plr
+
+  @plr.setter
+  def plr (self, val):
+    self.bridge.pipe0.lossrate = val;
+    self.bridge.pipe1.lossrate = val;
+    self._plr = val
+
+  def _write(self, root):
+      return root
+
+Request.EXTENSIONS.append(("BridgedLink", BridgedLink))
+
+class ShapedLink(BridgedLink):
+  """A ShapedLink is a synonym for BridgedLink"""
+
+  # This tells the Request class to pass the request object as the first
+  # argument to the __init__ function, from the extensions wrapper function.
+  __WANTPARENT__ = True;
+  
+  def __init__ (self, request, name = None):
+    super(ShapedLink, self).__init__(request, name=name)
+
+Request.EXTENSIONS.append(("ShapedLink", ShapedLink))
