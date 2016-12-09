@@ -98,6 +98,13 @@ class VTS(AM):
   def setDeleteLock (self, context, sname):
     return self._apiv3.poa(context, self.urlv3, sname, "geni:set-delete-lock", {})
 
+  def dropboxUpload (self, context, sname, cvols):
+    data = {}
+    for (cid,volid) in cvols:
+      data.getdefault(cid, []).append(volid)
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:dropbox:upload", options = {"vols" : [data]})
+
+
 
 
 DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
