@@ -24,6 +24,9 @@ class IGCompute(AM):
       urns = [urns]
     return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
 
+  def geniStart (self, context, sname):
+    return self._apiv3.poa(context, self.urlv3, sname, "geni_start")
+
 
 # TODO: Should warn if CMID from advertisement differs from one here
 

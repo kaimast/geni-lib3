@@ -227,9 +227,13 @@ class SSLVPNFunction(ManifestFunction):
     self.local_ip = None
     self.key = None
 
-  @staticmethod
-  def _fromdom (elem):
-    return
+  @classmethod
+  def _fromdom (cls,elem):
+    vpn = SSLVPNFunction(elem.get('client_id'))
+    vpn.tp_port = elem.get('tp-port')
+    vpn.local_ip = elem.get('local-ip')
+    vpn.key = elem.text
+    return vpn
 
 class Manifest(object):
   def __init__ (self, path = None, xml = None):

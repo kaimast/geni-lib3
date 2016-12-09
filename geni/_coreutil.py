@@ -6,8 +6,10 @@
 
 import os
 import os.path
+import pkg_resources
 
 WIN32_ATTR_HIDDEN = 0x02
+VERSION = pkg_resources.require("geni-lib")[0].version
 
 def getDefaultDir ():
   HOME = os.path.expanduser("~")
@@ -37,7 +39,7 @@ def getOSName ():
     return "unknown"
 
 def defaultHeaders ():
-  d = {"User-Agent" : "GENI-LIB (%s)" % (getOSName())}
+  d = {"User-Agent" : "GENI-LIB %s (%s)" % (VERSION, getOSName())}
   return d
 
 def getDefaultContextPath ():

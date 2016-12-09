@@ -15,7 +15,7 @@ if os.name == "posix" and os.uname()[0] == "Linux" and not os.path.exists("/etc/
   ssl._create_default_https_context = ssl._create_unverified_context
 
 setup(name = 'geni-lib',
-      version = '0.9.1',
+      version = '0.9.2',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
       packages = find_packages(),
@@ -24,6 +24,7 @@ setup(name = 'geni-lib',
       install_requires = [
         "requests >= 2.7.0",
         "cryptography",
+        "py2-ipaddress",
         "lxml",
         "wrapt",
         ],

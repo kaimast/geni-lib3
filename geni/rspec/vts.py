@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import functools
 import decimal
 
+import ipaddress
 from lxml import etree as ET
 
 import geni.rspec
@@ -320,6 +321,7 @@ class Container(Resource):
     self.image = image
     self.ports =[]
     self.name = name
+    self.routes = []
 
     for name,ext in Container.EXTENSIONS:
       self._wrapext(name, ext)
@@ -332,12 +334,19 @@ class Container(Resource):
     self.ports.append(port)
     return port
 
+  def addIPRoute (self, network, gateway):
+    self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
     self.image._write(d)
     for port in self.ports:
       port._write(d)
+    for net,gw in self.routes:
+      re = ET.SubElement(d, "{%s}route" % (Namespaces.VTS))
+      re.attrib["network"] = str(net)
+      re.attrib["gateway"] = str(gw)
     super(Container, self)._write(d)
     return d
 
@@ -400,6 +409,22 @@ class InternalCircuit(Port):
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
+
+
+class ContainerPort(InternalCircuit):
+  def __init__ (self, target, vlan = None, delay_info = None, loss_info = None):
+    super(ContainerPort, self).__init__(target, vlan, delay_info, loss_info)
+    self._v4addresses = []
+
+  def _write (self, element):
+    p = super(ContainerPort, self)._write(element)
+    for addr in self._v4addresses:
+      ae = ET.SubElement(p, "{%s}ipv4-address" % (Namespaces.VTS))
+      ae.attrib["value"] = str(addr)
+    return p
+
+  def addIPv4Address (self, value):
+    self._v4addresses.append(ipaddress.IPv4Interface(unicode(value)))
 
 
 class GRECircuit(Port):
@@ -471,8 +496,15 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v, delay_info, loss_info)
-  dp = InternalCircuit(None, dp2v, delay_info, loss_info)
+  if isinstance(dp1, Container):
+    sp = ContainerPort(None, dp1v, delay_info, loss_info)
+  elif isinstance(dp1, Datapath):
+    sp = InternalCircuit(None, dp1v, delay_info, loss_info)
+
+  if isinstance(dp2, Container):
+    dp = ContainerPort(None, dp2v, delay_info, loss_info)
+  elif isinstance(dp2, Datapath):
+    dp = InternalCircuit(None, dp2v, delay_info, loss_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)
