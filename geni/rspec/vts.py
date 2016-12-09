@@ -429,7 +429,7 @@ class Mount(Resource):
 
   def _write (self, element):
     melem = ET.SubElement(element, "{%s}mount" % (Namespaces.VTS))
-    melem.attrib["type"] = "hg"
+    melem.attrib["type"] = self.type
     melem.attrib["name"] = self.name
     melem.attrib["path"] = self.mount_path
     for k,v in self.attrs.iteritems():
