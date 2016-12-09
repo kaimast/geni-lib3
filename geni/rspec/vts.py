@@ -420,23 +420,39 @@ class GRECircuit(Port):
 # Element Extensions #
 ######################
 
-class HgMount(Resource):
-  def __init__ (self, name, source, mount_path, branch = "default"):
+class Mount(Resource):
+  def __init__ (self, type, name, mount_path):
+    self.type = type
     self.name = name
-    self.source = source
     self.mount_path = mount_path
-    self.branch = branch
+    self.attrs = {}
 
   def _write (self, element):
     melem = ET.SubElement(element, "{%s}mount" % (Namespaces.VTS))
     melem.attrib["type"] = "hg"
     melem.attrib["name"] = self.name
     melem.attrib["path"] = self.mount_path
-    melem.attrib["source"] = self.source
-    melem.attrib["branch"] = self.branch
+    for k,v in self.attrs.iteritems():
+      melem.attrib[k] = str(v)
     return melem
 
+Container.EXTENSIONS.append(("Mount", Mount))
+
+
+class HgMount(Mount):
+  def __init__ (self, name, source, mount_path, branch = "default"):
+    super(HgMount, self).__init__("hg", name, mount_path)
+    self.attrs["source"] = source
+    self.attrs["branch"] = branch
+
 Container.EXTENSIONS.append(("HgMount", HgMount))
+
+
+class DropboxMount(Mount):
+  def __init__ (self, name, mount_path):
+    super(DropboxMount, self).__init__("dropbox", name, mount_path)
+
+Container.EXTENSIONS.append(("DropboxMount", DropboxMount))
 
 
 #############
