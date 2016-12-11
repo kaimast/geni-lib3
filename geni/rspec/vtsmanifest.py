@@ -150,6 +150,23 @@ class PGLocalPort(GenericPort):
     p.shared_vlan = elem.get("shared-lan")
     return p
 
+
+class ManifestMount(object):
+  def __init__ (self):
+    self.type = None
+    self.name = None
+    self.path = None
+    self.volid = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    m = ManifestMount()
+    m.type = elem.get("type")
+    m.volid = elem.get("vol-id")
+    m.name = elem.get("name")
+    m.path = elem.get("path")
+
+
 class ManifestContainer(object):
   def __init__ (self):
     self.client_id = None
@@ -157,6 +174,7 @@ class ManifestContainer(object):
     self.sliver_id = None
     self.logins = []
     self.ports = []
+    self.mounts = []
 
   @property
   def name (self):
@@ -178,6 +196,11 @@ class ManifestContainer(object):
     for cport in ports:
       p = Manifest._buildPort(cport, True)
       c.ports.append(p)
+
+    mounts = elem.xpath('v:mount', namespaces = XPNS)
+    for melem in mounts:
+      m = ManifestMount._fromdom(melem)
+      c.mounts.append(m)
 
     return c
 
