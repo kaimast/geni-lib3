@@ -98,11 +98,18 @@ class VTS(AM):
   def setDeleteLock (self, context, sname):
     return self._apiv3.poa(context, self.urlv3, sname, "geni:set-delete-lock", {})
 
+  def dropboxLink (self, context):
+    return self._apiv3.paa(context, self.urlv3, "vts:dropbox:link-account")
+
+  def dropboxFinalize (self, context, authcode):
+    return self._apiv3.paa(context, self.urlv3, "vts:dropbox:complete-link", {"auth-code" : authcode})
+
   def dropboxUpload (self, context, sname, cvols):
     data = {}
     for (cid,volid) in cvols:
       data.setdefault(cid, []).append(volid)
     return self._apiv3.poa(context, self.urlv3, sname, "vts:dropbox:upload", options = {"vols" : [data]})
+
 
 
 
