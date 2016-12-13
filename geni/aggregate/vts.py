@@ -27,6 +27,17 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:change-controller", options)
 
   def dumpFlows (self, context, sname, datapaths, show_hidden=False):
+    """Get the current flows and flow stats from the requested datapaths.
+    
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      datapaths (list): A list of datapath client_id strings
+      show_hidden (bool): Show hidden flows (if any)
+
+    Returns:
+      dict: Key/Value dictionary of format { client_id : [(flow_field, ...), ...] }
+    """
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
 
@@ -35,6 +46,13 @@ class VTS(AM):
                            options={"datapaths" : datapaths})
 
   def clearFlows (self, context, sname, datapaths):
+    """Clear all installed flows from the requested datapaths.
+
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      datapaths (list): A list of datapath client_id strings
+    """
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:clear-flows", options={"datapaths" : datapaths})
 
   def portDown (self, context, sname, client_id):
@@ -96,13 +114,52 @@ class VTS(AM):
                            options = {"client-id-map" : clid_map})
 
   def setDeleteLock (self, context, sname):
+    """Prevent the given sliver from being deleted by another user with the credential.
+
+    .. note::
+      Locks are cumulative, and removed by calling `deletesliver`.  When the last locking
+      user calls `deletesliver`, the sliver will be deleted.  It is not possible to remove
+      your lock without risking deletion.
+
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+    """
     return self._apiv3.poa(context, self.urlv3, sname, "geni:set-delete-lock", {})
 
+  def dropboxLink (self, context):
+    """Link your user_urn to a Dropbox account at this aggregate.
+
+    Args:
+      context: geni-lib context
+
+    Returns:
+      str: Dropbox authorization URL to paste into web browser
+    """
+    return self._apiv3.paa(context, self.urlv3, "vts:dropbox:link-account")
+
+  def dropboxFinalize (self, context, authcode):
+    """Finalize the Dropbox account link for this aggregate.
+
+    Args:
+      context: geni-lib context
+      authcode (str): Authorization code given by Dropbox
+    """
+    return self._apiv3.paa(context, self.urlv3, "vts:dropbox:complete-link", {"auth-code" : authcode})
+
   def dropboxUpload (self, context, sname, cvols):
+    """Trigger upload to associated Dropbox account from requested container volumes.
+
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      cvols (list): List of `(container client-id, volume-id)` tuples
+    """
     data = {}
     for (cid,volid) in cvols:
       data.setdefault(cid, []).append(volid)
     return self._apiv3.poa(context, self.urlv3, sname, "vts:dropbox:upload", options = {"vols" : [data]})
+
 
 
 

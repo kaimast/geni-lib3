@@ -2,6 +2,7 @@ API
 ===
 
 .. toctree::
+   geniaggregatevts
    geniminigcfconfig
    geniportal
    genirspecigext
