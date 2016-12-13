@@ -116,7 +116,7 @@ class VTS(AM):
   def setDeleteLock (self, context, sname):
     """Prevent the given sliver from being deleted by another user with the credential.
 
-    :note:
+    .. note::
       Locks are cumulative, and removed by calling `deletesliver`.  When the last locking
       user calls `deletesliver`, the sliver will be deleted.  It is not possible to remove
       your lock without risking deletion.

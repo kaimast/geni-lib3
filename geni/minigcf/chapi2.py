@@ -168,7 +168,7 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
 
 def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
   """Delete project by URN
-  .. note:
+  .. note::
     You may or may not be able to delete projects as a matter of policy for the given authority."""
 
   options = {}
