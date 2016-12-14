@@ -12,6 +12,8 @@ import inspect
 from .core import AM, APIRegistry
 
 class VTS(AM):
+  """Wrapper for all VTS-supposed AMAPI functions"""
+
   def __init__ (self, name, host, url = None):
     self.host = host
     if url is None:
@@ -36,7 +38,7 @@ class VTS(AM):
       show_hidden (bool): Show hidden flows (if any)
 
     Returns:
-      dict: Key/Value dictionary of format { client_id : [(flow_field, ...), ...] }
+      dict: Key/Value dictionary of format `{ client_id : [(flow_field, ...), ...] }`
     """
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})

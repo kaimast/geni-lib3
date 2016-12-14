@@ -9,7 +9,7 @@ Welcome to geni-lib's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro/intro
    intro/credentials
