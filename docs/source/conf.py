@@ -41,6 +41,7 @@ extensions = [
 napoleon_use_rtype = False
 #napoleon_use_ivar = True
 autoclass_content = 'both'
+autodoc_default_flags = ["undoc-members", "members", "inherited-members"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
