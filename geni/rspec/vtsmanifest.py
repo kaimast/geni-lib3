@@ -259,6 +259,8 @@ class SSLVPNFunction(ManifestFunction):
     return vpn
 
 class Manifest(object):
+  """Wrapper object for GENI XML manifest rspec, providing a pythonic API to the contained data"""
+
   def __init__ (self, path = None, xml = None):
     if path:
       self._xml = open(path, "r").read()
@@ -276,10 +278,12 @@ class Manifest(object):
 
   @property
   def text (self):
+    """String representation of original XML content, with added whitespace for easier reading"""
     return ET.tostring(self.root, pretty_print=True)
 
   @property
   def pg_circuits (self):
+    """Iterator for allocated circuit names on the local PG circuit plane (as strings)."""
     elems = self._root.xpath("v:datapath/v:port[@shared-lan]", namespaces = XPNS)
     for elem in elems:
       yield elem.get("shared-lan")
@@ -288,6 +292,7 @@ class Manifest(object):
 
   @property
   def ports (self):
+    """Iterator for all datapath and container ports as subclasses of :py:class:`GenericPort` objects."""
     for dp in self.datapaths:
       for p in dp.ports:
         yield p
@@ -297,23 +302,35 @@ class Manifest(object):
 
   @property
   def containers (self):
+    """Iterator over all allocated containers as :py:class:`ManifestContainer` objects."""
     elems = self._root.xpath("v:container", namespaces = XPNS)
     for elem in elems:
       yield ManifestContainer._fromdom(elem)
 
   @property
   def functions (self):
+    """Iterator over all allocated functions as :py:class:`ManifestFunction` objects."""
     elems = self._root.xpath("v:functions/v:function", namespaces = XPNS)
     for elem in elems:
       yield ManifestFunction._fromdom(elem)
 
   @property
   def datapaths (self):
+    """Iterator over all allocated datapaths as :py:class:`ManifestDatapath` objects."""
     elems = self._root.xpath("v:datapath", namespaces = XPNS)
     for elem in elems:
       yield ManifestDatapath._fromdom(elem)
 
   def findTarget (self, client_id):
+    """Get the container or datapath representing the given `client_id` in the manifest.
+
+    Args:
+      client_id (str): Requested client ID of the object you want to find
+
+    Returns:
+      :py:class:`ManifestDatapath`, :py:class:`ManifestContainer`, or `None`
+    """
+      
     dpelems = self._root.xpath("v:datapath[@client_id='%s']" % (client_id), namespaces = XPNS)
     if dpelems:
       return ManifestDatapath._fromdom(dpelems[0])
@@ -323,6 +340,14 @@ class Manifest(object):
       return ManifestContainer._fromdom(ctelems[0])
 
   def findPort (self, client_id):
+    """Get the datapath port object representing the given `client_id`.
+
+    Args:
+      client_id (str): client_id of the port you want to find
+
+    Returns:
+      :py:class:`GenericPort` or `None`
+    """
     pelems = self._root.xpath("v:datapath/v:port[@client_id='%s']" % (client_id), namespaces = XPNS)
     if pelems:
       return Manifest._buildPort(pelems[0])
@@ -355,6 +380,11 @@ class Manifest(object):
     self.writeXML(path)
 
   def writeXML (self, path):
+    """Write the XML representation of this manifest to the supplied path.
+
+    Args:
+      path (str): Path to output file
+    """
     f = open(path, "w+")
     f.write(ET.tostring(self.root, pretty_print=True))
     f.close()
