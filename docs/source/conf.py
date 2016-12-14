@@ -39,6 +39,7 @@ extensions = [
 ]
 
 napoleon_use_rtype = False
+napoleon_use_ivar = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -98,7 +99,7 @@ add_module_names = False
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = ['geni.']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False

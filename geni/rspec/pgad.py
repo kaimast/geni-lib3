@@ -124,6 +124,7 @@ class AdNode(object):
   def __init__ (self):
     self.component_id = None
     self.component_manager_id = None
+
     self.name = None
     self.exclusive = True
     self.available = False
