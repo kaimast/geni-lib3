@@ -39,7 +39,8 @@ extensions = [
 ]
 
 napoleon_use_rtype = False
-napoleon_use_ivar = True
+#napoleon_use_ivar = True
+autoclass_content = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
