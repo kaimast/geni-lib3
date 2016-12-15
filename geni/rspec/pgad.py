@@ -102,10 +102,7 @@ class AdNode(object):
     In general this object is created on-demand through `Advertisement` objects,
     but you can load this object from a Node XML element by using the `_fromdom`
     classmethod.
-  """
 
-  def __init__ (self):
-    """
     Attributes:
       component_id (str): Component ID URN
       component_manager_id (str): Component Manager ID URN
@@ -120,8 +117,9 @@ class AdNode(object):
       location (:py:class:`AdLocation`): `None` if not available
       ram (int): Currently available system RAM in megabytes.  `None` if not available.
       cpu (int): Maximum Per-core CPU speed in Mhz.  `None` if not available.
-    """
+  """
 
+  def __init__ (self):
     self.component_id = None
     self.component_manager_id = None
 
