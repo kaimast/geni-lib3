@@ -165,6 +165,7 @@ class ManifestMount(object):
     m.volid = elem.get("vol-id")
     m.name = elem.get("name")
     m.path = elem.get("path")
+    return m
 
 
 class ManifestContainer(object):
