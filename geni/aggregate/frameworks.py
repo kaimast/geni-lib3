@@ -42,6 +42,10 @@ class Member(object):
     self.emulab_role = None
     self.roles = {}
 
+  @property
+  def shortname (self):
+    return self.urn.split("+")[-1]
+
   def _set_from_project (self, project_info):
     self.urn = project_info["PROJECT_MEMBER"]
     self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
@@ -261,6 +265,41 @@ class CHAPI2(Framework):
 
     res = chapi2.lookup_slice_members(self._sa, False, self.cert, self.key,
                                       [context.ucred_api3], slice_urn)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def addSliceMembers (self, context, slicename, members, role = None):
+    from ..minigcf import chapi2
+
+    if not role:
+      role = chapi2.SLICE_ROLE.MEMBER
+
+    if not isinstance(members, (list,set,tuple)):
+      members = [members]
+
+    slice_urn = self.sliceNameToURN(slicename)
+    
+    res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
+                                         slice_urn, add = [(x.urn, role) for x in members])
+
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def removeSliceMembers (self, context, slicename, members):
+    from ..minigcf import chapi2
+
+    if not isinstance(members, (list,set,tuple)):
+      members = [members]
+
+    slice_urn = self.sliceNameToURN(slicename)
+    
+    res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
+                                         slice_urn, remove = [x.urn for x in members])
+
     if res["code"] == 0:
       return res["value"]
     else:
