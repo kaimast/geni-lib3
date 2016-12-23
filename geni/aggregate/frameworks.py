@@ -210,6 +210,15 @@ class CHAPI2(Framework):
     ### TODO: Exception
     return None
 
+  def createProject (self, context, name, exp, desc):
+    from ..minigcf import chapi2
+
+    res = chapi2.create_project(self._sa, False, self.cert, self.key, [context.ucred_api3], name, exp, desc)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
   def listProjectMembers (self, context, project_urn = None):
     if not project_urn:
       project_urn = self.projecturn
