@@ -6,10 +6,6 @@ API
    geniminigcfconfig
    geniportal
    genirspec/index
-   genirspecigext
-   genirspecpg
-   genirspecpgad
-   genirspecvtsmanifest
    genitypes
    geniurn
    geniutil
