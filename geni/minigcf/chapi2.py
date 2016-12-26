@@ -27,6 +27,10 @@ class SLICE_ROLE(object):
   OPERATOR = "OPERATOR"
   AUDITOR = "AUDITOR"
 
+class PROJECT_ROLE(object):
+  LEAD = "LEAD"
+  MEMBER = "MEMBER"
+
 
 class TLS1HttpAdapter(HTTPAdapter):
   def init_poolmanager(self, connections, maxsize, block=False):
@@ -262,5 +266,29 @@ def modify_slice_membership (url, root_bundle, cert, key, cred_strings, slice_ur
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
     config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
-      
+
+
+def modify_project_membership (url, root_bundle, cert, key, cred_strings, project_urn, add = None, remove = None, change = None):
+  options = {}
+  if add:
+    to_add = []
+    for urn,role in add:
+      to_add.append({"PROJECT_MEMBER" : urn, "PROJECT_ROLE" : role})
+    options["members_to_add"] = to_add
+  if remove:
+    options["members_to_remove"] = remove
+  if change:
+    to_change = []
+    for urn,role in change:
+      to_change.append({"PROJECT_MEMBER" : urn, "PROJECT_ROLE" : role})
+    options["members_to_change"] = to_change
+
+  req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "modify_membership")
+  s = requests.Session()
+  s.mount(url, TLS1HttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
+  return xmlrpclib.loads(resp.content)[0][0]
 
