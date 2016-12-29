@@ -7,6 +7,7 @@
 import os
 import os.path
 import pkg_resources
+import ssl
 
 WIN32_ATTR_HIDDEN = 0x02
 VERSION = pkg_resources.require("geni-lib")[0].version
@@ -71,3 +72,14 @@ def disableUrllibWarnings ():
   except ImportError:
     # This version of requests doesn't have urllib3 in it
     return
+
+from requests.adapters import HTTPAdapter
+try:
+  from requests.packages.urllib3.poolmanager import PoolManager
+  class TLSHttpAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+      self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
+                                     block = block, ssl_version = ssl.PROTOCOL_TLSv1_2)
+except ImportError:
+  TLSHttpAdapter = HTTPAdapter
+

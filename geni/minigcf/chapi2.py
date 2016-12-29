@@ -7,10 +7,8 @@
 from __future__ import absolute_import
 
 import xmlrpclib
-import ssl
 
 import requests
-from requests.adapters import HTTPAdapter
 
 from .. import _coreutil as GCU
 from . import config
@@ -18,15 +16,6 @@ from . import config
 GCU.disableUrllibWarnings()
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
-
-try:
-  from requests.packages.urllib3.poolmanager import PoolManager
-  class TLS1HttpAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
-      self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
-                                     block = block, ssl_version = ssl.PROTOCOL_TLSv1)
-except ImportError:
-  TLS1HttpAdapter = HTTPAdapter
 
 
 class SLICE_ROLE(object):
@@ -48,7 +37,7 @@ def headers ():
 def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
   req_data = xmlrpclib.dumps((typ, cred_strings, options), methodname="lookup")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -59,7 +48,7 @@ def get_version (url, root_bundle, cert, key, options = None):
   if not options: options = {}
   req_data = xmlrpclib.dumps(tuple(), methodname = "get_version")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -78,7 +67,7 @@ def lookup_member_info (url, root_bundle, cert, key, cred_strings, user_urn):
 def create_key_info (url, root_bundle, cert, key, cred_strings, data):
   req_data = xmlrpclib.dumps(("KEY", cred_strings, {"fields" : data}), methodname="create")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -89,7 +78,7 @@ def create_key_info (url, root_bundle, cert, key, cred_strings, data):
 def get_credentials (url, root_bundle, cert, key, creds, target_urn):
   req_data = xmlrpclib.dumps((target_urn, creds, {}), methodname="get_credentials")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -107,7 +96,7 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
   req_data = xmlrpclib.dumps(("SLICE", cred_strings, {"fields" : fields}), methodname = "create")
 
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -118,7 +107,7 @@ def create_slice (url, root_bundle, cert, key, cred_strings, name, proj_urn, exp
 def update_slice (url, root_bundle, cert, key, cred_strings, slice_urn, fields):
   req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, {"fields" : fields}), methodname = "update")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -131,7 +120,7 @@ def lookup_slices_for_member (url, root_bundle, cert, key, cred_strings, member_
 
   req_data = xmlrpclib.dumps(("SLICE", member_urn, cred_strings, options), methodname = "lookup_for_member")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -149,7 +138,7 @@ def lookup_slice_members (url, root_bundle, cert, key, cred_strings, slice_urn):
 
   req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, options), methodname = "lookup_members")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -166,7 +155,7 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
 
   req_data = xmlrpclib.dumps(("PROJECT", cred_strings, {"fields" : fields}), methodname = "create")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -183,7 +172,7 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
 
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "delete")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -194,7 +183,7 @@ def delete_project (url, root_bundle, cert, key, cred_strings, project_urn):
 #  options = {"fields" : {}}
 #  req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "update")
 #  s = requests.Session()
-#  s.mount(url, TLS1HttpAdapter())
+#  s.mount(url, GCU.TLSHttpAdapter())
 #  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers())
 #  return xmlrpclib.loads(resp.content)[0][0]
 
@@ -220,7 +209,7 @@ def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, membe
 
   req_data = xmlrpclib.dumps(("PROJECT", member_urn, cred_strings, options), methodname = "lookup_for_member")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -233,7 +222,7 @@ def lookup_project_members (url, root_bundle, cert, key, cred_strings, project_u
 
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "lookup_members")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -264,7 +253,7 @@ def modify_slice_membership (url, root_bundle, cert, key, cred_strings, slice_ur
 
   req_data = xmlrpclib.dumps(("SLICE", slice_urn, cred_strings, options), methodname = "modify_membership")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
@@ -289,7 +278,7 @@ def modify_project_membership (url, root_bundle, cert, key, cred_strings, projec
 
   req_data = xmlrpclib.dumps(("PROJECT", project_urn, cred_strings, options), methodname = "modify_membership")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):

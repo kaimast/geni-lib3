@@ -10,21 +10,13 @@
 from __future__ import absolute_import
 
 import xmlrpclib
-import ssl
 
 import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
 
 from .. import _coreutil as GCU
 from . import config
 
 GCU.disableUrllibWarnings()
-
-class TLS1HttpAdapter(HTTPAdapter):
-  def init_poolmanager(self, connections, maxsize, block=False):
-    self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
-                                   block = block, ssl_version = ssl.PROTOCOL_TLSv1)
 
 def headers ():
   return GCU.defaultHeaders()
@@ -34,7 +26,7 @@ def getversion (url, root_bundle, cert, key, options = None):
   if not options: options = {}
   req_data = xmlrpclib.dumps(options, methodname="GetVersion")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
 
@@ -54,7 +46,7 @@ def poa (url, root_bundle, cert, key, creds, urns, action, options = None):
   req_data = xmlrpclib.dumps((urns, cred_list, action, options),
                              methodname="PerformOperationalAction")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
 
@@ -69,7 +61,7 @@ def paa (url, root_bundle, cert, key, action, options = None):
   req_data = xmlrpclib.dumps((action, options),
                              methodname="PerformAggregateAction")
   s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
+  s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
 
