@@ -47,23 +47,27 @@ def getDefaultContextPath ():
   return os.path.normpath("%s/context.json" % (ddir))
 
 def disableUrllibWarnings ():
-  import requests.packages.urllib3
-  import requests.packages.urllib3.exceptions
-
-  warnings = []
   try:
-    warnings.append(requests.packages.urllib3.exceptions.InsecureRequestWarning)
-  except AttributeError:
-    pass
+    import requests.packages.urllib3
+    import requests.packages.urllib3.exceptions
 
-  try:
-    warnings.append(requests.packages.urllib3.exceptions.InsecurePlatformWarning)
-  except AttributeError:
-    pass
+    warnings = []
+    try:
+      warnings.append(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    except AttributeError:
+      pass
 
-  try:
-    warnings.append(requests.packages.urllib3.exceptions.SNIMissingWarning)
-  except AttributeError:
-    pass
+    try:
+      warnings.append(requests.packages.urllib3.exceptions.InsecurePlatformWarning)
+    except AttributeError:
+      pass
 
-  requests.packages.urllib3.disable_warnings(tuple(warnings))
+    try:
+      warnings.append(requests.packages.urllib3.exceptions.SNIMissingWarning)
+    except AttributeError:
+      pass
+
+    requests.packages.urllib3.disable_warnings(tuple(warnings))
+  except ImportError:
+    # This version of requests doesn't have urllib3 in it
+    return
