@@ -11,7 +11,6 @@ import ssl
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
 
 from .. import _coreutil as GCU
 from . import config
@@ -19,6 +18,16 @@ from . import config
 GCU.disableUrllibWarnings()
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
+
+try:
+  from requests.packages.urllib3.poolmanager import PoolManager
+  class TLS1HttpAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+      self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
+                                     block = block, ssl_version = ssl.PROTOCOL_TLSv1)
+except ImportError:
+  TLS1HttpAdapter = HTTPAdapter
+
 
 class SLICE_ROLE(object):
   LEAD = "LEAD"
@@ -31,11 +40,6 @@ class PROJECT_ROLE(object):
   LEAD = "LEAD"
   MEMBER = "MEMBER"
 
-
-class TLS1HttpAdapter(HTTPAdapter):
-  def init_poolmanager(self, connections, maxsize, block=False):
-    self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
-                                   block = block, ssl_version = ssl.PROTOCOL_TLSv1)
 
 def headers ():
   return GCU.defaultHeaders()
