@@ -266,9 +266,13 @@ def Interface (authorities, name):
   """Create a new GENI URN with type 'interface'."""
   return GENI(authorities, GENI.TYPE_INTERFACE, name)
 
-def Image (authorities, name):
+def Image (authorities, name, version = None):
   """Create a new GENI URN with type 'image'."""
-  return GENI(authorities, GENI.TYPE_IMAGE, name)
+  if version is not None:
+      constructed_name = "%s:%s" % (name, str(version))
+  else:
+      constructed_name = name
+  return GENI(authorities, GENI.TYPE_IMAGE, constructed_name)
 
 def Link (authorities, name):
   """Create a new GENI URN with type 'link'."""
@@ -329,6 +333,8 @@ if __name__ == "__main__":
             "urn:publicid:IDN+lan.sdn.uky.edu+user+hussam")
   check_urn(Image(IG.UtahDDC,"UBUNTU64-STD"),
             "urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD")
+  check_urn(Image(IG.UtahDDC,"UBUNTU64-STD",42),
+            "urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD:42")
   check_urn(User(IG.Clemson,"kwang"),
             "urn:publicid:IDN+instageni.clemson.edu+user+kwang")
 
