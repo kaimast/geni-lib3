@@ -231,9 +231,7 @@ class Context (object):
     else:
       if self._dumpParamsPath:
         self._dumpParamsJSON()
-        sys.exit(0)
-      else:
-        return self._bindParametersEnv()
+      return self._bindParametersEnv()
 
   def makeParameterWarningsFatal (self):
     """
