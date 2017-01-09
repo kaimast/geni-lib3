@@ -66,7 +66,7 @@ class Base (object):
   def _fromStr(s):
     if not Base.isValidURN(s):
       raise MalformedURNError(s)
-    return tuple(re.split(":",s,3))
+    return tuple(re.split(":",s,2))
 
   def __init__ (self, *args):
     """Create a new generic URN
@@ -340,5 +340,6 @@ if __name__ == "__main__":
 
   check_type("urn:isbn:0345371984",Base)
   check_type("urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD",GENI)
+  check_type("urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD:42",GENI)
 
   sys.exit(errors)
