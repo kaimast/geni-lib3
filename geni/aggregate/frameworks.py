@@ -86,6 +86,10 @@ class Framework(object):
     def __str__ (self):
       return "Path %s does not contain a key" % (self.path)
 
+  class UnconfiguredCertificateError(Exception):
+    def __str__ (self):
+      return "Key and Certificate must be set before using a framework"
+
   def __init__ (self, name = None):
     self.name = name
     self._type = None
@@ -113,6 +117,8 @@ class Framework(object):
 
   @property
   def key (self):
+    if self._key is None:
+      raise Framework.UnconfiguredCertificateError()
     return self._key
 
   @key.setter
@@ -142,6 +148,8 @@ class Framework(object):
 
   @property
   def cert (self):
+    if self._cert is None:
+      raise Framework.UnconfiguredCertificateError()
     return self._cert
 
   @cert.setter
