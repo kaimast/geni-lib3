@@ -204,8 +204,15 @@ def lookup_projects (url, root_bundle, cert, key, cred_strings, urn = None, uid 
   return _lookup(url, root_bundle, cert, key, "PROJECT", cred_strings, options)
 
 
-def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, member_urn):
+def lookup_projects_for_member (url, root_bundle, cert, key, cred_strings, member_urn, expired = None):
   options = {}
+  match = {}
+
+  if expired is not None:
+    match["PROJECT_EXPIRED"] = expired
+
+  if match:
+    options["match"] = match
 
   req_data = xmlrpclib.dumps(("PROJECT", member_urn, cred_strings, options), methodname = "lookup_for_member")
   s = requests.Session()
