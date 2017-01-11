@@ -4,8 +4,9 @@ Tutorials / How-Tos
 .. toctree::
    portalcontext
    createcontext
+   projectmanagement
+   makingslices
    federationquery
-   gettingresources
    singlevm
    simplevts
    wanvts

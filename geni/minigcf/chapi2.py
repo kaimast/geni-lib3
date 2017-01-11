@@ -151,7 +151,7 @@ def create_project (url, root_bundle, cert, key, cred_strings, name, exp, desc =
   fields["PROJECT_EXPIRATION"] = exp.strftime(DATE_FMT)
   fields["PROJECT_NAME"] = name
   if desc is not None:
-    fields["PROJECT_DESC"] = desc
+    fields["PROJECT_DESCRIPTION"] = desc
 
   req_data = xmlrpclib.dumps(("PROJECT", cred_strings, {"fields" : fields}), methodname = "create")
   s = requests.Session()
