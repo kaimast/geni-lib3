@@ -242,14 +242,15 @@ class CHAPI2(Framework):
     else:
       raise ClearinghouseError(res["output"], res)
 
-  def listProjects (self, context, own = True):
+  def listProjects (self, context, own = True, expired = False):
     from ..minigcf import chapi2
 
     if not own:
-      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3])
+      res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3],
+                                   expired = expired)
     else:
-      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key,
-                                              [context.ucred_api3], context.userurn)
+      res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key, [context.ucred_api3],
+                                              context.userurn, expired = expired)
 
     if res["code"] == 0:
       return res["value"]

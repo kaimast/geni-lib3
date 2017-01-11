@@ -23,8 +23,11 @@ In order to create a project, you need three pieces of information to give to th
 * Project Name
 
   .. note::
-    Names must be unique for all projects at a given Clearinghouse. You will get an error
-    if you happen to choose the name of an existing project.
+    Names must be unique for all projects at a given Clearinghouse and you will get an error
+    if you happen to choose a name which has already been used.  If you are likely to create
+    multiple projects for similar purposes (different sections of the same class, etc.), you
+    may want to include date and organization information in your name (e.g. spr17-UH-cs410),
+    in order to use consistent names which are still unique.
 
 * Expiration Date
 * Project Description
@@ -37,16 +40,42 @@ In order to create a project, you need three pieces of information to give to th
 Using your existing ``context`` that is set up for the Clearinghouse where you want to create a
 project, you can set up your values and make a single call to create your project::
 
-  import datetime
+  >>> import datetime
 
-  name = "prj-test-1"
-  desc = "My test project"
-  exp = datetime.datetime.now() + datetime.timedelta(hours=6)
+  >>> name = "prj-test-1"
+  >>> desc = "My test project"
+  >>> exp = datetime.datetime.now() + datetime.timedelta(hours=12)
 
-  context.cf.createProject(context, name, exp, desc)
+  >>> prjinfo = context.cf.createProject(context, name, exp, desc)
 
+An exception will be raised if this action fails, otherwise ``prjinfo`` will contain information
+about our new project returned from the Clearinghouse::
 
+  >>> from pprint import pprint as PP
+  >>> PP(prjinfo)
+  {'PROJECT_CREATION': '2017-01-11T02:24:29Z',
+   'PROJECT_DESCRIPTION': 'My test project',
+   'PROJECT_EXPIRATION': '2017-01-11T03:23:49Z',
+   'PROJECT_EXPIRED': False,
+   'PROJECT_NAME': 'prj-test-1',
+   'PROJECT_UID': '8bbfa399-efcd-4a1d-bb74-932213d8491f',
+   'PROJECT_URN': 'urn:publicid:IDN+ch.geni.net+project+prj-test-1',
+   '_GENI_PROJECT_EMAIL': None,
+   '_GENI_PROJECT_OWNER': '8a447f06-8bd5-4f32-8fd6-1a3528e7fa37'}
+
+For the most part this information is not important - just remember the name you gave your
+project so that you can add members and make slices.  Your ``geni-lib`` context has an
+attribute for the "current" project, which you should set whenever you are working with this
+project::
+
+  >>> context.project = "prj-test-1"
+
+Of course if you have multiple projects, you'll need to change the value of ``context.project``
+as you change which project you are working with.
     
+Listing Your Projects
+---------------------
+
 Add Members to Project
 ----------------------
 
