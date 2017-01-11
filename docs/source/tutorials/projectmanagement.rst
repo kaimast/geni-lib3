@@ -4,16 +4,18 @@
 
   \newpage
 
-Creating and Managing Projects
-==============================
+Working with and Managing Projects
+==================================
 
-This example will walk you through creating a project at the NSF GENI Clearinghouse
-and managing membership.
+This example will walk you through creating a project at the NSF GENI Clearinghouse,
+listing your projects, and managing their membership.
+
 
 .. note::
   You will need to have sufficient privileges in order to perform these operations.  If you
   are a project admin but cannot create projects (or already have one you want to use), you
-  can still use the examples below to manage project membership.
+  can still use the examples below to manage project membership. All users with valid
+  credentials can list their projects and inspect their membership.
 
 Create Project
 --------------
@@ -75,6 +77,35 @@ as you change which project you are working with.
     
 Listing Your Projects
 ---------------------
+
+You can list all of the current projects for which you are a member with a single call::
+
+  >>> projects = context.cf.listProjects(context)
+
+  >>> PP(projects)
+  [{'EXPIRED': False,
+    'PROJECT_ROLE': 'LEAD',
+    'PROJECT_UID': '5f5fbc4a-f5e4-4688-8901-07109f60f151',
+    'PROJECT_URN': 'urn:publicid:IDN+ch.geni.net+project+bss-sw-test'},
+   ...
+   {'EXPIRED': False,
+    'PROJECT_ROLE': 'LEAD',
+    'PROJECT_UID': '8bbfa399-efcd-4a1d-bb74-932213d8491f',
+    'PROJECT_URN': 'urn:publicid:IDN+ch.geni.net+project+prj-test-1'}]
+
+If you would like to see every project that the Clearinghouse knows about (this list can be
+very large), you can remove the ``own`` filter::
+
+  >>> projects = context.cf.listProjects(context, own = False)
+  >>> len(projects)
+  391
+
+You can also see your projects which have expired by using the ``expired`` filter::
+
+  >>> expired_projects = context.cf.listProjects(context, expired = True)
+
+Listing Project Members
+-----------------------
 
 Add Members to Project
 ----------------------
