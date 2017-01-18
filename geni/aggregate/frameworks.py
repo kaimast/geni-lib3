@@ -111,6 +111,7 @@ class Framework(object):
     self._key = None
     self._project = None
     self._userurn = None
+    self._root_bundle = False
 
   @property
   def project (self):
@@ -179,6 +180,7 @@ class Framework(object):
               self._userurn = uri
               break
     return self._userurn
+
 
 
 class ProtoGENI(Framework):
@@ -400,10 +402,21 @@ class Portal(CHAPI2):
     self._ch = "https://ch.geni.net:8444/CH"
     self._ma = "https://ch.geni.net:443/MA"
     self._sa = "https://ch.geni.net:443/SA"
+    self._memberuid = None
+    self._project_info = {}
 
   @property
   def projecturn (self):
     return self.projectNameToURN(self.project)
+
+  def projectInfo (self, context):
+    purn = self.projecturn
+    if not self._project_info.has_key(purn):
+      from ..minigcf import chapi2
+      projects = chapi2.lookup_projects(self._sa, self._root_bundle, self.cert, self.key,
+                                        [context.ucred_api3], purn)
+      self._project_info[purn] = CHAPI2Project(projects[purn])
+    return self._project_info[purn]
 
   def projectNameToURN (self, name):
     return "urn:publicid:IDN+ch.geni.net+project+%s" % (name)
@@ -413,8 +426,21 @@ class Portal(CHAPI2):
       project = self.project
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
 
-  def getPendingProjectRequests (self, project):
-    pass
+  def _getMemberUID (self, context):
+    from ..minigcf import chapi2
+    if not self._memberuid:
+      infodict = chapi2.lookup_member_info(self._ma, self._root_bundle, self.cert, self.key,
+                                           [context.ucred_api3], self.userurn)
+      minfo = infodict[self.userurn]
+      self._memberuid = minfo["MEMBER_UID"]
+    return self._memberuid
+
+  def getPendingProjectRequests (self, context):
+    from ..minigcf import chapi2
+    requests = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key, 
+                                           [context.ucred_api3], self._getMemberUID(),
+                                           self.projectInfo().uid)
+    return requests
 
 
 class EmulabCH2(CHAPI2):
