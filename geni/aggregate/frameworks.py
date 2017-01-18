@@ -415,7 +415,7 @@ class Portal(CHAPI2):
       from ..minigcf import chapi2
       projects = chapi2.lookup_projects(self._sa, self._root_bundle, self.cert, self.key,
                                         [context.ucred_api3], purn)
-      self._project_info["value"][purn] = CHAPI2Project(projects[purn])
+      self._project_info[purn] = CHAPI2Project(projects["value"][purn])
     return self._project_info[purn]
 
   def projectNameToURN (self, name):
