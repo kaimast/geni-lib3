@@ -41,7 +41,8 @@ class Project(object):
 
 class CHAPI2Project(Project):
   def __init__ (self, pinfo):
-    super(CHAPI2Project, self).__init__()
+    super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
+                                        pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
 
 
 class Member(object):
@@ -264,7 +265,7 @@ class CHAPI2(Framework):
     if res["code"] == 0:
       projects = []
       for info in res["value"]:
-        projects.append(Project(info["PROJECT_URN"], info["PROJECT_UID"], info["EXPIRED"], info["PROJECT_ROLE"]))
+        projects.append(CHAPI2Project(info))
       return projects 
     else:
       raise ClearinghouseError(res["output"], res)
