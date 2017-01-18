@@ -438,7 +438,7 @@ class Portal(CHAPI2):
   def getPendingProjectRequests (self, context):
     from ..minigcf import chapi2
     requests = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key, 
-                                           [context.ucred_api3], self._getMemberUID(),
+                                           [context.ucred_api3], self._getMemberUID(context),
                                            self.projectInfo().uid)
     return requests
 
