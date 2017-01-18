@@ -60,8 +60,15 @@ def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
   options = {"match" : {"KEY_MEMBER" : user_urn} }
   return _lookup(url, root_bundle, cert, key, "KEY", cred_strings, options)
 
-def lookup_member_info (url, root_bundle, cert, key, cred_strings, user_urn):
-  options = {"match" : {"MEMBER_URN" : user_urn} }
+def lookup_member_info (url, root_bundle, cert, key, cred_strings, urn = None, uid = None,
+                        email = None, lastname = None):
+  match = {}
+  if urn: match["MEMBER_URN"] = urn
+  if uid: match["MEMBER_UID"] = uid
+  if email: match["MEMBER_EMAIL"] = email
+  if lastname: match["MEMBER_LASTNAME"] = lastname
+  options = {"match" : match}
+
   return _lookup(url, root_bundle, cert, key, "MEMBER", cred_strings, options)
 
 def create_key_info (url, root_bundle, cert, key, cred_strings, data):
