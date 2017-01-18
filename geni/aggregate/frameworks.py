@@ -41,8 +41,12 @@ class Project(object):
 
 class CHAPI2Project(Project):
   def __init__ (self, pinfo):
-    super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
-                                        pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
+    if pinfo.has_key("EXPIRED"):
+      super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
+                                          pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
+    else:
+      super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
+                                          pinfo["PROJECT_EXPIRED"])
 
 
 class Member(object):
