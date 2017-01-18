@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,9 +26,18 @@ class ClearinghouseError(Exception):
 
 
 class Project(object):
-  def __init__ (self):
-    self.expired = None
-    self.urn = None
+  def __init__ (self, urn = None, uid = None, expired = None, role = None):
+    self.expired = expired
+    self.urn = urn
+    self.uid = uid
+    self.role = role
+
+  def __str__ (self):
+    if self.expired:
+      return "[%s, %s, %s, EXPIRED]" % (self.urn, self.uid, self.role)
+    else:
+      return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
+
 
 class CHAPI2Project(Project):
   def __init__ (self, pinfo):
@@ -253,7 +262,10 @@ class CHAPI2(Framework):
                                               context.userurn, expired = expired)
 
     if res["code"] == 0:
-      return res["value"]
+      projects = []
+      for info in res["value"]:
+        projects.append(Project(info["PROJECT_URN"], info["PROJECT_UID"], info["EXPIRED"], info["PROJECT_ROLE"]))
+      return projects 
     else:
       raise ClearinghouseError(res["output"], res)
 
@@ -399,6 +411,9 @@ class Portal(CHAPI2):
     if not project:
       project = self.project
     return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
+
+  def getPendingProjectRequests (self, project):
+    pass
 
 
 class EmulabCH2(CHAPI2):
