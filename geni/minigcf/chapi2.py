@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,18 @@ class PROJECT_ROLE(object):
   LEAD = "LEAD"
   MEMBER = "MEMBER"
 
+class REQCTX(object):
+  PROJECT = 1
+  SLICE = 2
+  RESOURCE = 3
+  SERVICE = 4
+  MEMBER = 5
+
+class REQSTATUS(object):
+  PENDING = 0
+  APPROVED = 1
+  CANCELLED = 2
+  REJECTED = 3
 
 def headers ():
   return GCU.defaultHeaders()
@@ -298,4 +310,29 @@ def modify_project_membership (url, root_bundle, cert, key, cred_strings, projec
   if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
     config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
   return xmlrpclib.loads(resp.content)[0][0]
+
+
+def get_pending_requests (url, root_bundle, cert, key, cred_strings, member_uid, project_uid):
+  req_data = xmlrpclib.dumps((member_uid, REQCTX.PROJECT, project_uid, cred_strings, {}),
+                             methodname="get_pending_requests_for_user")
+  s = requests.Session()
+  s.mount(url, GCU.TLSHttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
+  return xmlrpclib.loads(resp.content)[0][0]
+
+
+def resolve_request (url, root_bundle, cert, key, cred_strings, request_id, resolution, desc):
+  req_data = xmlrpclib.dumps((REQCTX.PROJECT, request_id, resolution, desc, cred_strings, {}),
+                             methodname="resolve_pending_request")
+  s = requests.Session()
+  s.mount(url, GCU.TLSHttpAdapter())
+  resp = s.post(url, req_data, cert=(cert,key), verify=root_bundle, headers = headers(),
+                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
+    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
+  return xmlrpclib.loads(resp.content)[0][0]
+
 
