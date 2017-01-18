@@ -441,10 +441,13 @@ class Portal(CHAPI2):
 
   def getPendingProjectRequests (self, context):
     from ..minigcf import chapi2
-    requests = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key, 
+    res = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key, 
                                            [context.ucred_api3], self._getMemberUID(context),
                                            self.projectInfo(context).uid)
-    return requests
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
 
 class EmulabCH2(CHAPI2):
