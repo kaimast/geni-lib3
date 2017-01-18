@@ -431,7 +431,7 @@ class Portal(CHAPI2):
     if not self._memberuid:
       infodict = chapi2.lookup_member_info(self._ma, self._root_bundle, self.cert, self.key,
                                            [context.ucred_api3], self.userurn)
-      minfo = infodict[self.userurn]
+      minfo = infodict["value"][self.userurn]
       self._memberuid = minfo["MEMBER_UID"]
     return self._memberuid
 
