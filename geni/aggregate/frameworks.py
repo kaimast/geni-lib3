@@ -505,6 +505,15 @@ class Portal(CHAPI2):
     else:
       raise ClearinghouseError(res["output"], res)
 
+  def resolveRequests (self, context, req_ids, status, desc):
+    from ..minigcf import chapi2
+    for rid in req_ids:
+      res = chapi2.resolve_request(self._sa, self._root_bundle, self.cert, self.key,
+                                   [context.ucred_api3], rid, status, desc)
+      if res["code"] != 0:
+        raise ClearinghouseError(res["output"], res)
+    return
+
 
 class EmulabCH2(CHAPI2):
   SA = "https://www.emulab.net:12369/protogeni/xmlrpc/geni-sa/2"
