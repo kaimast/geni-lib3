@@ -76,6 +76,7 @@ def disableUrllibWarnings ():
 def shellImports ():
   imports = {}
 
+  import geni.constants
   import geni.util
   import geni.rspec.pg
   import geni.rspec.vts
