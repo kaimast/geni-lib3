@@ -8,15 +8,9 @@ from __future__ import absolute_import
 
 import xmlrpclib
 
-import requests
-
-from .. import _coreutil as GCU
-from . import config
-
-GCU.disableUrllibWarnings()
+from .util import _rpcpost
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
-
 
 class SLICE_ROLE(object):
   LEAD = "LEAD"
@@ -42,22 +36,6 @@ class REQSTATUS(object):
   CANCELLED = 2
   REJECTED = 3
 
-def headers ():
-  return GCU.defaultHeaders()
-
-def _rpcpost (url, req_data, cert, root_bundle):
-  if isinstance(config.HTTP.LOG_URLS, tuple):
-    config.HTTP.LOG_URLS[0].log(context.HTTP.LOG_URLS[1], "POST: %s" % (url))
-  s = requests.Session()
-  s.mount(url, GCU.TLSHttpAdapter())
-  resp = s.post(url, req_data, cert=cert, verify=root_bundle, headers = headers(),
-                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
-  if resp.status_code != 200:
-    resp.raise_for_status()
-  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
-    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
-  return xmlrpclib.loads(resp.content)[0][0]
-  
 
 # pylint: disable=unsubscriptable-object
 def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
