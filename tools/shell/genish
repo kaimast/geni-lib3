@@ -12,7 +12,8 @@ class Shell(object):
     self.admin = admin
 
   def run (self, options):
-    imports = {}
+    import geni._coreutil
+    imports = geni._coreutil.shellImports()
 
     try:
       import readline
@@ -36,9 +37,6 @@ class Shell(object):
           exec(compile(handle.read(), pythonrc, 'exec'), imports)
       except NameError:
         pass
-
-    import geni._coreutil
-    imports = geni._coreutil.shellImports()
 
     if self.debug:
       import geni.minigcf.chapi2
