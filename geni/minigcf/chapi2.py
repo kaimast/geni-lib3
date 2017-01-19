@@ -189,4 +189,10 @@ def resolve_request (url, root_bundle, cert, key, cred_strings, request_id, reso
                              methodname="resolve_pending_request")
   return _rpcpost(url, req_data, (cert, key), root_bundle)
 
+def create_request (url, root_bundle, cert, key, cred_strings, project_id, desc):
+  JOIN = 0
+  DUMMY_ATTRS = {}
+  req_data = xmlrpclib.dumps((REQCTX.PROJECT, project_id, JOIN, desc, DUMMY_ATTRS, cred_strings, {}).
+                             methodname="create_request")
+  return _rpcpost(url, req_data, (cert,key), root_bundle)
 
