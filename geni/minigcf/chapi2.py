@@ -8,35 +8,10 @@ from __future__ import absolute_import
 
 import xmlrpclib
 
+from ..constants import SLICE_ROLE, PROJECT_ROLE, REQCTX, REQSTATUS
 from .util import _rpcpost
 
 DATE_FMT = "%Y-%m-%dT%H:%M:%SZ"
-
-class SLICE_ROLE(object):
-  LEAD = "LEAD"
-  ADMIN = "ADMIN"
-  MEMBER = "MEMBER"
-  OPERATOR = "OPERATOR"
-  AUDITOR = "AUDITOR"
-
-class PROJECT_ROLE(object):
-  LEAD = "LEAD"
-  ADMIN = "ADMIN"
-  MEMBER = "MEMBER"
-
-class REQCTX(object):
-  PROJECT = 1
-  SLICE = 2
-  RESOURCE = 3
-  SERVICE = 4
-  MEMBER = 5
-
-class REQSTATUS(object):
-  PENDING = 0
-  APPROVED = 1
-  CANCELLED = 2
-  REJECTED = 3
-
 
 # pylint: disable=unsubscriptable-object
 def _lookup (url, root_bundle, cert, key, typ, cred_strings, options):
