@@ -226,35 +226,8 @@ replaceSymbol(VTS, "getPortInfo", getPortInfo)
 ### Extension loader
 #####
 def load_ipython_extension (ipy):
-  imports = {}
-
-  import geni.util
-  import geni.rspec.pg
-  import geni.rspec.vts
-  import geni.rspec.igext
-  import geni.rspec.egext
-  import geni.rspec.igutil
-  import geni.aggregate.frameworks
-  import geni.aggregate.instageni
-  import geni.aggregate.vts
-  import geni.aggregate.exogeni
-  import geni.aggregate.cloudlab
-  import geni.aggregate.transit
-  import pprint
-
-  imports["util"] = util
-  imports["PG"] = geni.rspec.pg
-  imports["VTS"] = geni.rspec.vts
-  imports["IGAM"] = geni.aggregate.instageni
-  imports["VTSAM"] = geni.aggregate.vts
-  imports["EGAM"] = geni.aggregate.exogeni
-  imports["CLAM"] = geni.aggregate.cloudlab
-  imports["TRANSITAM"] = geni.aggregate.transit
-  imports["IGX"] = geni.rspec.igext
-  imports["EGX"] = geni.rspec.egext
-  imports["IGUtil"] = geni.rspec.igutil
-  imports["PP"] = pprint.pprint
-  imports["RegM"] = geni.aggregate.frameworks.MemberRegistry
+  import geni._coreutil
+  imports = geni._coreutil.shellImports()
 
   import getpass
 

@@ -123,11 +123,11 @@ class Context(object):
     self._usercred_info = None  # (path, expires, urn, type, version)
     self._slicecreds = {}
     self.debug = False
+    self.uname = None
 
   @property
   def userurn (self):
     return self._cf.userurn
-    return self._ucred_info[2]
 
   def _getSliceCred (self, sname):
     info = self.getSliceInfo(sname)
@@ -215,7 +215,7 @@ class Context(object):
   @property
   def _ucred_info (self):
     if self._usercred_info is None:
-      ucpath = "%s/%s-usercred.xml" % (self.datadir, self.cf.name)
+      ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self.cf.name, self.uname)
       if not os.path.exists(ucpath):
         cred = self.cf.getUserCredentials(self.userurn)
 
@@ -252,6 +252,11 @@ class Context(object):
 
   def addUser (self, user):
     self._users.add(user)
+    # The first time we call this, it's from context loading, we hope
+    # So, the first user is us, and not wacky other people
+    # TODO: This is still stupid, and we need to separate framework accounts from resource accounts
+    if not self.uname:
+      self.uname = user.name
 
   @property
   def slicecreds (self):
