@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,6 +72,43 @@ def disableUrllibWarnings ():
   except ImportError:
     # This version of requests doesn't have urllib3 in it
     return
+
+def shellImports ():
+  imports = {}
+
+  import geni.util
+  import geni.rspec.pg
+  import geni.rspec.vts
+  import geni.rspec.igext
+  import geni.rspec.egext
+  import geni.rspec.igutil
+  import geni.aggregate.frameworks
+  import geni.aggregate.instageni
+  import geni.aggregate.vts
+  import geni.aggregate.exogeni
+  import geni.aggregate.cloudlab
+  import geni.aggregate.transit
+  import pprint
+
+  imports["util"] = geni.util
+  imports["PG"] = geni.rspec.pg
+  imports["VTS"] = geni.rspec.vts
+  imports["IGAM"] = geni.aggregate.instageni
+  imports["VTSAM"] = geni.aggregate.vts
+  imports["EGAM"] = geni.aggregate.exogeni
+  imports["CLAM"] = geni.aggregate.cloudlab
+  imports["TRANSITAM"] = geni.aggregate.transit
+  imports["IGX"] = geni.rspec.igext
+  imports["EGX"] = geni.rspec.egext
+  imports["IGUtil"] = geni.rspec.igutil
+  imports["PP"] = pprint.pprint
+  imports["RegM"] = geni.aggregate.frameworks.MemberRegistry
+  imports["SLICE_ROLE"] = geni.constants.SLICE_ROLE
+  imports["PROJECT_ROLE"] = geni.constants.PROJECT_ROLE
+  imports["REQSTATUS"] = geni.constants.REQSTATUS
+
+  return imports
+
 
 from requests.adapters import HTTPAdapter
 try:
