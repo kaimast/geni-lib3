@@ -288,7 +288,7 @@ class CHAPI2(Framework):
     projecturn = self.projectNameToURN(project)
 
     res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
-                                           project_urn, add = [(x.urn, role) for x in members)
+                                           project_urn, add = [(x.urn, role) for x in members])
     if res["code"] == 0:
       return res["value"]
     else:
@@ -301,7 +301,7 @@ class CHAPI2(Framework):
     projecturn = self.projectNameToURN(project)
 
     res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
-                                           project_urn, remove = [x.urn for x in members)
+                                           project_urn, remove = [x.urn for x in members])
     if res["code"] == 0:
       return res["value"]
     else:
