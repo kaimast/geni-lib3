@@ -319,8 +319,12 @@ class CHAPI2(Framework):
 
     if res["code"] == 0:
       projects = []
-      for info in res["value"]:
-        projects.append(CHAPI2Project(info))
+      if isinstance(res["value"], dict):
+        for info in res["value"].values():
+          projects.append(CHAPI2Project(info))
+      else:
+        for info in res["value"]:
+          projects.append(CHAPI2Project(info))
       return projects 
     else:
       raise ClearinghouseError(res["output"], res)
