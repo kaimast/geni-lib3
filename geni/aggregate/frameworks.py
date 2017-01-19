@@ -53,6 +53,10 @@ class Member(object):
   def __init__ (self):
     self.urn = None
     self.uid = None
+    self.email = None
+    self.username = None
+    self.firstname = None
+    self.lastname = None
     self.emulab_role = None
     self.roles = {}
 
@@ -74,6 +78,14 @@ class Member(object):
     except KeyError:
      pass
 
+   def _set_from_member (self, member_info):
+     self.urn = member_info["MEMBER_URN"]
+     self.uid = member_info["MEMBER_UID"]
+     self.email = member_info["MEMBER_EMAIL"]
+     self.username = member_info["MEMBER_USERNAME"]
+     self.firstname = member_info["MEMBER_FIRSTNAME"]
+     self.lastname = member_info["MEMBER_LASTNAME"]
+
 
 class _MemberRegistry(object):
   def __init__ (self):
@@ -87,6 +99,16 @@ class _MemberRegistry(object):
       self._members[project_info["PROJECT_MEMBER"]] = m
 
     m._set_from_project(project_info)
+    return m
+
+  def addMemberInfo (self, member_info):
+    try:
+      m = self._members[member_info["MEMBER_URN"]]
+    except KeyError:
+      m = Member()
+      self._members[member_info["MEMBER_URN"]] = m
+
+    m._set_from_member(member_info)
     return m
 
 
@@ -397,6 +419,13 @@ class CHAPI2(Framework):
       return key_list
     else:
       raise ClearinghouseError(res["output"], res)
+
+  def lookupMemberInfo (self, context, urn = None, uid = None):
+    from ..minigcf import chapi2
+
+    res = chapi2.lookup_member_info(self._ma, False, self.cert, self.key, [context.ucred_api3],
+                                    urn = urn, uid = uid)
+    return MemberRegistry.addMemberInfo(res["value"].values()[0])
 
 
 class Portal(CHAPI2):

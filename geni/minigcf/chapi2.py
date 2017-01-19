@@ -46,6 +46,8 @@ def headers ():
   return GCU.defaultHeaders()
 
 def _rpcpost (url, req_data, cert, root_bundle):
+  if isinstance(config.HTTP.LOG_URLS, tuple):
+    config.HTTP.LOG_URLS[0].log(context.HTTP.LOG_URLS[1], "POST: %s" % (url))
   s = requests.Session()
   s.mount(url, GCU.TLSHttpAdapter())
   resp = s.post(url, req_data, cert=cert, verify=root_bundle, headers = headers(),
