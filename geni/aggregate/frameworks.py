@@ -285,7 +285,7 @@ class CHAPI2(Framework):
 
     if not role: role = chapi2.PROJECT_ROLE.MEMBER
     if not project: project = context.project
-    projecturn = self.projectNameToURN(project)
+    project_urn = self.projectNameToURN(project)
 
     res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                            project_urn, add = [(x.urn, role) for x in members])
@@ -298,7 +298,7 @@ class CHAPI2(Framework):
     from ..minigcf import chapi2
 
     if not project: project = context.project
-    projecturn = self.projectNameToURN(project)
+    project_urn = self.projectNameToURN(project)
 
     res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                            project_urn, remove = [x.urn for x in members])
