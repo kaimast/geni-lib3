@@ -280,6 +280,33 @@ class CHAPI2(Framework):
     else:
       raise ClearinghouseError(res["output"], res)
 
+  def addProjectMembers (self, context, members, role = None, project = None):
+    from ..minigcf import chapi2
+
+    if not role: role = chapi2.PROJECT_ROLE.MEMBER
+    if not project: project = context.project
+    projecturn = self.projectNameToURN(project)
+
+    res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
+                                           project_urn, add = [(x.urn, role) for x in members)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def removeProjectMembers (self, context, members, project = None):
+    from ..minigcf import chapi2
+
+    if not project: project = context.project
+    projecturn = self.projectNameToURN(project)
+
+    res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
+                                           project_urn, remove = [x.urn for x in members)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
   def listProjects (self, context, own = True, expired = False):
     from ..minigcf import chapi2
 

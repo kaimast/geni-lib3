@@ -21,6 +21,7 @@ class SLICE_ROLE(object):
 
 class PROJECT_ROLE(object):
   LEAD = "LEAD"
+  ADMIN = "ADMIN"
   MEMBER = "MEMBER"
 
 class REQCTX(object):
