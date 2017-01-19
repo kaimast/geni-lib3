@@ -78,13 +78,13 @@ class Member(object):
     except KeyError:
      pass
 
-   def _set_from_member (self, member_info):
-     self.urn = member_info["MEMBER_URN"]
-     self.uid = member_info["MEMBER_UID"]
-     self.email = member_info["MEMBER_EMAIL"]
-     self.username = member_info["MEMBER_USERNAME"]
-     self.firstname = member_info["MEMBER_FIRSTNAME"]
-     self.lastname = member_info["MEMBER_LASTNAME"]
+  def _set_from_member (self, member_info):
+    self.urn = member_info["MEMBER_URN"]
+    self.uid = member_info["MEMBER_UID"]
+    self.email = member_info["MEMBER_EMAIL"]
+    self.username = member_info["MEMBER_USERNAME"]
+    self.firstname = member_info["MEMBER_FIRSTNAME"]
+    self.lastname = member_info["MEMBER_LASTNAME"]
 
 
 class _MemberRegistry(object):
