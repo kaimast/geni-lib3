@@ -5,7 +5,6 @@ Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty32"
   config.vm.boot_timeout = 600
   config.vm.network :forwarded_port, guest: 8888, host: 8888
-  config.vm.network :forwarded_port, guest: 9000, host: 9000
   config.vm.box_check_update = false
 
   config.vm.provider "virtualbox" do |vb|
@@ -17,17 +16,12 @@ Vagrant.configure(2) do |config|
      sudo apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-pip python-dev libzmq3-dev graphviz libssl-dev python-zmq python-kerberos git libxml2-dev python-ipaddr python-requests libxslt1-dev zlib1g-dev
      sudo pip install graphviz functools32 jupyter tornado
 
-     ## GateOne Install
-     git clone --depth=1 https://github.com/liftoff/GateOne
-     cd GateOne
-     sudo python setup.py install
-     cd ..
+     ## Jupyter nbextensions
+     sudo pip install six --upgrade
+     sudo pip install jupyter_contrib_nbextensions
+     sudo jupyter contrib nbextension install
+     jupyter nbextension enable hide_input/main
 
-     ## GateOne Setup
-     sudo gateone --configure
-     wget https://bitbucket.org/barnstorm/geni-lib/raw/0.9-DEV/support/gateone.conf
-     sudo mv gateone.conf /etc/gateone/conf.d/60local.conf
-     
      ## geni-lib install
      hg clone http://bitbucket.org/barnstorm/geni-lib
      cd geni-lib
@@ -54,7 +48,6 @@ Vagrant.configure(2) do |config|
      cp tools/ipython/genish.py ~/.ipython/extensions
      sudo cp support/jupyter-upstart /etc/init/jupyter.conf
      sudo start jupyter
-     sudo service gateone start
   SHELL
 
 end
