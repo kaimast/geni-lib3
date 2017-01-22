@@ -321,6 +321,7 @@ class Container(Resource):
     self.image = image
     self.ports =[]
     self.name = name
+    self.ram = None
     self.routes = []
 
     for name,ext in Container.EXTENSIONS:
@@ -340,6 +341,7 @@ class Container(Resource):
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
+    if self.ram: d.attrib["ram"] = str(self.ram)
     self.image._write(d)
     for port in self.ports:
       port._write(d)
