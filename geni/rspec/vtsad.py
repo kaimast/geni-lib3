@@ -71,9 +71,9 @@ class Image(object):
     img = cls()
     img.name = elem.get("name")
     img.type = elem.get("type")
-    img.mem_default = elem.get("mem", None)
-    img.mem_min = elem.get("mem-min", img.mem_default)
-    img.mem_max = elem.get("mem-max", img.mem_default)
+    img.mem_default = int(elem.get("mem", 0))
+    img.mem_min = int(elem.get("mem-min", img.mem_default))
+    img.mem_max = int(elem.get("mem-max", img.mem_default))
     return img
 
 
