@@ -325,9 +325,10 @@ class MissingPublicKeyError(Exception):
     return "Your bundle does not appear to contain an SSH public key.  You must supply a path to one."
 
 
-class BadPublicKeyPathError(Exception):
-  def __str__ (self):
-    return "Your SSH public key path does not exist or is incomplete.  You must supply a complete path to one."
+class PathNotFoundError(Exception):
+  def __str__ (self, path = None):
+    if path:
+      return "Your path %s does not exist or is incomplete.  You must supply a complete path." % (path)
 
 
 def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
@@ -386,7 +387,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   else:
     pkpath = os.path.expanduser(pubkey_path)
     if not os.path.exists(pkpath):
-      raise BadPublicKeyPathError
+      raise PathNotFoundError(pkpath)
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)
@@ -395,7 +396,9 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     ckpath = "%s/geni_cert.pem" % (DEF_DIR)
   else:
     # Use user-provided key path instead of key inside .pem
-    ckpath = cert_pkey_path
+    ckpath = os.path.expanduser(cert_pkey_path)
+    if not os.path.exists(ckpath):
+      raise PathNotFoundError(ckpath)
 
   cdata = {}
   cdata["framework"] = "portal"
