@@ -386,7 +386,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   else:
     pkpath = os.path.expanduser(pubkey_path)
     # os.path.expanduser does not raise an error when user does not supply ~/ to retrieve full path
-    if not pkpath.startswith(HOME):
+    if not os.path.exists(pkpath):
       raise BadPublicKeyPathError
 
   # We write the pem into 'private' space
