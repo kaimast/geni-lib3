@@ -385,7 +385,6 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
           tf.write(zf.open(zip_pubkey_path).read())
   else:
     pkpath = os.path.expanduser(pubkey_path)
-    # os.path.expanduser does not raise an error when user does not supply ~/ to retrieve full path
     if not os.path.exists(pkpath):
       raise BadPublicKeyPathError
 
