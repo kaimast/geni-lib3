@@ -1,0 +1,198 @@
+# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+from __future__ import absolute_import
+
+import os
+
+from lxml import etree as ET
+
+from .pg import Link
+from .. import namespaces as GNS
+from .pg import Namespaces as PGNS
+from ..model.util import XPathXRange
+
+_XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
+         'i' : PGNS.INFO.name }
+
+class ManifestLink(Link):
+  def __init__ (self):
+    super(ManifestLink, self).__init__()
+    self.interface_refs = []
+    self.sliver_id = None
+    self.vlan = None
+    self._elem = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    lnk = ManifestLink()
+    lnk._elem = elem
+    lnk.client_id = elem.get("client_id")
+    lnk.sliver_id = elem.get("sliver_id")
+    lnk.vlan = elem.get("vlantag", None)
+
+    refs = elem.xpath('g:interface_ref', namespaces = _XPNS)
+    for ref in refs:
+      lnk.interface_refs.append(ref.get("sliver_id"))
+
+    svlans = elem.xpath('s:link_shared_vlan', namespaces = _XPNS)
+    if svlans:
+      # TODO: Can a link be attached to more than one shared vlan?
+      # Don't believe PG supports trunks, but the rspec doesn't really forbid it
+      lnk.vlan = svlans[0].get("name")
+
+    return lnk
+
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
+
+class ManifestSvcLogin(object):
+  def __init__ (self):
+    self.auth = None
+    self.hostname = None
+    self.port = None
+    self.username = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestSvcLogin()
+    n.auth = elem.get("authentication")
+    n.hostname = elem.get("hostname")
+    n.port = int(elem.get("port"))
+    n.username = elem.get("username")
+
+    return n
+
+
+class ManifestNode(object):
+  class Interface(object):
+    def __init__ (self):
+      self.client_id = None
+      self.mac_address = None
+      self.sliver_id = None
+      self.address_info = None
+      self.component_id = None
+
+  def __init__ (self):
+    super(ManifestNode, self).__init__()
+    self.logins = []
+    self.interfaces = []
+    self.client_id = None
+    self.component_id = None
+    self.sliver_id = None
+    self._elem = None
+
+  @property
+  def name (self):
+    return self.client_id
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestNode()
+    n._elem = elem
+    n.client_id = elem.get("client_id")
+    n.component_id = elem.get("component_id")
+    n.sliver_id = elem.get("sliver_id")
+
+    logins = elem.xpath('g:services/g:login', namespaces = _XPNS)
+    for lelem in logins:
+      l = ManifestSvcLogin._fromdom(lelem)
+      n.logins.append(l)
+
+    interfaces = elem.xpath('g:interface', namespaces = _XPNS)
+    for ielem in interfaces:
+      i = ManifestNode.Interface()
+      i.client_id = ielem.get("client_id")
+      i.sliver_id = ielem.get("sliver_id")
+      i.component_id = ielem.get("component_id")
+      i.mac_address = ielem.get("mac_address")
+      try:
+        ipelem = ielem.xpath('g:ip', namespaces = _XPNS)[0]
+        i.address_info = (ipelem.get("address"), ipelem.get("netmask"))
+      except Exception:
+        pass
+      n.interfaces.append(i)
+
+    return n
+
+  @property
+  def text (self):
+    return ET.tostring(self._elem, pretty_print=True)
+
+
+class Manifest(object):
+  def __init__ (self, path = None, xml = None):
+    if path:
+      self._xml = open(path, "r").read()
+    elif xml:
+      self._xml = xml
+    self._root = ET.fromstring(self._xml)
+    self._pid = os.getpid()
+
+  @property
+  def root (self):
+    if os.getpid() != self._pid:
+      self._root = ET.fromstring(self._xml)
+      self._pid = os.getpid()
+    return self._root
+
+  @property
+  def latitude (self):
+    loc = self._root.xpath('i:site_info/i:location', namespaces = _XPNS)
+    if loc:
+      return loc[0].get("latitude")
+
+  @property
+  def longitude (self):
+    loc = self._root.xpath('i:site_info/i:location', namespaces = _XPNS)
+    if loc:
+      return loc[0].get("longitude")
+
+  @property
+  def expiresstr (self):
+    return self._root.get("expires")
+
+  @property
+  def links (self):
+    return XPathXRange(self.root.findall("{%s}link" % (GNS.REQUEST)), ManifestLink)
+
+  @property
+  def nodes (self):
+    return XPathXRange(self.root.findall("{%s}node" % (GNS.REQUEST)), ManifestNode)
+
+  @property
+  def text (self):
+    return ET.tostring(self.root, pretty_print=True)
+
+  def _repr_html_ (self):
+    return """
+<table>
+  <tr><th scope="row">Expires</th><td>%s</td></tr>
+  <tr><th scope="row">Nodes</th><td>%d</td></tr>
+  <tr><th scope="row">Links</th><td>%d</td></tr>
+  <tr><th scope="row">Location</th><td>%s, %s</td></tr>
+</table>""" % (self.expiresstr, len(self.nodes), len(self.links),
+               self.latitude, self.longitude)
+
+  def write (self, path):
+    """
+.. deprecated:: 0.4
+    Use :py:meth:`geni.rspec.pg.Request.writeXML` instead."""
+
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("The Manifest.write() method is deprecated, please use Manifest.writeXML() instead",
+                  GW.GENILibDeprecationWarning, 2)
+    self.writeXML(path)
+
+  def writeXML (self, path):
+    """Write the current manifest as an XML file that contains an rspec in the format returned by the
+    aggregate."""
+    f = open(path, "w+")
+    f.write(ET.tostring(self.root, pretty_print=True))
+    f.close()
