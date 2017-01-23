@@ -387,10 +387,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     pkpath = os.path.expanduser(pubkey_path)
     # os.path.expanduser does not raise an error when user does not supply ~/ to retrieve full path
     if not pkpath.startswith(HOME):
-      if not os.path.exists(os.path.expanduser("~/"+pubkey_path)):
-        raise BadPublicKeyPathError
-      else:
-        pkpath = os.path.expanduser("~/"+pubkey_path)
+      raise BadPublicKeyPathError
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)
