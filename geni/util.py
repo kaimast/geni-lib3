@@ -326,9 +326,11 @@ class MissingPublicKeyError(Exception):
 
 
 class PathNotFoundError(Exception):
-  def __str__ (self, path = None):
-    if path:
-      return "The path %s does not exist." % (path)
+  def __init__ (self, path):
+    self._path = path
+
+  def __str__ (self):
+    return "The path %s does not exist." % (self._path)
 
 
 def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
