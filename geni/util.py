@@ -328,7 +328,7 @@ class MissingPublicKeyError(Exception):
 class PathNotFoundError(Exception):
   def __str__ (self, path = None):
     if path:
-      return "Your path %s does not exist or is incomplete.  You must supply a complete path." % (path)
+      return "The path %s does not exist." % (path)
 
 
 def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
