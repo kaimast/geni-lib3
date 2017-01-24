@@ -378,7 +378,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
         with open(pkpath, "w+") as tf:
           tf.write(zf.open(zip_pubkey_path).read())
   else:
-    pkpath = os.path.expanduser(opts.pubkey_path)
+    pkpath = os.path.expanduser(pubkey_path)
 
   # We write the pem into 'private' space
   zf.extract("geni_cert.pem", DEF_DIR)
