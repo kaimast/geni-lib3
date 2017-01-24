@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +55,28 @@ class CircuitPlane(object):
     return cp
 
 
+class Image(object):
+  def __init__ (self):
+    self.name = None
+    self.type = None
+    self.mem_default = None
+    self.mem_min = None
+    self.mem_max = None
+
+  def __str__ (self):
+    return "[%s: %s]" % (self.type, self.name)
+
+  @classmethod
+  def _fromdom (cls, elem):
+    img = cls()
+    img.name = elem.get("name")
+    img.type = elem.get("type")
+    img.mem_default = int(elem.get("mem", 0))
+    img.mem_min = int(elem.get("mem-min", img.mem_default))
+    img.mem_max = int(elem.get("mem-max", img.mem_default))
+    return img
+
+
 class Advertisement(object):
   def __init__ (self, path = None, xml = None):
     if path:
@@ -65,6 +87,10 @@ class Advertisement(object):
   @property
   def circuit_planes (self):
     return XPathXRange(self._root.xpath("v:circuit-planes/v:circuit-plane", namespaces = _XPNS), CircuitPlane)
+
+  @property
+  def images (self):
+    return XPathXRange(self._root.xpath("v:images/v:image", namespaces = _XPNS), Image)
 
   @property
   def text (self):

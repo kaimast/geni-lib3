@@ -18,7 +18,7 @@ Vagrant.configure(2) do |config|
      hg clone http://bitbucket.org/barnstorm/geni-lib
      cd geni-lib
      hg update -C 0.9-DEV
-     sudo python setup.py install
+     sudo pip install .
 
      ## geni-lib setup
      if [ -f /vagrant/omni.bundle ]
