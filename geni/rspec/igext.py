@@ -108,7 +108,7 @@ pg.Request.EXTENSIONS.append(("AddressPool", AddressPool))
 
 
 class Blockstore(object):
-  def __init__ (self, name, mount):
+  def __init__ (self, name, mount = None):
     """Creates a BlockStore object with the given name (arbitrary) and mountpoint."""
     self.name = name
     self.mount = mount
@@ -122,7 +122,8 @@ class Blockstore(object):
   def _write (self, element):
     bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
     bse.attrib["name"] = self.name
-    bse.attrib["mountpoint"] = self.mount
+    if self.mount:
+      bse.attrib["mountpoint"] = self.mount
     bse.attrib["class"] = self.where
     if self.size:
       if re.match(r"^\d+$", self.size):
@@ -144,7 +145,7 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 
 
 class RemoteBlockstore(pg.Node):
-  def __init__ (self, name, mount, ifacename = "if0"):
+  def __init__ (self, name, mount = None, ifacename = "if0"):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
     bs = Blockstore("%s-bs" % (self.name), mount)
     bs.where = "remote"
