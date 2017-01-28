@@ -49,9 +49,9 @@ def loginInfo (manifests):
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
 
-util = types.ModuleType("geni_ipython_util")
-setattr(util, "showtopo", topo)
-setattr(util, "printlogininfo", loginInfo)
+gsh = types.ModuleType("geni_ipython_util")
+setattr(gsh, "showtopo", topo)
+setattr(gsh, "printlogininfo", loginInfo)
 
 #####
 ### Converters
@@ -228,6 +228,7 @@ replaceSymbol(VTS, "getPortInfo", getPortInfo)
 def load_ipython_extension (ipy):
   import geni._coreutil
   imports = geni._coreutil.shellImports()
+  imports["genish"] = gsh
 
   import getpass
 
