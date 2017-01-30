@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@ if os.name == "posix" and os.uname()[0] == "Linux":
   # On Xenial you installed cryptography from the dist
   (name, ver, dist_id) = platform.linux_distribution()
   if dist_id == "trusty":
+    requires.append("setuptools==33.1.1")  # The last setuptools that works with OS pip on trusty
     requires.append("cryptography==1.2.3")
 
 setup(name = 'geni-lib',
