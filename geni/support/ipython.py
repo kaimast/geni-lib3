@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,9 @@
 
 # genish as an iPython extension for use with Jupyter
 
-import types
 import copy
+import itertools
+import types
 
 import graphviz
 import wrapt
@@ -56,6 +57,36 @@ setattr(gsh, "printlogininfo", loginInfo)
 #####
 ### Converters
 #####
+
+class ListGrid(object):
+  def __init__ (self, iterable, cols, hdr):
+    self.iterable = iterable
+    self.cols = cols
+    self.header = ""
+    if hdr:
+      self.header = """<tr><th colspan="%d" scope="row"><b>%s</b></th></tr>""" % (cols, hdr)
+    rowc = ["<tr>"]
+    for idx in xrange(cols):
+      rowc.append("<td>%s</td>")
+    rowc.append("</tr>")
+    self.row = "".join(rowc)
+
+  def _repr_html_ (self):
+    args = [iter(self.iterable)] * self.cols
+    rows = [self.row % tuple([str(y) for y in x]) for x in itertools.izip_longest(fillvalue="&nbsp;", *args)]
+    out = """
+    <table>
+    %s
+    %s
+    </table>
+    """ % (self.header, "\n".join(rows))
+    return out
+
+def listGridMaker (iterable, cols = 2, hdr = None):
+  return ListGrid(iterable, cols, hdr)
+
+setattr(gsh, "grid", listGridMaker)
+
 
 STP_PORT_ROW = """<tr>
 <td>%(client-id)s (%(num)d)</td><td>%(stp_state)s</td><td>%(stp_role)s</td><td>%(stp_port_id)s</td><td>%(stp_sec_in_state)s</td>
