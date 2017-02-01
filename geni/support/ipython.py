@@ -13,14 +13,26 @@ import types
 import graphviz
 import wrapt
 
+from geni.aggregate.exceptions import AMError
 from geni.aggregate.frameworks import KeyDecryptionError
 from geni.aggregate.vts import VTS
 import geni.util
 import geni.types
 
+SHOW_ERROR_URL = False
+
 ######
 ### iPython-specific Utilities
 ######
+
+def am_exc_handler (self, etype, value, tb, tb_offset = None):
+  new_tb = []
+  new_tb.append("[%s] %s" % (etype.__name__, str(value))
+  if SHOW_ERROR_URL:
+    if value.has_attr("error_url"):
+      new_tb.append("<%s>" % (value.error_url))
+  return new_tb
+
 
 class ColumnInfo(object):
   def __init__ (self, iname, oname, default = None, xform = None):
@@ -49,10 +61,15 @@ def loginInfo (manifests):
   linfo = geni.util._corelogininfo(manifests)
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
+def showErrorURL (show = False):
+  global SHOW_ERROR_URL
+  SHOW_ERROR_URL = show
+
 
 gsh = types.ModuleType("geni_ipython_util")
 setattr(gsh, "showtopo", topo)
 setattr(gsh, "printlogininfo", loginInfo)
+setattr(gsh, "showErrorURL", showErrorURL)
 
 #####
 ### Converters
@@ -278,4 +295,5 @@ def load_ipython_extension (ipy):
       break
 
   ipy.push(imports)
+  ipy.set_custom_exc((AMError,), am_exc_handler)
 
