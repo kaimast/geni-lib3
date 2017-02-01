@@ -26,6 +26,9 @@ SHOW_ERROR_URL = False
 ######
 
 def am_exc_handler (self, etype, value, tb, tb_offset = None):
+  print etype
+  print dir(etype)
+  print value
   new_tb = []
   new_tb.append("[%s] %s" % (etype.__name__, str(value)))
   if SHOW_ERROR_URL:
