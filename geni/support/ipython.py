@@ -27,7 +27,7 @@ SHOW_ERROR_URL = False
 
 def am_exc_handler (self, etype, value, tb, tb_offset = None):
   new_tb = []
-  new_tb.append("[%s] %s" % (etype.__name__, str(value))
+  new_tb.append("[%s] %s" % (etype.__name__, str(value)))
   if SHOW_ERROR_URL:
     if value.has_attr("error_url"):
       new_tb.append("<%s>" % (value.error_url))
