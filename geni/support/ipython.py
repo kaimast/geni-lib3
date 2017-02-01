@@ -26,14 +26,13 @@ SHOW_ERROR_URL = False
 ######
 
 def am_exc_handler (self, etype, value, tb, tb_offset = None):
-  print type(etype)
-  print type(value)
+  print dir(etype)
   print dir(value)
   new_tb = []
-  new_tb.append("[%s] %s" % (etype.__name__, str(value)))
+  new_tb.append("[%s] %s" % (etype.__class__, str(value)))
   if SHOW_ERROR_URL:
-    if etype.has_attr("error_url"):
-      new_tb.append("<%s>" % (etype.error_url))
+    if value.has_attr("error_url"):
+      new_tb.append("<%s>" % (value.error_url))
   return new_tb
 
 
