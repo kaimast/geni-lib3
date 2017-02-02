@@ -26,14 +26,20 @@ SHOW_ERROR_URL = False
 ######
 
 def am_exc_handler (self, etype, value, tb, tb_offset = None):
-# new_tb = []
-#  new_tb.append("[%s] %s" % (str(value.__class__), str(value)))
-#  return new_tb
-  return "Hi mom!"
+  # The ipython docs for this handler are a lie - returning a structured traceback
+  # is useless (ipython burns CPU cycles validating it, but never actually displays
+  # any of it), you need to take care of all display yourself
 
-#  if SHOW_ERROR_URL:
-#    if value.has_attr("error_url"):
-#      new_tb.append("<%s>" % (value.error_url))
+  colors = self.InteractiveTB.Colors
+
+
+  out = []
+  out.append("%s%s:%s %s" % (Colors.excName, str(value.__class__), Colors.Normal, str(value)))
+
+  if SHOW_ERROR_URL:
+    if value.has_attr("error_url"):
+      out.append("AM Log URL: <%s>" % (value.error_url))
+  print "\n".join(out)
 
 
 class ColumnInfo(object):
