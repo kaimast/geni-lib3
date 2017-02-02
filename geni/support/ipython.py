@@ -30,7 +30,7 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   # is useless (ipython burns CPU cycles validating it, but never actually displays
   # any of it), you need to take care of all display yourself
 
-  colors = self.InteractiveTB.Colors
+  Colors = self.InteractiveTB.Colors
 
 
   out = []
