@@ -27,11 +27,12 @@ SHOW_ERROR_URL = False
 
 def am_exc_handler (self, etype, value, tb, tb_offset = None):
   new_tb = []
-  new_tb.append("[%s] %s" % (value.__class__, str(value)))
+  new_tb.append("[%s] %s" % (str(value.__class__), str(value)))
+  return new_tb
+
 #  if SHOW_ERROR_URL:
 #    if value.has_attr("error_url"):
 #      new_tb.append("<%s>" % (value.error_url))
-  return new_tb
 
 
 class ColumnInfo(object):
