@@ -105,7 +105,7 @@ class ListGrid(object):
     self.row = "".join(rowc)
 
   def _repr_html_ (self):
-    if sort:
+    if self.sort:
       args = [sorted(iter(self.iterable))] * self.cols
     else:
       args = [iter(self.iterable)] * self.cols
