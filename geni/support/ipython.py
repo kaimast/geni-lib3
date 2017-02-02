@@ -85,11 +85,17 @@ setattr(gsh, "showErrorURL", showErrorURL)
 ### Converters
 #####
 
+# Not actually supported right now, my brain doesn't want to figure it out
+class Direction(object):
+  TTB = 0
+  LTR = 1
+
 class ListGrid(object):
-  def __init__ (self, iterable, cols, hdr):
+  def __init__ (self, iterable, cols, hdr, sort):
     self.iterable = iterable
     self.cols = cols
     self.header = ""
+    self.sort = sort
     if hdr:
       self.header = """<tr><th colspan="%d" scope="row"><b>%s</b></th></tr>""" % (cols, hdr)
     rowc = ["<tr>"]
@@ -99,7 +105,10 @@ class ListGrid(object):
     self.row = "".join(rowc)
 
   def _repr_html_ (self):
-    args = [iter(self.iterable)] * self.cols
+    if sort:
+      args = [sorted(iter(self.iterable))] * self.cols
+    else:
+      args = [iter(self.iterable)] * self.cols
     rows = [self.row % tuple([str(y) for y in x]) for x in itertools.izip_longest(fillvalue="&nbsp;", *args)]
     out = """
     <table>
@@ -109,7 +118,7 @@ class ListGrid(object):
     """ % (self.header, "\n".join(rows))
     return out
 
-def listGridMaker (iterable, cols = 2, hdr = None):
+def listGridMaker (iterable, cols = 2, hdr = None, sort = False):
   return ListGrid(iterable, cols, hdr)
 
 setattr(gsh, "grid", listGridMaker)
