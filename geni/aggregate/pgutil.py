@@ -33,6 +33,7 @@ def raiseError(res):
     e = ProtoGENIError(output, res)
 
   try:
+    print res["code"]
     e.error_url = res["code"]["protogeni_error_url"]
   except KeyError:
     pass
