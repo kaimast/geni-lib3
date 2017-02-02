@@ -119,7 +119,7 @@ class ListGrid(object):
     return out
 
 def listGridMaker (iterable, cols = 2, hdr = None, sort = False):
-  return ListGrid(iterable, cols, hdr)
+  return ListGrid(iterable, cols, hdr, sort)
 
 setattr(gsh, "grid", listGridMaker)
 
