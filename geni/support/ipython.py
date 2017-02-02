@@ -106,7 +106,8 @@ class ListGrid(object):
 
   def _repr_html_ (self):
     if self.sort:
-      args = sorted([iter(self.iterable)] * self.cols)
+      contents = sorted([x for x in self.iterable])
+      args = [iter(contents)] * self.cols
     else:
       args = [iter(self.iterable)] * self.cols
     rows = [self.row % tuple([str(y) for y in x]) for x in itertools.izip_longest(fillvalue="&nbsp;", *args)]
