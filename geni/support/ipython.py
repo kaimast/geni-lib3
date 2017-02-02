@@ -34,7 +34,7 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
 
 
   out = []
-  out.append("%s%s:%s %s" % (Colors.excName, str(value.__class__), Colors.Normal, str(value)))
+  out.append("%s%s:%s %s" % (Colors.excName, etype.__name__, Colors.Normal, str(value)))
 
   if SHOW_ERROR_URL:
     if value.has_attr("error_url"):
