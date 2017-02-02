@@ -13,14 +13,36 @@ import types
 import graphviz
 import wrapt
 
+from geni.aggregate.exceptions import AMError
 from geni.aggregate.frameworks import KeyDecryptionError
 from geni.aggregate.vts import VTS
 import geni.util
 import geni.types
 
+SHOW_ERROR_URL = False
+
 ######
 ### iPython-specific Utilities
 ######
+
+def am_exc_handler (self, etype, value, tb, tb_offset = None):
+  # The ipython docs for this handler are a lie - returning a structured traceback
+  # is useless (ipython burns CPU cycles validating it, but never actually displays
+  # any of it), you need to take care of all display yourself
+
+  Colors = self.InteractiveTB.Colors
+
+
+  out = []
+  out.append("%s%s:%s %s" % (Colors.excName, etype.__name__, Colors.Normal, str(value)))
+
+  if SHOW_ERROR_URL:
+    try:
+      out.append("AM Log URL: <%s>" % (value.error_url))
+    except AttributeError:
+      pass
+  print "\n".join(out)
+
 
 class ColumnInfo(object):
   def __init__ (self, iname, oname, default = None, xform = None):
@@ -49,20 +71,31 @@ def loginInfo (manifests):
   linfo = geni.util._corelogininfo(manifests)
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
+def showErrorURL (show = False):
+  global SHOW_ERROR_URL
+  SHOW_ERROR_URL = show
+
 
 gsh = types.ModuleType("geni_ipython_util")
 setattr(gsh, "showtopo", topo)
 setattr(gsh, "printlogininfo", loginInfo)
+setattr(gsh, "showErrorURL", showErrorURL)
 
 #####
 ### Converters
 #####
 
+# Not actually supported right now, my brain doesn't want to figure it out
+class Direction(object):
+  TTB = 0
+  LTR = 1
+
 class ListGrid(object):
-  def __init__ (self, iterable, cols, hdr):
+  def __init__ (self, iterable, cols, hdr, sort):
     self.iterable = iterable
     self.cols = cols
     self.header = ""
+    self.sort = sort
     if hdr:
       self.header = """<tr><th colspan="%d" scope="row"><b>%s</b></th></tr>""" % (cols, hdr)
     rowc = ["<tr>"]
@@ -72,7 +105,11 @@ class ListGrid(object):
     self.row = "".join(rowc)
 
   def _repr_html_ (self):
-    args = [iter(self.iterable)] * self.cols
+    if self.sort:
+      contents = sorted([x for x in self.iterable])
+      args = [iter(contents)] * self.cols
+    else:
+      args = [iter(self.iterable)] * self.cols
     rows = [self.row % tuple([str(y) for y in x]) for x in itertools.izip_longest(fillvalue="&nbsp;", *args)]
     out = """
     <table>
@@ -82,8 +119,8 @@ class ListGrid(object):
     """ % (self.header, "\n".join(rows))
     return out
 
-def listGridMaker (iterable, cols = 2, hdr = None):
-  return ListGrid(iterable, cols, hdr)
+def listGridMaker (iterable, cols = 2, hdr = None, sort = False):
+  return ListGrid(iterable, cols, hdr, sort)
 
 setattr(gsh, "grid", listGridMaker)
 
@@ -278,4 +315,5 @@ def load_ipython_extension (ipy):
       break
 
   ipy.push(imports)
+  ipy.set_custom_exc((AMError,), am_exc_handler)
 

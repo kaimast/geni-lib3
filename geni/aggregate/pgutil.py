@@ -20,14 +20,21 @@ def raiseError(res):
   amcode = res["code"]["am_code"]
   output = res["output"]
   if amcode == 24:
-    raise VLANUnavailableError(output, res)
+    e = VLANUnavailableError(output, res)
   elif amcode == 25:
-    raise InsufficientBandwidthError(output, res)
+    e = InsufficientBandwidthError(output, res)
   elif amcode == 26:
-    raise InsufficientNodesError(output, res)
+    e = InsufficientNodesError(output, res)
   elif amcode == 27:
-    raise InsufficientMemoryError(output, res)
+    e = InsufficientMemoryError(output, res)
   elif amcode == 28:
-    raise NoMappingError(output, res)
+    e = NoMappingError(output, res)
   else:
-    raise ProtoGENIError(output, res)
+    e = ProtoGENIError(output, res)
+
+  try:
+    e.error_url = res["code"]["protogeni_error_url"]
+  except KeyError:
+    pass
+
+  raise e
