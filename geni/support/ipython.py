@@ -37,8 +37,10 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   out.append("%s%s:%s %s" % (Colors.excName, etype.__name__, Colors.Normal, str(value)))
 
   if SHOW_ERROR_URL:
-    if has_attr("value", "error_url"):
+    try:
       out.append("AM Log URL: <%s>" % (value.error_url))
+    except AttributeError:
+      pass
   print "\n".join(out)
 
 
