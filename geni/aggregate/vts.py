@@ -87,7 +87,7 @@ class VTS(AM):
 
   def getLeaseInfo (self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:get-leases",
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.dhcp:get-leases",
                            options = {"client-ids" : client_ids})
 
   def setPortVLAN (self, context, sname, port_tuples):
@@ -112,8 +112,39 @@ class VTS(AM):
     for clid,subnet in subnet_tuples:
       clid_map[clid] = subnet
 
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.simple-dhcpd:set-subnet",
+      return self._apiv3.poa(context, self.urlv3, sname, "api:uh.dhcp:set-subnet",
                            options = {"client-id-map" : clid_map})
+
+
+
+  def addResourceRecord (self, context, sname, client_id, record_name, record_type, record_value, record_ttl=7200):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsroot:add-resource-record",
+                           options = {"client-id" : client_id,
+                           "record-name" : record_name,
+                           "record-type" : record_type,
+                           "record-value" : record_value,
+                           "record-ttl" : record_ttl})
+
+  def deleteResourceRecord (self, context, sname, client_id, record_name, record_type):
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsroot:delete-resource-record",
+                           options = {"client-id" : client_id,
+                           "record-name" : record_name,
+                           "record-type" : record_type})
+
+  def getAllResourceRecords(self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsdhcp:get-all-records",
+                           options={"client-ids": client_ids})
+
+  def getLastDNSDHCPops(self, context, sname, client_ids, number_of_operations, dns_OR_dhcp):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsdhcp:get-last-DNSDHCP-ops",
+                           options={"client-ids": client_ids,
+                           "number-of-operations": number_of_operations,
+                           "dns-OR-dhcp": dns_OR_dhcp})
+
+
+
 
   def setDeleteLock (self, context, sname):
     """Prevent the given sliver from being deleted by another user with the credential.
