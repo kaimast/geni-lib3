@@ -112,12 +112,12 @@ class VTS(AM):
     for clid,subnet in subnet_tuples:
       clid_map[clid] = subnet
 
-      return self._apiv3.poa(context, self.urlv3, sname, "api:uh.dhcp:set-subnet",
-                           options = {"client-id-map" : clid_map})
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.dhcp:set-subnet",
+                         options = {"client-id-map" : clid_map})
 
 
 
-  def addResourceRecord (self, context, sname, client_id, record_name, record_type, record_value, record_ttl=7200):
+  def addDNSResourceRecord (self, context, sname, client_id, record_name, record_type, record_value, record_ttl=7200):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsroot:add-resource-record",
                            options = {"client-id" : client_id,
                            "record-name" : record_name,
@@ -125,13 +125,13 @@ class VTS(AM):
                            "record-value" : record_value,
                            "record-ttl" : record_ttl})
 
-  def deleteResourceRecord (self, context, sname, client_id, record_name, record_type):
+  def deleteDNSResourceRecord (self, context, sname, client_id, record_name, record_type):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsroot:delete-resource-record",
                            options = {"client-id" : client_id,
                            "record-name" : record_name,
                            "record-type" : record_type})
 
-  def getAllResourceRecords(self, context, sname, client_ids):
+  def getAllDNSResourceRecords(self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
     return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsdhcp:get-all-records",
                            options={"client-ids": client_ids})
