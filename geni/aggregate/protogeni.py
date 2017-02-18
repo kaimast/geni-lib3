@@ -9,7 +9,7 @@ from __future__ import absolute_import
 import inspect
 import sys
 
-from .core import AM
+from .core import AM, APIRegistry
 
 class PGCompute(AM):
   def __init__ (self, name, host, cmid = None, url = None):
