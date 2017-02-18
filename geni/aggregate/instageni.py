@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,24 +9,9 @@ from __future__ import absolute_import
 import inspect
 import sys
 
-from .core import AM, APIRegistry
+from .protogeni import PGCompute
 
-class IGCompute(AM):
-  def __init__ (self, name, host, cmid = None, url = None):
-    if url is None:
-      url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
-    self.urlv3 = "%s3.0" % (url[:-3])
-    self._apiv3 = APIRegistry.get("amapiv3")
-    super(IGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
-
-  def geniRestart (self, context, sname, urns):
-    if not isinstance(urns, list):
-      urns = [urns]
-    return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
-
-  def geniStart (self, context, sname):
-    return self._apiv3.poa(context, self.urlv3, sname, "geni_start")
-
+class IGCompute(PGCompute): pass
 
 # TODO: Should warn if CMID from advertisement differs from one here
 
