@@ -272,8 +272,13 @@ def getLeaseInfo (self, context, sname, client_ids):
 
   res = self._getLeaseInfo(context, sname, client_ids)
   retobj = {}
-  for k,v in res.items():
-    retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
+  if isinstance(res, list):
+    for entry in res:
+      for k,v in entry.items():
+        retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
+  else:
+    for k,v in res.items():
+      retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
   return retobj
 
 def getPortInfo (self, context, sname, client_ids):
