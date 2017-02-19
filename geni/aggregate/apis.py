@@ -34,6 +34,10 @@ class AMAPIv3(object):
     if res["code"]["geni_code"] == 0:
       return res["value"]
 
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
+
     raise POAError(res["output"], res)
 
   @staticmethod
