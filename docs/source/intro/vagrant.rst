@@ -1,4 +1,4 @@
-.. Copyright (c) 2016  Barnstormer Softworks, Ltd.
+.. Copyright (c) 2016-2017  Barnstormer Softworks, Ltd.
 
 .. raw:: latex
 
@@ -74,7 +74,7 @@ You may often want to access the VM command line for accessing your GENI resourc
 etc.  While you can use `vagrant ssh` on some platforms, this doesn't work very well on Windows, so the VM
 provides a web-based mechanism for accessing the VM shell directly.
 
-* Open any web browser and load ``http://localhost:9000``
-* Click the large **Terminal: SSH** button
+* Open any web browser and load ``http://localhost:8888``
+* In the upper right-hand corner of the UI, choose ``New->Terminal`` from the dropdown menu
 
 This will automatically log you into the VM and provide you a shell interface for using the VM OS directly.
