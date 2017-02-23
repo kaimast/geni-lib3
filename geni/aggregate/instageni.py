@@ -56,14 +56,14 @@ UKYMCV = IGCompute('ig-ukymcv', 'mcv.sdn.uky.edu', 'urn:publicid:IDN+mcv.sdn.uky
 def aggregates ():
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       result[obj.name] = obj
   return result
 
@@ -71,6 +71,6 @@ def cmid_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       result[obj._cmid] = obj
   return result
