@@ -24,13 +24,13 @@ Apt = AptAM("apt", "boss.apt.emulab.net", "urn:publicid:IDN+apt.emulab.net+autho
 def aggregates ():
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       result[obj.name] = obj
   return result
