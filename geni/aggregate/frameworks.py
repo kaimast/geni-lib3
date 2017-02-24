@@ -38,6 +38,9 @@ class Project(object):
     else:
       return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
 
+  def __repr__ (self):
+    return str(self)
+
 
 class CHAPI2Project(Project):
   def __init__ (self, pinfo):
