@@ -39,7 +39,7 @@ class Project(object):
       return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
 
   def __repr__ (self):
-    return "[%s, %s]" % (self.urn, self.role)
+    return "<%s, %s>" % (self.urn, self.role)
 
 
 class CHAPI2Project(Project):
