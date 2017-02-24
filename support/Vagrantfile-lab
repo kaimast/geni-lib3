@@ -4,7 +4,7 @@
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty32"
   config.vm.boot_timeout = 600
-  config.vm.network :forwarded_port, guest: 8888, host: 8888
+  config.vm.network :forwarded_port, guest: 8888, host: 8900
   config.vm.box_check_update = false
 
   config.vm.provider "virtualbox" do |vb|
@@ -21,6 +21,7 @@ Vagrant.configure(2) do |config|
      sudo pip install jupyter_contrib_nbextensions
      sudo jupyter contrib nbextension install
      jupyter nbextension enable hide_input/main
+     jupyter nbextension enable collapsible_headings/main
 
      ## geni-lib install
      hg clone http://bitbucket.org/barnstorm/geni-lib
@@ -47,6 +48,7 @@ Vagrant.configure(2) do |config|
      mkdir -p ~/.ipython/extensions
      cp tools/ipython/genish.py ~/.ipython/extensions
      sudo cp support/jupyter-upstart /etc/init/jupyter.conf
+     cp support/Getting\ Started.ipynb ~/notebooks/
      sudo start jupyter
   SHELL
 

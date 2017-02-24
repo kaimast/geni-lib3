@@ -61,7 +61,7 @@ Set up your geni-lib VM directory
 Load the Jupyter web interface
 ==============================
 
-* Open any web browser and load ``http://localhost:8888``
+* Open any web browser and load ``http://localhost:8900``
 * In the upper right-hand corner of the UI, choose ``New->(Notebooks) Python 2`` from the dropdown menu
 * In the new notebook enter ``%load_ext genish`` in the first cell and enter your key passphrase if necessary
   (otherwise just hit enter to skip the passphrase entry)
@@ -74,7 +74,7 @@ You may often want to access the VM command line for accessing your GENI resourc
 etc.  While you can use `vagrant ssh` on some platforms, this doesn't work very well on Windows, so the VM
 provides a web-based mechanism for accessing the VM shell directly.
 
-* Open any web browser and load ``http://localhost:8888``
+* Open any web browser and load ``http://localhost:8900``
 * In the upper right-hand corner of the UI, choose ``New->Terminal`` from the dropdown menu
 
 This will automatically log you into the VM and provide you a shell interface for using the VM OS directly.
