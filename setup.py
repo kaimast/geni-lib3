@@ -25,7 +25,7 @@ if os.name == "posix" and os.uname()[0] == "Linux":
     requires.append("cryptography==1.2.3")
 
 setup(name = 'geni-lib',
-      version = '0.9.3',
+      version = '0.9.4.1',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
       packages = find_packages(),
