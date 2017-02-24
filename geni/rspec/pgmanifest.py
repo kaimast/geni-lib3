@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,10 +86,30 @@ class ManifestNode(object):
     self.component_id = None
     self.sliver_id = None
     self._elem = None
+    self._hostfqdn = None
+    self._hostipv4 = None
 
   @property
   def name (self):
     return self.client_id
+
+  @property
+  def hostfqdn (self):
+    if not self._hostfqdn:
+      self._populateHostInfo()
+    return self._hostfqdn
+
+  @property
+  def hostipv4 (self):
+    if not self._hostipv4:
+      self._populateHostInfo()
+    return self._hostipv4
+
+  def _populateHostInfo (self):
+    host = self._elem.xpath('g:host', namespaces = _XPNS)
+    if host:
+      self._hostfqdn = host[0].get("name", None)
+      self._hostipv4 = host[0].get("ipv4", None)
 
   @classmethod
   def _fromdom (cls, elem):
