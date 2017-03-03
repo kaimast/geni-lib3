@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,6 +142,16 @@ class VTS(AM):
                            options={"client-ids": client_ids,
                            "number-of-operations": number_of_operations,
                            "dns-OR-dhcp": dns_OR_dhcp})
+
+  def getARPTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.host:get-arp-table",
+                           options={"client-ids": client_ids})
+
+  def getRouteTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.host:get-route-table",
+                           options={"client-ids": client_ids})
 
 
 
