@@ -44,16 +44,6 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   print "\n".join(out)
 
 
-class ColumnInfo(object):
-  def __init__ (self, iname, oname, default = None, xform = None):
-    self.iname = iname
-    self.oname = oname
-    self.default = default
-    if xform:
-      self.xform = xform
-    else:
-      self.xform = lambda x: x
-
 def topo (manifests):
   if not isinstance(manifests, list):
     manifests = [manifests]
@@ -152,6 +142,19 @@ class STPProxy(wrapt.ObjectProxy):
   </table>
   """ % ("\n".join(pelist))
     return "%s\n%s" % (brt,pt)
+
+
+def distListBuilder (objlist, filter_cols, display_names):
+  flist = []
+  for obj in objlist:
+    newl = []
+    for col in filter_cols:
+      newl.append(obj[col])
+    flist.append(newl)
+
+  rtemplate = "<tr>%s</tr>" % ("".join(["<td>{%d}</td>" for x in xrange(len(display_names))]))
+
+  return RetListProxy(flist, display_names, rtemplate, True)
 
 
 class RetListProxy(object):
