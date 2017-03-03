@@ -152,7 +152,7 @@ def dictListBuilder (objlist, filter_cols, display_names):
       newl.append(obj[col])
     flist.append(newl)
 
-  rtemplate = "<tr>%s</tr>" % ("".join(["<td>{%d}</td>" for x in xrange(len(display_names))]))
+  rtemplate = "<tr>%s</tr>" % ("".join(["<td>{%d}</td>" % (x) for x in xrange(len(display_names))]))
 
   return RetListProxy(flist, display_names, rtemplate, True)
 
