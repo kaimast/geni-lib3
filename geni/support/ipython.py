@@ -144,7 +144,7 @@ class STPProxy(wrapt.ObjectProxy):
     return "%s\n%s" % (brt,pt)
 
 
-def distListBuilder (objlist, filter_cols, display_names):
+def dictListBuilder (objlist, filter_cols, display_names):
   flist = []
   for obj in objlist:
     newl = []
