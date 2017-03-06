@@ -17,7 +17,7 @@ class HostPOAs(object):
 
   def getARPTable (self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
-    return self.am__apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-arp-table",
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-arp-table",
                               options={"client-ids": client_ids})
 
   def getRouteTable (self, context, sname, client_ids):
