@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import functools
 import decimal
 
+import ipaddress
 from lxml import etree as ET
 
 import geni.rspec
@@ -29,7 +30,7 @@ class Request(geni.rspec.RSpec):
 
   def __init__ (self):
     super(Request, self).__init__("request")
-    self.resources = []
+    self._resources = []
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.VTS)
@@ -50,7 +51,7 @@ class Request(geni.rspec.RSpec):
   def addResource (self, rsrc):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
-    self.resources.append(rsrc)
+    self._resources.append(rsrc)
 
   def writeXML (self, path):
     f = open(path, "w+")
@@ -60,7 +61,7 @@ class Request(geni.rspec.RSpec):
   def toXMLString (self, pretty_print = False):
     rspec = self.getDOM()
 
-    for resource in self.resources:
+    for resource in self._resources:
       resource._write(rspec)
 
     for obj in self._ext_children:
@@ -69,6 +70,9 @@ class Request(geni.rspec.RSpec):
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
 
+  @property
+  def resources(self):
+      return self._resources + self._ext_children
 
 ###################
 # Utility Objects #
@@ -81,6 +85,14 @@ class DelayInfo(object):
     self.correlation = correlation
     self.distribution = distribution
 
+  def __json__ (self):
+    d = {"type" : "egress-delay"}
+    if self.time: d["time"] = self.time
+    if self.jitter: d["jitter"] = self.jitter
+    if self.correlation: d["correlation"] = self.correlation
+    if self.distribution: d["distribution"] = self.distribution
+    return d
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-delay" % (Namespaces.VTS.name))
     if self.time: d.attrib["time"] = str(self.time)
@@ -92,6 +104,7 @@ class DelayInfo(object):
 
 class LossInfo(object):
   def __init__ (self, percent):
+    self._percent = None
     self.percent = percent
 
   @property
@@ -101,6 +114,9 @@ class LossInfo(object):
   @percent.setter
   def percent (self, val):
     self._percent = decimal.Decimal(val)
+
+  def __json__ (self):
+    return {"type" : "egress-loss", "percent" : "%s" % (self.percent)}
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
@@ -116,12 +132,20 @@ class Image(object):
   def __init__ (self, name):
     self.name = name
     self._features = []
+    self._image_attrs = []
+
+  def setImageAttribute (self, name, val):
+    self._image_attrs.append((name, val))
 
   def _write (self, element):
     i = ET.SubElement(element, "{%s}image" % (Namespaces.VTS.name))
     i.attrib["name"] = self.name
     for feature in self._features:
       feature._write(i)
+    for (name,val) in self._image_attrs:
+      ae = ET.SubElement(i, "{%s}image-attribute" % (Namespaces.VTS))
+      ae.attrib["name"] = name
+      ae.attrib["value"] = str(val)
     return i
 
 class SimpleDHCPImage(Image):
@@ -164,6 +188,9 @@ class OVSImage(DatapathImage):
     if isinstance(val, NetFlow):
       self._features.append(val)
     # TODO: Throw exception
+
+  def setMirror (self, port):
+    self._features.append(MirrorPort(port))
 
 
 class OVSOpenFlowImage(OVSImage):
@@ -224,6 +251,15 @@ class NetFlow(object):
     s.attrib["timeout"] = str(self.timeout)
     return s
 
+class MirrorPort(object):
+  def __init__ (self, port):
+    self.target = port.client_id
+
+  def _write (self, element):
+    s = ET.SubElement(element, "{%s}mirror" % (Namespaces.VTS))
+    s.attrib["target"] = self.target
+    return s
+
 ##################
 # Graph Elements #
 ##################
@@ -258,11 +294,11 @@ class Datapath(Resource):
     self.client_id = val
 
   def attachPort (self, port):
-    if port.clientid is None:
+    if port.client_id is None:
       if port.name is None:
-        port.clientid = "%s:%d" % (self.name, len(self.ports))
+        port.client_id = "%s:%d" % (self.name, len(self.ports))
       else:
-        port.clientid = "%s:%s" % (self.name, port.name)
+        port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -278,26 +314,42 @@ Request.EXTENSIONS.append(("Datapath", Datapath))
 
 
 class Container(Resource):
+  EXTENSIONS = []
+
   def __init__ (self, image, name):
     super(Container, self).__init__()
     self.image = image
     self.ports =[]
     self.name = name
+    self.ram = None
+    self.routes = []
+
+    for name,ext in Container.EXTENSIONS:
+      self._wrapext(name, ext)
 
   def attachPort (self, port):
     if port.name is None:
-      port.clientid = "%s:%d" % (self.name, len(self.ports))
+      port.client_id = "%s:%d" % (self.name, len(self.ports))
     else:
-      port.clientid = "%s:%s" % (self.name, port.name)
+      port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
+
+  def addIPRoute (self, network, gateway):
+    self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
+    if self.ram: d.attrib["ram"] = str(self.ram)
     self.image._write(d)
     for port in self.ports:
       port._write(d)
+    for net,gw in self.routes:
+      re = ET.SubElement(d, "{%s}route" % (Namespaces.VTS))
+      re.attrib["network"] = str(net)
+      re.attrib["gateway"] = str(gw)
+    super(Container, self)._write(d)
     return d
 
 Request.EXTENSIONS.append(("Container", Container))
@@ -305,12 +357,12 @@ Request.EXTENSIONS.append(("Container", Container))
 
 class Port(object):
   def __init__ (self, name = None):
-    self.clientid = None
+    self.client_id = None
     self.name = name
 
   def _write (self, element):
     p = ET.SubElement(element, "{%s}port" % (Namespaces.VTS.name))
-    p.attrib["client_id"] = self.clientid
+    p.attrib["client_id"] = self.client_id
     return p
 
 
@@ -361,6 +413,22 @@ class InternalCircuit(Port):
     return p
 
 
+class ContainerPort(InternalCircuit):
+  def __init__ (self, target, vlan = None, delay_info = None, loss_info = None):
+    super(ContainerPort, self).__init__(target, vlan, delay_info, loss_info)
+    self._v4addresses = []
+
+  def _write (self, element):
+    p = super(ContainerPort, self)._write(element)
+    for addr in self._v4addresses:
+      ae = ET.SubElement(p, "{%s}ipv4-address" % (Namespaces.VTS))
+      ae.attrib["value"] = str(addr)
+    return p
+
+  def addIPv4Address (self, value):
+    self._v4addresses.append(ipaddress.IPv4Interface(unicode(value)))
+
+
 class GRECircuit(Port):
   def __init__ (self, circuit_plane, endpoint):
     super(GRECircuit, self).__init__()
@@ -374,6 +442,44 @@ class GRECircuit(Port):
     p.attrib["endpoint"] = self.endpoint
     return p
 
+
+######################
+# Element Extensions #
+######################
+
+class Mount(Resource):
+  def __init__ (self, type, name, mount_path):
+    self.type = type
+    self.name = name
+    self.mount_path = mount_path
+    self.attrs = {}
+
+  def _write (self, element):
+    melem = ET.SubElement(element, "{%s}mount" % (Namespaces.VTS))
+    melem.attrib["type"] = self.type
+    melem.attrib["name"] = self.name
+    melem.attrib["path"] = self.mount_path
+    for k,v in self.attrs.iteritems():
+      melem.attrib[k] = str(v)
+    return melem
+
+Container.EXTENSIONS.append(("Mount", Mount))
+
+
+class HgMount(Mount):
+  def __init__ (self, name, source, mount_path, branch = "default"):
+    super(HgMount, self).__init__("hg", name, mount_path)
+    self.attrs["source"] = source
+    self.attrs["branch"] = branch
+
+Container.EXTENSIONS.append(("HgMount", HgMount))
+
+
+class DropboxMount(Mount):
+  def __init__ (self, name, mount_path):
+    super(DropboxMount, self).__init__("dropbox", name, mount_path)
+
+Container.EXTENSIONS.append(("DropboxMount", DropboxMount))
 
 
 #############
@@ -392,11 +498,20 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v, delay_info, loss_info)
-  dp = InternalCircuit(None, dp2v, delay_info, loss_info)
+  if isinstance(dp1, Container):
+    sp = ContainerPort(None, dp1v, delay_info, loss_info)
+  elif isinstance(dp1, Datapath):
+    sp = InternalCircuit(None, dp1v, delay_info, loss_info)
+
+  if isinstance(dp2, Container):
+    dp = ContainerPort(None, dp2v, delay_info, loss_info)
+  elif isinstance(dp2, Datapath):
+    dp = InternalCircuit(None, dp2v, delay_info, loss_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)
 
-  sp.target = dp.clientid
-  dp.target = sp.clientid
+  sp.target = dp.client_id
+  dp.target = sp.client_id
+
+  return (sp, dp)

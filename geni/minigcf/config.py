@@ -24,10 +24,13 @@ class HTTP(object):
   """If set to a valid `(log_handle, log_level)` tuple, will write all raw requests
   (before any parsing) to AM API and CH API calls to that log at the given level."""
 
+  LOG_URLS = False
+  """If set to a valid `(log_handle, log_level)` tuple, will log all URLs as they are used."""
+
 def dumps_with_log (*args, **kwargs):
   req_data = xmlrpclib._dumps(*args, **kwargs)
   if isinstance(HTTP.LOG_RAW_REQUESTS, tuple):
-    HTTP.LOG_RAW_REQUESTS[0].log(HTTP.LOG_RAW_REQUESTS[1], req_data)
+    HTTP.LOG_RAW_REQUESTS[0].log(HTTP.LOG_RAW_REQUESTS[1], req_data) # pylint: disable=unsubscriptable-object
   return req_data
 
 setattr(xmlrpclib, "_dumps", getattr(xmlrpclib, "dumps"))

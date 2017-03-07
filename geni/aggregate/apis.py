@@ -10,6 +10,7 @@ from .core import APIRegistry
 from .exceptions import AMError
 from . import pgutil as ProtoGENI
 
+# pylint: disable=multiple-statements
 class GetVersionError(AMError): pass
 class DeleteSliverError(AMError): pass
 class CreateSliverError(AMError): pass
@@ -17,11 +18,12 @@ class SliverStatusError(AMError): pass
 class RenewSliverError(AMError): pass
 class ListResourcesError(AMError): pass
 class POAError(AMError): pass
+# pylint: enable=multiple-statements
 
 
 class AMAPIv3(object):
   @staticmethod
-  def poa (context, url, sname, action, urns = [], options = None):
+  def poa (context, url, sname, action, urns = None, options = None):
     from ..minigcf import amapi3 as AM3
 
     sinfo = context.getSliceInfo(sname)
@@ -29,6 +31,20 @@ class AMAPIv3(object):
       urns = [sinfo.urn]
 
     res = AM3.poa(url, False, context.cf.cert, context.cf.key, [sinfo], urns, action, options)
+    if res["code"]["geni_code"] == 0:
+      return res["value"]
+
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
+
+    raise POAError(res["output"], res)
+
+  @staticmethod
+  def paa (context, url, action, options = None):
+    from ..minigcf import amapi3 as AM3
+
+    res = AM3.paa(url, False, context.cf.cert, context.cf.key, action, options)
     if res["code"]["geni_code"] == 0:
       return res["value"]
 
@@ -54,6 +70,9 @@ class AMAPIv2(object):
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
     if res["code"]["geni_code"] == 0:
       return res
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
 
     raise ListResourcesError(res["output"], res)
 
@@ -86,6 +105,9 @@ class AMAPIv2(object):
     res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
     if res["code"]["geni_code"] == 0:
       return res["value"]
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
     raise SliverStatusError(res["output"], res)
 
   @staticmethod

@@ -6,12 +6,15 @@
 
 from __future__ import absolute_import, print_function
 
+import datetime
+import json
 import multiprocessing as MP
+import os
+import os.path
+import tempfile
 import time
 import traceback as tb
-import tempfile
-import json
-import os.path
+import zipfile
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
@@ -195,8 +198,8 @@ def builddot (manifests):
 
         for ref in link.interface_refs:
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (
-              intf_map[ref][0].sliver_id, name,
-              intf_map[ref][1].component_id.split(":")[-1]))
+            intf_map[ref][0].sliver_id, name,
+            intf_map[ref][1].component_id.split(":")[-1]))
           dda("\"%s\" -> \"%s\"" % (name, intf_map[ref][0].sliver_id))
 
 
@@ -210,9 +213,23 @@ def builddot (manifests):
                                                        port.name))
           dda("\"%s\" -> \"%s\"" % (port.shared_vlan, port.dpname))
         elif isinstance(port, VTSM.InternalPort):
+          dp = manifest.findTarget(port.dpname)
+          if dp.mirror == port.client_id:
+            continue # The other side will handle it, oddly
+          # TODO: Handle mirroring into another datapath
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
         elif isinstance(port, VTSM.InternalContainerPort):
+          # Check to see if the other side is a mirror into us
+          dp = manifest.findTarget(port.remote_dpname)
+          if isinstance(dp, VTSM.ManifestDatapath):
+            if port.remote_client_id == dp.mirror:
+              remote_port_name = port.remote_client_id.split(":")[-1]
+              dda("\"%s\" -> \"%s\" [headlabel=\"%s\",taillabel=\"%s\",style=dashed]" % (
+                            port.remote_dpname, port.dpname, port.name, remote_port_name))
+              continue
+
+          # No mirror, draw as normal
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
         elif isinstance(port, VTSM.GenericPort):
@@ -240,7 +257,7 @@ def loadContext (path = None, key_passphrase = None):
     path = os.path.expanduser(path)
 
   obj = json.load(open(path, "r"))
-  
+
   version = _getdefault(obj, "version", 1)
 
   if key_passphrase is True:
@@ -288,6 +305,11 @@ def loadContext (path = None, key_passphrase = None):
         user.addKey(keypath)
       context.addUser(user)
 
+  from cryptography import x509
+  from cryptography.hazmat.backends import default_backend
+  cert = x509.load_pem_x509_certificate(open(context._cf.cert, "rb").read(), default_backend())
+  if cert.not_valid_after < datetime.datetime.now():
+    print("***WARNING*** Client SSL certificate supplied in this context is expired")
   return context
 
 
@@ -296,3 +318,96 @@ def hasDataContext ():
 
   path = GCU.getDefaultContextPath()
   return os.path.exists(path)
+
+
+class MissingPublicKeyError(Exception):
+  def __str__ (self):
+    return "Your bundle does not appear to contain an SSH public key.  You must supply a path to one."
+
+
+class PathNotFoundError(Exception):
+  def __init__ (self, path):
+    self._path = path
+
+  def __str__ (self):
+    return "The path %s does not exist." % (self._path)
+
+
+def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
+  import geni._coreutil as GCU
+
+  HOME = os.path.expanduser("~")
+
+  # Create the .bssw directories if they don't exist
+  DEF_DIR = GCU.getDefaultDir()
+
+  zf = zipfile.ZipFile(os.path.expanduser(bundle_path))
+
+  zip_pubkey_path = None
+  if pubkey_path is None:
+    # search for pubkey-like file in zip
+    for fname in zf.namelist():
+      if fname.startswith("ssh/public/") and fname.endswith(".pub"):
+        zip_pubkey_path = fname
+        break
+
+    if not zip_pubkey_path:
+      raise MissingPublicKeyError()
+
+  # Get URN/Project/username from omni_config
+  urn = None
+  project = None
+
+  oc = zf.open("omni_config")
+  for l in oc.readlines():
+    if l.startswith("urn"):
+      urn = l.split("=")[1].strip()
+    elif l.startswith("default_project"):
+      project = l.split("=")[1].strip()
+  
+  uname = urn.rsplit("+")[-1]
+
+  # Create .ssh if it doesn't exist
+  try:
+    os.makedirs("%s/.ssh" % (HOME), 0775)
+  except OSError, e:
+    pass
+
+  # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
+  pkpath = pubkey_path
+  if not pkpath:
+    if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
+      if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
+        # If your umask isn't already 0, we can't safely create this file with the right permissions
+        with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
+          tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
+    
+    pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
+    if not os.path.exists(pkpath):
+        with open(pkpath, "w+") as tf:
+          tf.write(zf.open(zip_pubkey_path).read())
+  else:
+    pkpath = os.path.expanduser(pubkey_path)
+    if not os.path.exists(pkpath):
+      raise PathNotFoundError(pkpath)
+
+  # We write the pem into 'private' space
+  zf.extract("geni_cert.pem", DEF_DIR)
+
+  if cert_pkey_path is None:
+    ckpath = "%s/geni_cert.pem" % (DEF_DIR)
+  else:
+    # Use user-provided key path instead of key inside .pem
+    ckpath = os.path.expanduser(cert_pkey_path)
+    if not os.path.exists(ckpath):
+      raise PathNotFoundError(ckpath)
+
+  cdata = {}
+  cdata["framework"] = "portal"
+  cdata["cert-path"] = "%s/geni_cert.pem" % (DEF_DIR)
+  cdata["key-path"] = ckpath
+  cdata["user-name"] = uname
+  cdata["user-urn"] = urn
+  cdata["user-pubkeypath"] = pkpath
+  cdata["project"] = project
+  json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
