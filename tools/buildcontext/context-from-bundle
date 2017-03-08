@@ -1,14 +1,15 @@
 #!/usr/bin/env python
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
 
-import zipfile
-import sys
-import os
-import os.path
 import argparse
 import json
+import os
+import os.path
+import sys
+import zipfile
 
 import geni._coreutil as GCU
+import geni.util
 
 def parse_args ():
   parser = argparse.ArgumentParser()
@@ -17,82 +18,10 @@ def parse_args ():
   parser.add_argument("--cert-private-key", dest="cert_pkey_path", help="Path to certificate private key file", default=None)
   return parser.parse_args()
 
-def build_context (opts):
-  HOME = os.path.expanduser("~")
-
-  # Create the .bssw directories if they don't exist
-  DEF_DIR = GCU.getDefaultDir()
-
-  zf = zipfile.ZipFile(os.path.expanduser(opts.bundle_path))
-
-  zip_pubkey_path = None
-  if opts.pubkey_path is None:
-    # search for pubkey-like file in zip
-    for fname in zf.namelist():
-      if fname.startswith("ssh/public/") and fname.endswith(".pub"):
-        zip_pubkey_path = fname
-        break
-
-    if not zip_pubkey_path:
-      print "Your bundle does not appear to contain an SSH public key.  You must specify one using a command line argument."
-      sys.exit()
-    
-
-  # Get URN/Project/username from omni_config
-  urn = None
-  project = None
-
-  oc = zf.open("omni_config")
-  for l in oc.readlines():
-    if l.startswith("urn"):
-      urn = l.split("=")[1].strip()
-    elif l.startswith("default_project"):
-      project = l.split("=")[1].strip()
-  
-  uname = urn.rsplit("+")[-1]
-
-  # Create .ssh if it doesn't exist
-  try:
-    os.makedirs("%s/.ssh" % (HOME), 0775)
-  except OSError, e:
-    pass
-
-  # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
-  pkpath = opts.pubkey_path
-  if not pkpath:
-    if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
-      if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
-        # If your umask isn't already 0, we can't safely create this file with the right permissions
-        with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
-          tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
-    
-    pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
-    if not os.path.exists(pkpath):
-        with open(pkpath, "w+") as tf:
-          tf.write(zf.open(zip_pubkey_path).read())
-  else:
-    pkpath = os.path.expanduser(opts.pubkey_path)
-
-  # We write the pem into 'private' space
-  zf.extract("geni_cert.pem", DEF_DIR)
-
-  if opts.cert_pkey_path is None:
-    ckpath = "%s/geni_cert.pem" % (DEF_DIR)
-  else:
-    # Use user-provided key path instead of key inside .pem
-    ckpath = opts.cert_pkey_path
-
-  cdata = {}
-  cdata["framework"] = "portal"
-  cdata["cert-path"] = "%s/geni_cert.pem" % (DEF_DIR)
-  cdata["key-path"] = ckpath
-  cdata["user-name"] = uname
-  cdata["user-urn"] = urn
-  cdata["user-pubkeypath"] = pkpath
-  cdata["project"] = project
-  json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
-
 
 if __name__ == '__main__':
   opts = parse_args()
-  build_context(opts)
+  try:
+    geni.util.buildContextFromBundle(opts.bundle_path, opts.pubkey_path, opts.cert_pkey_path)
+  except Exception as e:
+    print str(e)

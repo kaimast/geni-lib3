@@ -13,48 +13,39 @@ These instructions may work on later versions of Windows, and/or 64-bit versions
 Installation Dependencies
 =========================
 
-* Mercurial 3.1.2 (http://mercurial.selenic.com/wiki/Download)
-* Python 2.7.8 (http://www.python.org)
-* python-lxml (https://pypi.python.org/packages/2.7/l/lxml/lxml-3.4.0.win32-py2.7.exe)
-* Omni 2.7 (http://trac.gpolab.bbn.com/gcf/wiki/Omni)
-* OpenSSL-Win32 (https://slproweb.com/products/Win32OpenSSL.html)
+* Mercurial 3.8.2 (http://mercurial.selenic.com/wiki/Download)
+* Python 2.7.11 (http://www.python.org)
 
 .. note::
-  On 64-bit versions of Windows you *must* still install the 32-bit version of Python (and python-lxml),
-  as Omni is only available in 32-bit and it must match a locally installed Python.
+  Make sure to set the installation option to add Python.exe to your PATH, or you will have to do this
+  manually later, or type out the full path to python during ``geni-lib`` installation and use.
 
 =====================
 Install / Basic Setup
 =====================
 
-* Install the above dependencies in their default locations (particularly Python, Omni, and OpenSSL)
+* Install the above dependencies
 
-.. warning::
-  If you change any of the install locations you may need to edit configuration files in
-  other dependencies, as well as the ``geni-lib`` installation (particularly ``envsetup.bat``)
-
-* Open a command line (``cmd.exe``) and clone the geni-lib repository::
+* Open a Powershell command line and clone the geni-lib repository::
 
    C:\> mkdir C:\Development
    C:\> cd C:\Development
-   C:\Development> hg clone http://bitbucket.org/barnstorm/geni-lib
+   C:\Development> hg clone https://bitbucket.org/barnstorm/geni-lib
    C:\Development> cd geni-lib
    C:\Development\geni-lib> hg update -C 0.9-DEV
+
+* Install some dependencies directly::
+
+   C:\Development\geni-lib> pip install cryptography lxml wrapt
+
+* Install the main `geni-lib` packages:: 
+
    C:\Development\geni-lib> python setup.py install
 
 .. note::
   (The location of the ``geni-lib`` clone can be changed, just alter these paths accordingly)
 
-* Run the batch file in the ``support/`` directory that sets up your environment::
-
-   C:\Development\geni-lib> support\envsetup.bat
-
 Congratulations, you are now ready to launch ``python`` and import geni lib modules!
-
-You can also make a shortcut to ``cmd.exe`` and change the "target" property to
-include the environment setup script::
-
-  C:\Windows\System32\cmd.exe /k "C:\Development\geni-lib\support\envsetup.bat"
 
 
 =====================

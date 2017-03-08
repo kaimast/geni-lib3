@@ -26,7 +26,7 @@ class Request(geni.rspec.RSpec):
 
   def __init__ (self):
     super(Request, self).__init__("request")
-    self.resources = []
+    self._resources = []
     self.tour = None
     self._raw_elements = []
 
@@ -51,7 +51,11 @@ class Request(geni.rspec.RSpec):
   def addResource (self, rsrc):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
-    self.resources.append(rsrc)
+    self._resources.append(rsrc)
+
+  @property
+  def resources(self):
+    return self._resources + self._ext_children
 
   def addTour (self, tour):
     self.addNamespace(Namespaces.EMULAB)
@@ -88,7 +92,7 @@ class Request(geni.rspec.RSpec):
     if self.tour:
       self.tour._write(rspec)
 
-    for resource in self.resources:
+    for resource in self._resources:
       resource._write(rspec)
 
     for obj in self._ext_children:
@@ -105,9 +109,23 @@ class Request(geni.rspec.RSpec):
 class Resource(object):
   def __init__ (self):
     self.namespaces = []
+    self._ext_children = []
 
   def addNamespace (self, ns):
     self.namespaces.append(ns)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      instance = klass(*args, **kw)
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
+
+  def _write (self, element):
+    for obj in self._ext_children:
+      obj._write(element)
+    return element
 
 
 class NodeType(object):
@@ -301,7 +319,8 @@ class Link(Resource):
   def enableVlanTagging (self):
     import geni.warnings as GW
     import warnings
-    warnings.warn("Link.enableVlanTagging() is deprecated, please use the Link.vlan_tagging attribute instead.")
+    warnings.warn("Link.enableVlanTagging() is deprecated, please use the Link.vlan_tagging attribute instead.",
+                  GW.GENILibDeprecationWarning, 2)
     self.vlan_tagging = True
 
   @property

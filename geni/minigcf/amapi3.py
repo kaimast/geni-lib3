@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,37 +10,14 @@
 from __future__ import absolute_import
 
 import xmlrpclib
-import ssl
 
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
+from .util import _rpcpost
 
-from .. import _coreutil as GCU
-from . import config
-
-GCU.disableUrllibWarnings()
-
-class TLS1HttpAdapter(HTTPAdapter):
-  def init_poolmanager(self, connections, maxsize, block=False):
-    self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
-                                   block = block, ssl_version = ssl.PROTOCOL_TLSv1)
-
-def headers ():
-  return GCU.defaultHeaders()
-
+# pylint: disable=unsubscriptable-object
 def getversion (url, root_bundle, cert, key, options = None):
   if not options: options = {}
   req_data = xmlrpclib.dumps(options, methodname="GetVersion")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
-                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
-
-  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
-    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
-
-  return xmlrpclib.loads(resp.content)[0][0]
+  return _rpcpost(url, req_data, (cert, key), root_bundle)
 
 def poa (url, root_bundle, cert, key, creds, urns, action, options = None):
   if not options: options = {}
@@ -52,14 +29,12 @@ def poa (url, root_bundle, cert, key, creds, urns, action, options = None):
 
   req_data = xmlrpclib.dumps((urns, cred_list, action, options),
                              methodname="PerformOperationalAction")
-  s = requests.Session()
-  s.mount(url, TLS1HttpAdapter())
-  resp = s.post(url, req_data, cert=(cert, key), verify=root_bundle, headers = headers(),
-                timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
+  return _rpcpost(url, req_data, (cert, key), root_bundle)
 
-  if isinstance(config.HTTP.LOG_RAW_RESPONSES, tuple):
-    config.HTTP.LOG_RAW_RESPONSES[0].log(config.HTTP.LOG_RAW_RESPONSES[1], resp.content)
+def paa (url, root_bundle, cert, key, action, options = None):
+  if not options: options = {}
 
-  return xmlrpclib.loads(resp.content, use_datetime=True)[0][0]
-
+  req_data = xmlrpclib.dumps((action, options),
+                             methodname="PerformAggregateAction")
+  return _rpcpost(url, req_data, (cert, key), root_bundle)
 

@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import binascii
+
 """Utility types used within geni-lib."""
 
 class DPID(object):
@@ -12,7 +14,7 @@ class DPID(object):
   This class tries to handle all likely inputs and desired outputs, while
   providing a single internal type to work with in the code.
 
-  String representations passwd in must be represented in hex, but may contain
+  String representations passed in must be represented in hex, but may contain
   common separators (colon, dash, and period) in any configuration.
 
   Args:
@@ -88,7 +90,7 @@ class EthernetMAC (object):
   This class tries to handle all likely inputs and desired outputs, while
   providing a single internal type to work with in the code.
 
-  String representations passwd in must be represented in hex, but may contain
+  String representations passed in must be represented in hex, but may contain
   common separators (colon, dash, and period) in any configuration.
 
   Args:
@@ -100,7 +102,7 @@ class EthernetMAC (object):
     EthernetMAC.InputTypeError: If `val` is not a supported data type
   """
 
-  MAX = (2 ** 48) - 1
+  MAX = 2 ** 48
 
   class OutOfRangeError(Exception):
     def __init__ (self, val):
@@ -120,6 +122,8 @@ class EthernetMAC (object):
     self._mac = None
 
     if isinstance(val, (unicode, str)):
+      if len(val) == 6:
+        val = binascii.hexlify(val)
       val = val.replace(":", "")
       val = val.replace("-", "")
       val = int(val, 16)

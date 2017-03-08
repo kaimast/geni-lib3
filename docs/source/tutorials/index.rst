@@ -5,7 +5,6 @@ Tutorials / How-Tos
    portalcontext
    createcontext
    federationquery
-   gettingresources
    singlevm
    simplevts
    wanvts

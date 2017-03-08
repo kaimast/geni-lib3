@@ -75,8 +75,7 @@ class Connection(germ.Connection):
   def addCircuitPlane (self, typ, label, endpoint, mtu, types = None, encoded = True):
     if not types: types = []
 
-    url = "https://%s:%d/core/admin/vts/circuitplane/%s" % (
-          self.host, self.port, typ)
+    url = "https://%s:%d/core/admin/vts/circuitplane/%s" % (self.host, self.port, typ)
     d = json.dumps({"label" : label, "endpoint" : endpoint,
                     "supported-types" : types, "encoded" : encoded, "mtu" : mtu})
     r = requests.put(url, d, **self.rkwargs)
@@ -139,4 +138,4 @@ class Connection(germ.Connection):
     r = requests.put(url, d, **self.rkwargs)
     return r.json()["value"]
 
-    
+

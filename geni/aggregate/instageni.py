@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,19 +9,9 @@ from __future__ import absolute_import
 import inspect
 import sys
 
-from .core import AM
+from .protogeni import PGCompute
 
-class IGCompute(AM):
-  def __init__ (self, name, host, cmid = None, url = None):
-    if url is None:
-      url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
-    super(IGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
-
-  def geniRestart (self, context, sname, urns):
-    if not isinstance(urns, list):
-      urns = [urns]
-    return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
-
+class IGCompute(PGCompute): pass
 
 # TODO: Should warn if CMID from advertisement differs from one here
 
@@ -61,18 +51,19 @@ UtahDDC = IGCompute("ig-utahddc", "boss.utahddc.geniracks.net", "urn:publicid:ID
 UTC = IGCompute("ig-utc", "instageni.utc.edu", "urn:publicid:IDN+instageni.utc.edu+authority+cm")
 UWashington = IGCompute("ig-uwashington", "instageni.washington.edu", "urn:publicid:IDN+instageni.washington.edu+authority+cm")
 Wisconsin = IGCompute("ig-wisconsin", "instageni.wisc.edu", "urn:publicid:IDN+instageni.wisc.edu+authority+cm")
+UKYMCV = IGCompute('ig-ukymcv', 'mcv.sdn.uky.edu', 'urn:publicid:IDN+mcv.sdn.uky.edu+authority+cm')
 
 def aggregates ():
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       yield obj
 
 def name_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       result[obj.name] = obj
   return result
 
@@ -80,6 +71,6 @@ def cmid_to_aggregate ():
   result = dict()
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
-    if isinstance(obj, AM):
+    if isinstance(obj, PGCompute):
       result[obj._cmid] = obj
   return result
