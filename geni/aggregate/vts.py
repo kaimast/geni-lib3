@@ -133,7 +133,7 @@ class VTS(AM):
 
   def getAllDNSResourceRecords(self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsdhcp:get-all-records",
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsroot:get-all-records",
                            options={"client-ids": client_ids})
 
   def getLastDNSDHCPops(self, context, sname, client_ids, number_of_operations, dns_OR_dhcp):
