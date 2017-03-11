@@ -15,7 +15,7 @@ import wrapt
 
 from geni.aggregate.exceptions import AMError
 from geni.aggregate.frameworks import KeyDecryptionError
-from geni.aggregate.vts import VTS
+from geni.aggregate.vts import VTS, HostPOAs
 import geni.util
 import geni.types
 
@@ -43,16 +43,6 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
       pass
   print "\n".join(out)
 
-
-class ColumnInfo(object):
-  def __init__ (self, iname, oname, default = None, xform = None):
-    self.iname = iname
-    self.oname = oname
-    self.default = default
-    if xform:
-      self.xform = xform
-    else:
-      self.xform = lambda x: x
 
 def topo (manifests):
   if not isinstance(manifests, list):
@@ -152,6 +142,19 @@ class STPProxy(wrapt.ObjectProxy):
   </table>
   """ % ("\n".join(pelist))
     return "%s\n%s" % (brt,pt)
+
+
+def dictListBuilder (objlist, filter_cols, display_names):
+  flist = []
+  for obj in objlist:
+    newl = []
+    for col in filter_cols:
+      newl.append(obj[col])
+    flist.append(newl)
+
+  rtemplate = "<tr>%s</tr>" % ("".join(["<td>{%d}</td>" % (x) for x in xrange(len(display_names))]))
+
+  return RetListProxy(flist, display_names, rtemplate, True)
 
 
 class RetListProxy(object):
@@ -287,6 +290,36 @@ def getPortInfo (self, context, sname, client_ids):
   for k,v in res.items():
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
   return retobj
+
+ARP_FILTER = ["hw-address", "ip-address", "status", "device"]
+ARP_COLS = ["HW Address", "IP Address", "Status", "Interface"]
+def getARPTable (self, context, sname, client_ids):
+  res = self._getARPTable(context, sname, client_ids)
+
+  if len(res.items()) == 1:
+    return dictListBuilder(res.popitem()[1], ARP_FILTER, ARP_COLS)
+
+  retobj = {}
+  for k,v in res.items():
+    retobj[k] = dictListBuilder(v, ARP_FILTER, ARP_COLS)
+  return retobj
+
+replaceSymbol(HostPOAs, "getARPTable", getARPTable)
+
+ROUTE_FILTER = ["destination", "mask", "gateway", "device"]
+ROUTE_COLS = ["Destination", "Mask", "Gateway", "Interface"]
+def getRouteTable (self, context, sname, client_ids):
+  res = self._getRouteTable(context, sname, client_ids)
+
+  if len(res.items()) == 1:
+    return dictListBuilder(res.popitem()[1], ROUTE_FILTER, ROUTE_COLS)
+
+  retobj = {}
+  for k,v in res.items():
+    retobj[k] = dictListBuilder(v, ROUTE_FILTER, ROUTE_COLS)
+  return retobj
+
+replaceSymbol(HostPOAs, "getRouteTable", getRouteTable)
 
 
 replaceSymbol(VTS, "dumpMACs", dumpMACs)

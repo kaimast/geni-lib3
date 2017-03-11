@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,16 +11,31 @@ import inspect
 
 from .core import AM, APIRegistry
 
+class HostPOAs(object):
+  def __init__ (self, vtsam):
+    self.am = vtsam
+
+  def getARPTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-arp-table",
+                              options={"client-ids": client_ids})
+
+  def getRouteTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-route-table",
+                              options={"client-ids": client_ids})
+
 class VTS(AM):
   """Wrapper for all VTS-supposed AMAPI functions"""
 
   def __init__ (self, name, host, url = None):
-    self.host = host
+    self._host = host
     if url is None:
-      url = "https://%s:3626/foam/gapi/2" % (host)
+      url = "https://%s:3626/foam/gapi/2" % (self._host)
     self.urlv3 = "%s3" % (url[:-1])
     self._apiv3 = APIRegistry.get("amapiv3")
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
+    self.Host = HostPOAs(self)
 
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
@@ -142,8 +157,6 @@ class VTS(AM):
                            options={"client-ids": client_ids,
                            "number-of-operations": number_of_operations,
                            "dns-OR-dhcp": dns_OR_dhcp})
-
-
 
 
   def setDeleteLock (self, context, sname):
