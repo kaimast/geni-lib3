@@ -25,6 +25,12 @@ class HostPOAs(object):
     return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-route-table",
                               options={"client-ids": client_ids})
 
+  def svcStatus (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:supervisor-status",
+                              options={"client-ids": client_ids})
+
+
 class VTS(AM):
   """Wrapper for all VTS-supposed AMAPI functions"""
 
