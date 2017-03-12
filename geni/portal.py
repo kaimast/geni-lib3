@@ -361,12 +361,8 @@ class Context (object):
             val = True
           else:
             val = ParameterType.argparsemap[opts['type']](val)
-            pass
-          pass
         else:
           val = ParameterType.argparsemap[opts['type']](val)
-          pass
-        pass
       except:
         print "ERROR: Could not coerce '%s' to '%s'" % (val, opts['type'])
         continue
@@ -376,8 +372,6 @@ class Context (object):
       else:
         setattr(namespace, name, val)
         self._parameters[name]['value'] = val
-        pass
-      pass
     # This might not return. 
     self.verifyParameters()
     self._bindingDone = True
@@ -387,7 +381,6 @@ class Context (object):
     pdict = {}
     for manifestParameter in manifest.parameters:
       pdict[manifestParameter.name] = manifestParameter.value
-      pass
     return self._bindParametersDict(pdict)
 
   def _dumpParamsJSON (self):
