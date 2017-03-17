@@ -250,20 +250,12 @@ class Bridge(pg.Node):
     return nd;
 
   # pipe0 goes with iface0, and pipe1 goes with iface1
-  def pipe (self, which):
-    which = self.client_id + ":" + which
-    if self.iface0.name == which:
+  def getPipe (self, interface):
+    if self.iface0.name is interface: 
       return self.pipe0
     else:
       return self.pipe1
   
-  def interface (self, which):
-    which = self.client_id + ":" + which
-    if self.iface0.name == which:
-      return self.iface0
-    else:
-      return self.iface1
-
 pg.Request.EXTENSIONS.append(("Bridge", Bridge))
 
 class Firewall(object):
