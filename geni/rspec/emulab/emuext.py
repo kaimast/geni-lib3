@@ -266,30 +266,47 @@ latency, and loss. For example:
         link.latency   = 15
         link.plr       = 0.01"""
 
-  # This tells the Request class to pass the request object as the first
-  # argument to the __init__ function, from the extensions wrapper function.
+  # This tells the Request class to set the _parent member after creating the
+  # object
   __WANTPARENT__ = True;
   
-  def __init__ (self, request, name = None):
+  def __init__ (self, name = None):
     if name is None:
       self.name = Link.newLinkID()
     else:
       self.name = name
 
-    self.request     = request
     self.bridge_name = name + "_bridge"
-    self.bridge      = request.Bridge(self.bridge_name)
     self.left_name   = name + "_left"
-    self.left_link   = request.Link(self.left_name)
-    self.left_link.addInterface(self.bridge.iface0);
-    self.left_iface  = None
     self.right_name  = name + "_right"
-    self.right_link  = request.Link(self.right_name)
-    self.right_link.addInterface(self.bridge.iface1);
+    self.left_iface  = None
     self.right_iface = None
+
     self._bandwidth  = Link.DEFAULT_BW
     self._latency    = Link.DEFAULT_LAT
     self._plr        = Link.DEFAULT_PLR
+
+    # This needs to get set with the setter; this helps us remember that we
+    # have not been attached to a parent
+    self.request = None
+
+    # These will be set later when we know the parent
+    self.bridge = None
+    self.left_link = None
+    self.right_link = None
+
+  @property
+  def _parent(self):
+    return self.request
+
+  @_parent.setter
+  def _parent(self, request):
+    self.request     = request
+    self.bridge      = request.Bridge(self.bridge_name)
+    self.left_link   = request.Link(self.left_name)
+    self.left_link.addInterface(self.bridge.iface0);
+    self.right_link  = request.Link(self.right_name)
+    self.right_link.addInterface(self.bridge.iface1);
 
   def addInterface(self, interface):
       if self.left_iface == None:
@@ -337,11 +354,7 @@ Request.EXTENSIONS.append(("BridgedLink", BridgedLink))
 class ShapedLink(BridgedLink):
   """A ShapedLink is a synonym for BridgedLink"""
 
-  # This tells the Request class to pass the request object as the first
-  # argument to the __init__ function, from the extensions wrapper function.
-  __WANTPARENT__ = True;
-  
-  def __init__ (self, request, name = None):
-    super(ShapedLink, self).__init__(request, name=name)
+  def __init__ (self, name = None):
+    super(ShapedLink, self).__init__(name=name)
 
 Request.EXTENSIONS.append(("ShapedLink", ShapedLink))

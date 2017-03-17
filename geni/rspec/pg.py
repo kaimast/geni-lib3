@@ -40,10 +40,9 @@ class Request(geni.rspec.RSpec):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
-        instance = klass(self, *args, **kw)
-      else:
-        instance = klass(*args, **kw)
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -283,10 +282,9 @@ class Link(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
-        instance = klass(self, *args, **kw)
-      else:
-        instance = klass(*args, **kw)
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -515,10 +513,9 @@ class Node(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
-        instance = klass(self, *args, **kw)
-      else:
-        instance = klass(*args, **kw)
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
