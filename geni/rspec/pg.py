@@ -316,7 +316,9 @@ class Link(Resource):
     self.interfaces.append(intf)
 
   def addNode (self, node):
-    self.interfaces.append(node.addInterface())
+    interface = node.addInterface()
+    self.interfaces.append(interface)
+    return interface
 
   def connectSharedVlan (self, name):
     self.namespaces.append(GNS.SVLAN)
