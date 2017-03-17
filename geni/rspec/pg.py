@@ -17,6 +17,15 @@ import geni.rspec
 import geni.namespaces as GNS
 import geni.urn
 
+# This exception gets thrown if a __ONCEONLY__ extension gets added to a parent
+# element more than one time
+class DuplicateExtensionError(Exception):
+  def __init__ (self, klass):
+    super(DuplicateExtensionError, self).__init__()
+    self.klass = klass
+  def __str__ (self):
+    return "Extension (%s) can only be added to a parent object once" % self.klass.__name__
+
 ################################################
 # Base Request - Must be at top for EXTENSIONS #
 ################################################
@@ -43,6 +52,9 @@ class Request(geni.rspec.RSpec):
       instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
         instance._parent = self
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)

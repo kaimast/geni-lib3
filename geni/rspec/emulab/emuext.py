@@ -28,14 +28,12 @@ class setCollocateFactor(object):
     of VMs from one experiment that Emulab will collocate on each physical
     host.
     """
-    _mfactor = None
+    __ONCEONLY__ = True
     
     def __init__(self, mfactor):
         """mfactor is an integer, giving the maximum number of VMs to multiplex
         on each physical host."""
-        if setCollocateFactor._mfactor:
-            raise EmulabExtensionDuplicateStatement("setCollocateFactor")
-        self.mfactor = setCollocateFactor._mfactor = mfactor
+        self.mfactor = mfactor
     
     def _write(self, root):
         el = ET.SubElement(root,
