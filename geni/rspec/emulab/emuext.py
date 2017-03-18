@@ -14,15 +14,6 @@ from ..pg import Request, Namespaces, Link, Node, Service, Command, RawPC
 import geni.namespaces as GNS
 from lxml import etree as ET
 
-class EmulabExtensionDuplicateStatement(Exception):
-    """This exception gets thrown if something that was only supposed to get
-    added once to a Request, Node, Link, etc. gets added multiple times."""
-    def __init__ (self, classname):
-        self._classname = classname
-
-    def __str__ (self):
-        return "%s may be used only once!" % str(self._classname,)
-
 class setCollocateFactor(object):
     """Added to a top-level Request object, this extension limits the number
     of VMs from one experiment that Emulab will collocate on each physical
@@ -47,13 +38,10 @@ class setPackingStrategy(object):
     """Added to a top-level Request object, this extension controls the
     strategy used for distributing VMs across physical hosts
     """
+    __ONCEONLY__ = True
 
-    _strategy = None
-    
     def __init__(self, strategy):
-        if setPackingStrategy._strategy:
-            raise EmulabExtensionDuplicateStatement("setPackingStrategy")
-        self.strategy = setPackingStrategy._strategy = strategy
+        self.strategy = strategy
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -68,12 +56,10 @@ class setRoutingStyle(object):
     routing that is automatically configured on the experiment (data-plane)
     side of the network.
     """
-    _style = None
+    __ONCEONLY__ = True
     
     def __init__(self, style):
-        if setRoutingStyle._style:
-            raise EmulabExtensionDuplicateStatement("setRoutingStyle")
-        self.style = setRoutingStyle._style = style;
+        self.style = style
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -87,15 +73,13 @@ class setDelayImage(object):
     """Added to a top-level Request object, this extension sets the disk image
     that will be used for all delay nodes configured for the experiment.
     """
-    _urn = None
+    __ONCEONLY__ = True
     
     def __init__(self, urn):
         """urn: URN of any image - to perform the intnded function, the 
         image must be capable of setting up bridging and/or traffic shaping.
         """
-        if setDelayImage._urn:
-            raise EmulabExtensionDuplicateStatement("setDelayImage")
-        self.urn = setDelayImage._urn = urn
+        self.urn = urn
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -111,7 +95,7 @@ class setForceShaping(object):
     allows the link properties to be changed dynamically via the Emulab event
     system.
     """
-    _enabled = False
+    __ONCEONLY__ = True
     
     def __init__(self):
         self._enabled = True
@@ -131,7 +115,7 @@ class setNoInterSwitchLinks(object):
     link.  This allows users to require that specific nodes in their
     topology be attached to the same switch(es).
     """
-    _enabled = False
+    __ONCEONLY__ = True
     
     def __init__(self):
         self._enabled = True
@@ -151,7 +135,7 @@ class setUseTypeDefaultImage(object):
     standard geni default image. Useful with special hardware that should
     run a special image.
     """
-    _enabled = False
+    __ONCEONLY__ = True
     
     def __init__(self):
         self._enabled = True
@@ -209,7 +193,7 @@ class InstantiateOn(object):
             def __str__ (self):
                 return "%s is not a Raw PC" % (self.parent.name)
     
-    _parent = None
+    __ONCEONLY__ = True
     
     def __init__(self, parent):
         if isinstance(parent, Node):

@@ -49,12 +49,12 @@ class Request(geni.rspec.RSpec):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
-      instance = klass(*args, **kw)
-      if getattr(klass, "__WANTPARENT__", False):
-        instance._parent = self
       if getattr(klass, "__ONCEONLY__", False):
         if any(map(lambda x: isinstance(x,klass),self._ext_children)):
           raise DuplicateExtensionError(klass)
+      instance = klass(*args, **kw)
+      if getattr(klass, "__WANTPARENT__", False):
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -128,6 +128,9 @@ class Resource(object):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
       self._ext_children.append(instance)
       return instance
@@ -294,6 +297,9 @@ class Link(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
         instance._parent = self
@@ -527,6 +533,9 @@ class Node(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
         instance._parent = self
