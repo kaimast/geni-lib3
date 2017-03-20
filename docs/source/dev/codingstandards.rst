@@ -65,6 +65,9 @@ offered.
   checks (``geni.minigcf.amapi3``).  That being said, this level of convenience should be limited.
 * While we support IronPython and Jython, those ``geni-lib`` users should still prefer ``multiprocessing`` for
   parallel execution, instead of ``threading``.
+* Providing convenience shouldn't extend to essentially providing new tools - it's hard to say where this line is,
+  but providing too much tool-like functionality in ``geni-lib`` puts pressure on both the release schedule and
+  the versioning and API stability.
 
 
 Things That Don't Belong
