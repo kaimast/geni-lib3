@@ -30,6 +30,29 @@ class HostPOAs(object):
     return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:supervisor-status",
                               options={"client-ids": client_ids})
 
+class v4RouterPOAs(object):
+  def __init__ (self, vtsam):
+    self.am = vtsam
+
+  def addOSPFNetworks (self, context, sname, client_ids, nets):
+    """Add OSPF Networks to areas on the given routers
+
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      client_ids (list): A list of client-id strings
+      nets (list): A list of (network, area) tuples
+    """
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:add-ospf-nets",
+                              options={"client-ids": client_ids, "networks" : nets})
+
+  def getRouteTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:get-route-table",
+                              options={"client-ids": client_ids})
+
+
 
 class VTS(AM):
   """Wrapper for all VTS-supposed AMAPI functions"""
@@ -42,6 +65,7 @@ class VTS(AM):
     self._apiv3 = APIRegistry.get("amapiv3")
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
     self.Host = HostPOAs(self)
+    self.IPv4Router = v4RouterPOAs(self)
 
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
