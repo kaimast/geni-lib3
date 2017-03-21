@@ -365,8 +365,8 @@ def getAllDNSResourceRecords(self, context, sname, client_ids):
   return retobj
 replaceSymbol(VTS, "getAllDNSResourceRecords", getAllDNSResourceRecords)
 
-LASTDNSDHC_OPSCOLS = ["data"]
-LASTDNSDHC_OPSROW = ["Log"]
+LASTDNSDHC_FILTER = ["data"]
+LASTDNSDHC_COLS = ["Log"]
 def getLastDNSDHCPops(self, context, sname, client_ids, count, type):
   res = self._getLastDNSDHCPops(context, sname, client_ids, count, type)
   if len(res.items()) == 1:
