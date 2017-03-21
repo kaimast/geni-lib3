@@ -326,8 +326,8 @@ def getRouteTable (self, context, sname, client_ids):
   return retobj
 replaceSymbol(HostPOAs, "getRouteTable", getRouteTable)
 
-QROUTE_FILTER = ["type", "selected", "fib", "core", "interface", "time"]
-QROUTE_COLS = ["", ">", "*", "Route", "Interface", "Duration"]
+QROUTE_FILTER = ["type", "selected", "core", "interface", "time"]
+QROUTE_COLS = ["", "Selected", "Route", "Interface", "Duration"]
 def getIPRouteTable (self, context, sname, client_ids):
   res = self._getRouteTable(context, sname, client_ids)
   if len(res.items()) == 1:
