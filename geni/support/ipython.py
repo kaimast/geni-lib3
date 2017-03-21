@@ -367,8 +367,8 @@ replaceSymbol(VTS, "getAllDNSResourceRecords", getAllDNSResourceRecords)
 
 LASTDNSDHC_OPSCOLS = ["data"]
 LASTDNSDHC_OPSROW = ["Log"]
-def getLastDNSDHCPops(self, context, sname, client_ids):
-  res = self._getLastDNSDHCPops(context, sname, client_ids)
+def getLastDNSDHCPops(self, context, sname, client_ids, count, type):
+  res = self._getLastDNSDHCPops(context, sname, client_ids, count, type)
   if len(res.items()) == 1:
     return dictListBuilder(res.popitem()[1], LASTDNSDHC_FILTER, LASTDNSDHC_COLS)
 
