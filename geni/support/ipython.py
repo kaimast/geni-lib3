@@ -15,7 +15,7 @@ import wrapt
 
 from geni.aggregate.exceptions import AMError
 from geni.aggregate.frameworks import KeyDecryptionError
-from geni.aggregate.vts import VTS, HostPOAs
+from geni.aggregate.vts import VTS, HostPOAs, v4RouterPOAs
 import geni.util
 import geni.types
 
@@ -291,6 +291,13 @@ def getPortInfo (self, context, sname, client_ids):
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
   return retobj
 
+replaceSymbol(VTS, "dumpMACs", dumpMACs)
+replaceSymbol(VTS, "dumpFlows", dumpFlows)
+replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
+replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
+replaceSymbol(VTS, "getPortInfo", getPortInfo)
+
+
 ARP_FILTER = ["hw-address", "ip-address", "status", "device"]
 ARP_COLS = ["HW Address", "IP Address", "Status", "Interface"]
 def getARPTable (self, context, sname, client_ids):
@@ -303,7 +310,6 @@ def getARPTable (self, context, sname, client_ids):
   for k,v in res.items():
     retobj[k] = dictListBuilder(v, ARP_FILTER, ARP_COLS)
   return retobj
-
 replaceSymbol(HostPOAs, "getARPTable", getARPTable)
 
 ROUTE_FILTER = ["destination", "mask", "gateway", "device"]
@@ -318,15 +324,20 @@ def getRouteTable (self, context, sname, client_ids):
   for k,v in res.items():
     retobj[k] = dictListBuilder(v, ROUTE_FILTER, ROUTE_COLS)
   return retobj
-
 replaceSymbol(HostPOAs, "getRouteTable", getRouteTable)
 
+QROUTE_FILTER = ["type", "selected", "fib", "core", "interface", "time"]
+QROUTE_COLS = ["", ">", "*", "Route", "Interface", "Duration"]
+def getIPRouteTable (self, context, sname, client_ids):
+  res = self._getRouteTable(context, sname, client_ids)
+  if len(res.items()) == 1:
+    return dictListBuilder(res.popitem()[1], QROUTE_FILTER, QROUTE_COLS)
 
-replaceSymbol(VTS, "dumpMACs", dumpMACs)
-replaceSymbol(VTS, "dumpFlows", dumpFlows)
-replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
-replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
-replaceSymbol(VTS, "getPortInfo", getPortInfo)
+  retobj = {}
+  for k,v in res.items():
+    retobj[k] = dictListBuilder(v, QROUTE_FILTER, QROUTE_COLS)
+  return retobj
+replaceSymbol(v4RouterPOAs, "getRouteTable", getIPRouteTable)
 
 #####
 ### Extension loader
