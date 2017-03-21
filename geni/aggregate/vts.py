@@ -52,6 +52,10 @@ class v4RouterPOAs(object):
     return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:get-route-table",
                               options={"client-ids": client_ids})
 
+  def getOSPFNeighbors (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:get-ospf-neighbors",
+                              options={"client-ids": client_ids})
 
 
 class VTS(AM):

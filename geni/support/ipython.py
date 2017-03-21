@@ -339,6 +339,19 @@ def getIPRouteTable (self, context, sname, client_ids):
   return retobj
 replaceSymbol(v4RouterPOAs, "getRouteTable", getIPRouteTable)
 
+NEIGHBOR_FILTER = ["id", "priority", "state", "dead-time", "address", "interface"]
+NEIGHBOR_COLS = ["ID", "Priority", "State", "Dead Time", "Address", "Interface"]
+def getOSPFNieghbors (self, context, sname, client_ids):
+  res = self._getOSPFNeighbors(context, sname, client_ids)
+  if len(res.items()) == 1:
+    return dictListBuilder(res.popitem()[1], NEIGHBOR_FILTER, NEIGHBOR_COLS)
+
+  retobj = {}
+  for k,v in res.items():
+    retobj[k] = dictListBuilder(v, NEIGHBOR_FILTER, NEIGHBOR_COLS)
+  return retobj
+replaceSymbol(v4RouterPOAs, "getOSPFNeighbors", getOSPFNeighbors)
+
 #####
 ### Extension loader
 #####
