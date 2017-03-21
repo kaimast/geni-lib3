@@ -341,7 +341,7 @@ replaceSymbol(v4RouterPOAs, "getRouteTable", getIPRouteTable)
 
 NEIGHBOR_FILTER = ["id", "priority", "state", "dead-time", "address", "interface"]
 NEIGHBOR_COLS = ["ID", "Priority", "State", "Dead Time", "Address", "Interface"]
-def getOSPFNieghbors (self, context, sname, client_ids):
+def getOSPFNeighbors (self, context, sname, client_ids):
   res = self._getOSPFNeighbors(context, sname, client_ids)
   if len(res.items()) == 1:
     return dictListBuilder(res.popitem()[1], NEIGHBOR_FILTER, NEIGHBOR_COLS)
