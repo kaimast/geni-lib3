@@ -308,12 +308,12 @@ class Tour(object):
     # Type can markdown
     self.instructions_type = Tour.TEXT
 
-  def Description(self, typ, desc):
-    self.description_type = typ
+  def Description(self, type, desc):
+    self.description_type = type
     self.description = desc
 
-  def Instructions(self, typ, inst):
-    self.instructions_type = typ
+  def Instructions(self, type, inst):
+    self.instructions_type = type
     self.instructions = inst
 
   def useDocstring(self, module = None):
