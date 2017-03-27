@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -223,3 +223,10 @@ def name_to_aggregate ():
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result
+
+def aggregateFromHost (host):
+  module = sys.modules[__name__]
+  for _,obj in inspect.getmembers(module):
+    if isinstance(obj, AM):
+      if AM.host == host:
+        return AM
