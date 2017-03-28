@@ -10,10 +10,10 @@ import multiprocessing as MP
 from argparse import ArgumentParser
 import time
 
-import example_config
 import geni.aggregate.instageni as IG
+import geni.util
 
-context = example_config.buildContext()
+context = geni.util.loadContext(key_passphrase = True)
 
 def query_aggregate (context, site, q = None):
   try:
