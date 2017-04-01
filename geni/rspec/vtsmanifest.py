@@ -336,7 +336,7 @@ class Manifest(object):
     return self._info["host"]
 
   @property
-  def slice (self):
+  def slicename (self):
     if not self._info:
       self._populate_info()
     return self._info["slice"]
