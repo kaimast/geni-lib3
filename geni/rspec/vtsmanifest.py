@@ -272,10 +272,10 @@ class Manifest(object):
     self._info = {}
 
   def _populate_info (self):
-    ielem = self._root.xpath('v:info', namespaces = XPNS)
-    if ielem:
-      self._info["host"] = ielem.get("host")
-      self._info["slice"] = ielem.get("slice")
+    ielems = self._root.xpath('v:info', namespaces = XPNS)
+    if ielems:
+      self._info["host"] = ielems[0].get("host")
+      self._info["slice"] = ielems[0].get("slice")
 
   @property
   def root (self):
