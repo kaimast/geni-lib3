@@ -241,7 +241,7 @@ class OVSL2Image(OVSImage):
     self._stpmode = val
 
   @property
-  def priority
+  def priority (self):
     try:
       return self._stp_params["priority"]
     except KeyError:
