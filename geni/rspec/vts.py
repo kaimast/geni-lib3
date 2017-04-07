@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -214,9 +214,76 @@ class OVSOpenFlowImage(OVSImage):
 
     return i
 
+class UnknownSTPModeError(Exception):
+  def __init__ (self, val):
+    self._val = val
+  def __str__ (self):
+    return "Unknown STP Mode (%d)" % (self._val)
+
 class OVSL2Image(OVSImage):
+  STP = 1
+  RSTP = 2
+
   def __init__ (self):
     super(OVSL2Image, self).__init__("bss:ovs-201")
+    self._stpmode = OVSL2Image.STP
+    self._rstp_params = {}
+    self._stp_params = {}
+
+  @property
+  def stpmode (self):
+    return self._stpmode
+
+  @stpmode.setter
+  def stpmode (self, val):
+    if val != OVSL2Image.STP and val != OVSL2Image.RSTP:
+      raise UnknownSTPModeError(val)
+    self._stpmode = val
+
+  @property
+  def priority
+    try:
+      return self._stp_params["priority"]
+    except KeyError:
+      return None
+
+  @priority.setter
+  def priority (self, val):
+    self._stp_params["priority"] = val
+    self._rstp_params["priority"] = val
+
+  @property
+  def max_age (self):
+    try:
+      return self._stp_params["max-age"]
+    except KeyError:
+      return None
+    
+  @max_age.setter
+  def max_age (self, val):
+    self._stp_params["max-age"] = val
+    self._rstp_params["max-age"] = val
+
+  def _write (self, element):
+    i = super(OVSL2Image, self)._write(element)
+    se = ET.SubElement(i, "{%s}stp" % (Namespaces.VTS))
+
+    if self._stpmode == OVSL2Image.STP:
+      se.attrib["type"] = "stp"
+      for k,v in self._stp_params:
+        pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
+        pe.attrib["value"] = str(v)
+    elif self._stpmode == OVSL2Image.RSTP:
+      se.attrib["type"] = "rstp"
+      for k,v in self._rstp_params:
+        pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
+        pe.attrib["value"] = str(v)
+    elif self._stpmode == -1:
+      se.attrib["type"] = "disabled"
+
+    return i
+
+
 
 ##################
 # Image Features #
