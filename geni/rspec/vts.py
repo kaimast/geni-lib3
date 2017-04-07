@@ -297,7 +297,7 @@ class OVSL2STP(object):
     elif self._mode == -1:
       se.attrib["type"] = "disabled"
 
-    return i
+    return element
 
 class OVSL2Image(OVSImage):
   def __init__ (self):
