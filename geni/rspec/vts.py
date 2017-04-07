@@ -284,17 +284,17 @@ class OVSL2STP(object):
   def _write (self, element):
     se = ET.SubElement(element, "{%s}stp" % (Namespaces.VTS))
 
-    if self._stpmode == OVSL2Image.STP:
+    if self._mode == OVSL2STP.STP:
       se.attrib["type"] = "stp"
       for k,v in self._stp_params.items():
         pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
         pe.attrib["value"] = str(v)
-    elif self._stpmode == OVSL2Image.RSTP:
+    elif self._mode == OVSL2STP.RSTP:
       se.attrib["type"] = "rstp"
       for k,v in self._rstp_params.items():
         pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
         pe.attrib["value"] = str(v)
-    elif self._stpmode == -1:
+    elif self._mode == -1:
       se.attrib["type"] = "disabled"
 
     return i
