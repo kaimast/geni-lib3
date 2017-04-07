@@ -220,25 +220,30 @@ class UnknownSTPModeError(Exception):
   def __str__ (self):
     return "Unknown STP Mode (%d)" % (self._val)
 
-class OVSL2Image(OVSImage):
+class IllegalModeForParamError(Exception):
+  def __init__ (self, param):
+    self.param = param
+  def __str__ (self):
+    return "The parameter '%s' is not configurable in the current STP mode" % (self.param)
+
+class OVSL2STP(object):
   STP = 1
   RSTP = 2
 
   def __init__ (self):
-    super(OVSL2Image, self).__init__("bss:ovs-201")
-    self._stpmode = OVSL2Image.STP
+    self._mode = OVSL2STP.STP
     self._rstp_params = {}
     self._stp_params = {}
 
   @property
-  def stpmode (self):
-    return self._stpmode
+  def mode (self):
+    return self._mode
 
-  @stpmode.setter
-  def stpmode (self, val):
-    if val != OVSL2Image.STP and val != OVSL2Image.RSTP:
+  @mode.setter
+  def mode (self, val):
+    if val != OVSL2STP.STP and val != OVSL2STP.RSTP:
       raise UnknownSTPModeError(val)
-    self._stpmode = val
+    self._mode = val
 
   @property
   def priority (self):
@@ -264,9 +269,19 @@ class OVSL2Image(OVSImage):
     self._stp_params["max-age"] = val
     self._rstp_params["max-age"] = val
 
+  @property
+  def hello_time (self):
+    if self._mode != OVSL2STP.STP:
+      raise IllegalModeForParamError("hello-time")
+    return self._stp_params["hello-time"]
+
+  @hello_time.setter (self, val):
+    if self._mode != OVSL2STP.STP:
+      raise IllegalModeForParamError("hello-time")
+    self._stp_params["hello-time"] = val
+
   def _write (self, element):
-    i = super(OVSL2Image, self)._write(element)
-    se = ET.SubElement(i, "{%s}stp" % (Namespaces.VTS))
+    se = ET.SubElement(element, "{%s}stp" % (Namespaces.VTS))
 
     if self._stpmode == OVSL2Image.STP:
       se.attrib["type"] = "stp"
@@ -282,6 +297,15 @@ class OVSL2Image(OVSImage):
       se.attrib["type"] = "disabled"
 
     return i
+
+class OVSL2Image(OVSImage):
+  def __init__ (self):
+    super(OVSL2Image, self).__init__("bss:ovs-201")
+    self.stp = OVSL2STP()
+
+  def _write (self, element):
+    i = super(OVSL2Image, self)._write(element)
+    self.stp._write(i)
 
 
 
