@@ -270,12 +270,12 @@ class OVSL2Image(OVSImage):
 
     if self._stpmode == OVSL2Image.STP:
       se.attrib["type"] = "stp"
-      for k,v in self._stp_params:
+      for k,v in self._stp_params.items():
         pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
         pe.attrib["value"] = str(v)
     elif self._stpmode == OVSL2Image.RSTP:
       se.attrib["type"] = "rstp"
-      for k,v in self._rstp_params:
+      for k,v in self._rstp_params.items():
         pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
         pe.attrib["value"] = str(v)
     elif self._stpmode == -1:
