@@ -275,7 +275,8 @@ class OVSL2STP(object):
       raise IllegalModeForParamError("hello-time")
     return self._stp_params["hello-time"]
 
-  @hello_time.setter (self, val):
+  @hello_time.setter
+  def hello_time (self, val):
     if self._mode != OVSL2STP.STP:
       raise IllegalModeForParamError("hello-time")
     self._stp_params["hello-time"] = val
