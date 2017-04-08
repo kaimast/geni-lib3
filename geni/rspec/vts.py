@@ -273,13 +273,68 @@ class OVSL2STP(object):
   def hello_time (self):
     if self._mode != OVSL2STP.STP:
       raise IllegalModeForParamError("hello-time")
-    return self._stp_params["hello-time"]
+    try:
+      return self._stp_params["hello-time"]
+    except KeyError:
+      return None
 
   @hello_time.setter
   def hello_time (self, val):
     if self._mode != OVSL2STP.STP:
       raise IllegalModeForParamError("hello-time")
     self._stp_params["hello-time"] = val
+
+  @property
+  def forward_delay (self):
+    try:
+      return self._stp_params["forward-delay"]
+    except KeyError:
+      return None
+    
+  @forward_delay.setter
+  def forward_delay (self, val):
+    self._stp_params["forward-delay"] = val
+    self._rstp_params["forward-delay"] = val
+
+  @property
+  def address (self):
+    try:
+      return self._stp_params["system-id"]
+    except KeyError:
+      return None
+
+  @address.setter
+  def address (self, val):
+    self._stp_params["system-id"] = val
+    self._rstp_params["address"] = val
+
+  @property
+  def ageing_time (self):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("ageing-time")
+    try:
+      return self._rstp_params["ageing-time"]
+    except KeyError:
+      return None
+
+  @ageing_time.setter (self, val):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("ageing-time")
+    self._rstp_params["ageing-time"] = val
+    
+  @property
+  def xmit_hold_count (self):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("xmit-hold-count")
+    try:
+      return self._rstp_params["xmit-hold-count"]
+    except KeyError:
+      return None
+
+  @xmit_hold_count.setter (self, val):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("xmit-hold-count")
+    self._rstp_params["xmit-hold-count"] = val
 
   def _write (self, element):
     se = ET.SubElement(element, "{%s}stp" % (Namespaces.VTS))
@@ -298,6 +353,8 @@ class OVSL2STP(object):
       se.attrib["type"] = "disabled"
 
     return element
+
+OVSL2STP.system_id = OVSL2STP.address
 
 class OVSL2Image(OVSImage):
   def __init__ (self):
