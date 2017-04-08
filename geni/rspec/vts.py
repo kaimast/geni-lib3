@@ -317,7 +317,8 @@ class OVSL2STP(object):
     except KeyError:
       return None
 
-  @ageing_time.setter (self, val):
+  @ageing_time.setter
+  def ageing_time (self, val):
     if self._mode != OVSL2STP.RSTP:
       raise IllegalModeForParamError("ageing-time")
     self._rstp_params["ageing-time"] = val
@@ -331,7 +332,8 @@ class OVSL2STP(object):
     except KeyError:
       return None
 
-  @xmit_hold_count.setter (self, val):
+  @xmit_hold_count.setter
+  def xmit_hold_count (self, val):
     if self._mode != OVSL2STP.RSTP:
       raise IllegalModeForParamError("xmit-hold-count")
     self._rstp_params["xmit-hold-count"] = val
