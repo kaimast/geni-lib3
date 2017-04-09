@@ -246,6 +246,13 @@ class OVSL2STP(object):
     self._mode = val
 
   @property
+  def type (self):
+    if self._mode == OVSL2STP.STP:
+      return "stp"
+    elif self._mode == OVSL2STP.RSTP:
+      return "rstp"
+
+  @property
   def priority (self):
     try:
       return self._stp_params["priority"]
@@ -355,6 +362,16 @@ class OVSL2STP(object):
       se.attrib["type"] = "disabled"
 
     return element
+
+  def _as_jsonable (self):
+    obj = {"type" : self.type}
+    if self._mode == OVSL2STP.STP:
+      for k,v in self._stp_params.items():
+        obj[k] = v
+    elif self._mode == OVSL2STP.RSTP:
+      for k,v in self._rstp_params.items():
+        obj[k] = v
+    return obj
 
 OVSL2STP.system_id = OVSL2STP.address
 
