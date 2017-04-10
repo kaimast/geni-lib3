@@ -9,12 +9,22 @@ from __future__ import absolute_import
 import itertools
 import sys
 import functools
+import importlib
 
 from lxml import etree as ET
 
 import geni.rspec
 import geni.namespaces as GNS
 import geni.urn
+
+# This exception gets thrown if a __ONCEONLY__ extension gets added to a parent
+# element more than one time
+class DuplicateExtensionError(Exception):
+  def __init__ (self, klass):
+    super(DuplicateExtensionError, self).__init__()
+    self.klass = klass
+  def __str__ (self):
+    return "Extension (%s) can only be added to a parent object once" % self.klass.__name__
 
 ################################################
 # Base Request - Must be at top for EXTENSIONS #
@@ -27,8 +37,6 @@ class Request(geni.rspec.RSpec):
     super(Request, self).__init__("request")
     self._resources = []
     self.tour = None
-    self.mfactor = None
-    self.packing_strategy = None
     self._raw_elements = []
 
     self.addNamespace(GNS.REQUEST, None)
@@ -41,7 +49,12 @@ class Request(geni.rspec.RSpec):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
+      if getattr(klass, "__WANTPARENT__", False):
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -59,14 +72,6 @@ class Request(geni.rspec.RSpec):
     self.addNamespace(Namespaces.EMULAB)
     self.addNamespace(Namespaces.JACKS)
     self.tour = tour
-
-  def setCollocateFactor (self, mfactor):
-    self.addNamespace(Namespaces.EMULAB)
-    self.mfactor = mfactor
-
-  def setPackingStrategy (self, strategy):
-    self.addNamespace(Namespaces.EMULAB)
-    self.packing_strategy = strategy
 
   def hasTour (self):
     return self.tour is not None
@@ -101,14 +106,6 @@ class Request(geni.rspec.RSpec):
     for resource in self._resources:
       resource._write(rspec)
 
-    if self.mfactor:
-      mf = ET.SubElement(rspec, "{%s}collocate_factor" % (Namespaces.EMULAB.name))
-      mf.attrib["count"] = str(self.mfactor)
-
-    if self.packing_strategy:
-      mf = ET.SubElement(rspec, "{%s}packing_strategy" % (Namespaces.EMULAB.name))
-      mf.attrib["strategy"] = str(self.packing_strategy)
-
     for obj in self._ext_children:
       obj._write(rspec)
 
@@ -131,6 +128,9 @@ class Resource(object):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
       self._ext_children.append(instance)
       return instance
@@ -218,7 +218,7 @@ class Interface(object):
     def __str__ (self):
       return "Type (%s) is invalid for interface addresses." % (type(self.addr))
 
-  def __init__ (self, name, node):
+  def __init__ (self, name, node, address = None):
     self.client_id = name
     self.node = node
     self.addresses = []
@@ -226,6 +226,8 @@ class Interface(object):
     self.bandwidth = None
     self.latency = None
     self.plr = None
+    if address:
+      self.addAddress(address)
 
   @property
   def name (self):
@@ -251,18 +253,28 @@ class Interface(object):
 
 
 class Link(Resource):
+  EXTENSIONS = []
   LNKID = 0
   DEFAULT_BW = -1
   DEFAULT_LAT = 0
   DEFAULT_PLR = 0.0
 
-  def __init__ (self, name = None, ltype = ""):
+  def __init__ (self, name = None, ltype = "", members = None):
     super(Link, self).__init__()
     if name is None:
       self.client_id = Link.newLinkID()
     else:
       self.client_id = name
+
     self.interfaces = []
+
+    if members is not None:
+      for member in members:
+        if isinstance(member,Interface):
+          self.addInterface(member)
+        else:
+          self.addInterface(member.addInterface())
+
     self.type = ltype
     self.shared_vlan = None
     self._mac_learning = True
@@ -279,6 +291,22 @@ class Link(Resource):
     self.latency = Link.DEFAULT_LAT
     self.plr = Link.DEFAULT_PLR
 
+    for name,ext in Link.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
+      instance = klass(*args, **kw)
+      if getattr(klass, "__WANTPARENT__", False):
+        instance._parent = self
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
+
   def addRawElement (self, elem):
     self._raw_elements.append(elem)
 
@@ -292,6 +320,11 @@ class Link(Resource):
 
   def addInterface (self, intf):
     self.interfaces.append(intf)
+
+  def addNode (self, node):
+    interface = node.addInterface()
+    self.interfaces.append(interface)
+    return interface
 
   def connectSharedVlan (self, name):
     self.namespaces.append(GNS.SVLAN)
@@ -500,7 +533,12 @@ class Node(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
+      if getattr(klass, "__WANTPARENT__", False):
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -564,7 +602,7 @@ class Node(Resource):
 
     return nd
 
-  def addInterface (self, name = None):
+  def addInterface (self, name = None, address = None):
     existingNames = [x.name for x in self.interfaces]
     if name is not None:
       intfName = "%s:%s" % (self.client_id, name)
@@ -577,7 +615,7 @@ class Node(Resource):
     if intfName in existingNames:
       raise Node.DuplicateInterfaceName()
 
-    intf = Interface(intfName, self)
+    intf = Interface(intfName, self, address)
     self.interfaces.append(intf)
     return intf
 
@@ -587,12 +625,13 @@ class Node(Resource):
   def addRawElement (self, elem):
     self._raw_elements.append(elem)
 
+Request.EXTENSIONS.append(("Node", Node))
 
 class RawPC(Node):
   def __init__ (self, name, component_id = None):
     super(RawPC, self).__init__(name, NodeType.RAW, component_id = component_id, exclusive = True)
 
-
+Request.EXTENSIONS.append(("RawPC", RawPC))
 
 class VZContainer(Node):
   def __init__ (self, name, exclusive = False):
@@ -608,5 +647,33 @@ class Namespaces(object):
   TOUR =  GNS.Namespace("tour", "http://www.protogeni.net/resources/rspec/ext/apt-tour/1")
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
+  PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
+  DATA = GNS.Namespace("data", "http://www.protogeni.net/resources/rspec/ext/user-data/1")
+  DELAY =  GNS.Namespace("delay", "http://www.protogeni.net/resources/rspec/ext/delay/1")
 
 
+#### DEPRECATED #####
+class XenVM(Node):
+  """
+.. deprecated:: 0.4
+   Use :py:class:`geni.rspec.igext.XenVM` instead."""
+  def __init__ (self, name, component_id = None, exclusive = False):
+    import geni.warnings as GW
+    import warnings
+    warnings.warn("geni.rspec.pg.XenVM is deprecated, please use geni.rspec.igext.XenVM instead",
+                  GW.GENILibDeprecationWarning)
+    super(XenVM, self).__init__(name, NodeType.XEN, component_id = component_id, exclusive = exclusive)
+    self.cores = 1
+    self.ram = 256
+    self.disk = 8
+
+  def _write (self, root):
+    nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    xen = ET.SubElement(st, "{%s}xen" % (Namespaces.EMULAB.name))
+    xen.attrib["cores"] = str(self.cores)
+    xen.attrib["ram"] = str(self.ram)
+    xen.attrib["disk"] = str(self.disk)
+    return nd
+
+VM = XenVM

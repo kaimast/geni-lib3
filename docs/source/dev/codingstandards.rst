@@ -54,20 +54,20 @@ Philosophy Notes
 
 ``geni-lib`` is a surprisingly useful tool for end-users.  However, that does not mean it is designed as a user
 tool.  As it is a library, constraints and "convenience" can always be wrapped around it, but they can't be removed
-if the library is too opinionated at a base level.
+if the library is too opinionated at a base level.  Convenience is generally acceptable if the underlying
+functionality can be directly accessed by the user should they want to avoid whatever level of "help" is being
+offered.
 
 * Do not provide Magic(tm) to users in the base API.  ``geni-lib`` should not go out of its' way to protect the user
   from building a request that we believe the be impossible to satisfy, or from passing "bad" data to AM API calls.
-* The base level rspec wrappers should not provide convenience functionality that extends to synthesizing
-  resources.  They are intended to be thin wrappers on the underlying resource request, and any convenience
-  functions should be limited to those that facilitate navigating the tree (searching, filtered iteration, 
-  dynamic attachment, etc.).
 * AM wrappers provide some basic level of sanity checking of input values (specifically for POAs in the VTS
   support).  This is acceptable as there is a lower-level API a user may use if they want to ignore those
-  checks (``geni.minigcf.amapi3``).  That being said, this level of convenience should be limited to tweaking
-  data types.
+  checks (``geni.minigcf.amapi3``).  That being said, this level of convenience should be limited.
 * While we support IronPython and Jython, those ``geni-lib`` users should still prefer ``multiprocessing`` for
   parallel execution, instead of ``threading``.
+* Providing convenience shouldn't extend to essentially providing new tools - it's hard to say where this line is,
+  but providing too much tool-like functionality in ``geni-lib`` puts pressure on both the release schedule and
+  the versioning and API stability.
 
 
 Things That Don't Belong

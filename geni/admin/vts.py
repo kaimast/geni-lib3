@@ -138,4 +138,9 @@ class Connection(germ.Connection):
     r = requests.put(url, d, **self.rkwargs)
     return r.json()["value"]
 
+  def deleteDropboxVol (self, sliver_uuid):
+    url = "https://%s:%d/core/admin/vts/dropbox/%s" % (self.host, self.port, sliver_uuid)
+    r = requests.delete(url, **self.rkwargs)
+    return r.json()["value"]
+
 
