@@ -51,17 +51,19 @@ class XenVM(Node):
     cores (int): Number of CPU cores
     ram (int): Amount of memory in megabytes
     disk (int): Amount of disk space in gigabytes
+    xen_ptype (str): Physical node type on which to instantiate the VM. Types are AM-specific.
   """
   def __init__ (self, client_id, component_id = None, exclusive = False):
     super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
     self.cores = 1
     self.ram = 512
     self.disk = 0
+    self.xen_ptype = None
 
   def _write (self, root):
     nd = super(XenVM, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
     if self.cores or self.ram or self.disk:
-      st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
       xen = ET.SubElement(st, "{%s}xen" % (PGNS.EMULAB.name))
       if self.cores:
         xen.attrib["cores"] = str(self.cores)
@@ -69,6 +71,9 @@ class XenVM(Node):
         xen.attrib["ram"] = str(self.ram)
       if self.disk:
         xen.attrib["disk"] = str(self.disk)
+    if self.xen_ptype is not None:
+      pt = ET.SubElement(st, "{%s}xen_ptype" % (PGNS.EMULAB.name))
+      pt.attrib["name"] = self.xen_ptype
     return nd
 
 pg.Request.EXTENSIONS.append(("XenVM", XenVM))
@@ -103,26 +108,38 @@ pg.Request.EXTENSIONS.append(("AddressPool", AddressPool))
 
 
 class Blockstore(object):
-  def __init__ (self, name, mount):
+  def __init__ (self, name, mount = None):
     """Creates a BlockStore object with the given name (arbitrary) and mountpoint."""
     self.name = name
     self.mount = mount
-    self.size = None
+    self._size = None
     self.where = "local"    # local|remote
     self.readonly = False
     self.placement = "any"  # any|sysvol|nonsysvol
     self.dataset = None
+    self.rwclone = False    # Only for remote blockstores.
+
+  @property
+  def size (self):
+      return self._size
+
+  @size.setter
+  def size (self, val):
+      self._size = int(val)
 
   def _write (self, element):
     bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
     bse.attrib["name"] = self.name
-    bse.attrib["mountpoint"] = self.mount
+    if self.mount:
+      bse.attrib["mountpoint"] = self.mount
     bse.attrib["class"] = self.where
-    if self.size:
-      bse.attrib["size"] = "%dGB" % (self.size)
+    if self._size:
+      bse.attrib["size"] = "%dGB" % (self._size)
     bse.attrib["placement"] = self.placement
     if self.readonly:
       bse.attrib["readonly"] = "true"
+    if self.rwclone:
+      bse.attrib["rwclone"] = "true"
     if self.dataset:
       if isinstance(self.dataset, (str, unicode)):
         bse.attrib["dataset"] = self.dataset
@@ -134,12 +151,15 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 
 
 class RemoteBlockstore(pg.Node):
-  def __init__ (self, name, mount):
+  def __init__ (self, name, mount = None, ifacename = "if0"):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
     bs = Blockstore("%s-bs" % (self.name), mount)
     bs.where = "remote"
     self._bs = bs
-    self._interface = self.addInterface("if0")
+    self._interface = self.addInterface(ifacename)
+
+  def _write (self, element):
+    return self._bs._write(super(RemoteBlockstore, self)._write(element));
 
   @property
   def interface (self):
@@ -170,6 +190,14 @@ class RemoteBlockstore(pg.Node):
     self._bs.readonly = val
 
   @property
+  def rwclone (self):
+    return self._bs.rwclone
+
+  @rwclone.setter
+  def rwclone (self, val):
+    self._bs.rwclone = val
+
+  @property
   def placement (self):
     return self._bs.placement
 
@@ -187,6 +215,48 @@ class RemoteBlockstore(pg.Node):
 
 pg.Request.EXTENSIONS.append(("RemoteBlockstore", RemoteBlockstore))
 
+class Bridge(pg.Node):
+  class Pipe(object):
+    def __init__ (self):
+      self.bandwidth = 0
+      self.latency   = 0
+      self.lossrate  = 0.0
+  
+  def __init__ (self, name, if0name = "if0", if1name = "if1"):
+    super(Bridge, self).__init__(name, "delay")
+    self.addNamespace(PGNS.DELAY)
+    
+    self.iface0 = self.addInterface(if0name)
+    self.pipe0  = self.Pipe();
+    self.iface1 = self.addInterface(if1name)
+    self.pipe1  = self.Pipe();
+
+  def _write (self, root):
+    nd = super(Bridge, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    delay = ET.SubElement(st, "{%s}sliver_type_shaping" % (PGNS.DELAY.name))
+    pipe0 = ET.SubElement(delay, "{%s}pipe" % (PGNS.DELAY.name))
+    pipe0.attrib["source"]    = self.iface0.name
+    pipe0.attrib["dest"]      = self.iface1.name
+    pipe0.attrib["capacity"]  = str(self.pipe0.bandwidth)
+    pipe0.attrib["latency"]   = str(self.pipe0.latency)
+    pipe0.attrib["lossrate"]  = str(self.pipe0.lossrate)
+    pipe1 = ET.SubElement(delay, "{%s}pipe" % (PGNS.DELAY.name))
+    pipe1.attrib["source"]    = self.iface1.name
+    pipe1.attrib["dest"]      = self.iface0.name
+    pipe1.attrib["capacity"]  = str(self.pipe1.bandwidth)
+    pipe1.attrib["latency"]   = str(self.pipe1.latency)
+    pipe1.attrib["lossrate"]  = str(self.pipe1.lossrate)
+    return nd;
+
+  # pipe0 goes with iface0, and pipe1 goes with iface1
+  def getPipe (self, interface):
+    if self.iface0.name is interface: 
+      return self.pipe0
+    else:
+      return self.pipe1
+  
+pg.Request.EXTENSIONS.append(("Bridge", Bridge))
 
 class Firewall(object):
   class Style(object):
@@ -274,6 +344,27 @@ class Tour(object):
     return td
 
 
+class ParameterData(object):
+  def __init__ (self, parameters):
+    self.parameters = parameters
+
+  def _write (self, root):
+    td = ET.SubElement(root, "data_set",
+                       nsmap={None : PGNS.PARAMS.name})
+    for param in self.parameters:
+      that = self.parameters[param]
+      if 'hide' in that and that['hide'] is False:
+        desc = ET.SubElement(td, "data_item")
+        desc.attrib["name"] = that['prefix'] + param
+
+        if isinstance(that['value'], ET._Element):
+          desc.append(that['value'])
+        else:
+          desc.text = str(that['value'])
+
+pg.Request.EXTENSIONS.append(("ParameterData", ParameterData))
+
+
 class Site(object):
   def __init__ (self, id):
     self.id = id
@@ -294,7 +385,7 @@ class Desire(object):
   def _write (self, node):
     fd = ET.SubElement(node, "{%s}fd" % (PGNS.EMULAB))
     fd.attrib["name"] = self.name
-    fd.attrib["weight"] = self.weight
+    fd.attrib["weight"] = str(self.weight)
     return fd
 
 pg.Node.EXTENSIONS.append(("Desire", Desire))

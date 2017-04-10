@@ -66,7 +66,7 @@ class Base (object):
   def _fromStr(s):
     if not Base.isValidURN(s):
       raise MalformedURNError(s)
-    return tuple(re.split(":",s,3))
+    return tuple(re.split(":",s,2))
 
   def __init__ (self, *args):
     """Create a new generic URN
@@ -119,7 +119,7 @@ class GENI (Base):
 
   AUTHORITY_PATTERN = "%s(:%s)*" % (DNS_FULL, DNS_FULL)
   TYPE_PATTERN      = DNS_PART
-  NAME_PATTERN      = "%s(:%s)*" % (DNS_PART, DNS_PART)
+  NAME_PATTERN      = Base.NSS_PATTERN
   GENINSS_PATTERN   = r"""%s\+%s\+(?P<type>%s)\+%s""" % (NSSPREFIX, AUTHORITY_PATTERN,
                                                          TYPE_PATTERN, NAME_PATTERN)
   GENIURN_PATTERN   = "%s:%s:%s" % (Base.PREFIX, NID, GENINSS_PATTERN)
@@ -266,9 +266,13 @@ def Interface (authorities, name):
   """Create a new GENI URN with type 'interface'."""
   return GENI(authorities, GENI.TYPE_INTERFACE, name)
 
-def Image (authorities, name):
+def Image (authorities, name, version = None):
   """Create a new GENI URN with type 'image'."""
-  return GENI(authorities, GENI.TYPE_IMAGE, name)
+  if version is not None:
+      constructed_name = "%s:%s" % (name, str(version))
+  else:
+      constructed_name = name
+  return GENI(authorities, GENI.TYPE_IMAGE, constructed_name)
 
 def Link (authorities, name):
   """Create a new GENI URN with type 'link'."""
@@ -329,10 +333,15 @@ if __name__ == "__main__":
             "urn:publicid:IDN+lan.sdn.uky.edu+user+hussam")
   check_urn(Image(IG.UtahDDC,"UBUNTU64-STD"),
             "urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD")
+  check_urn(Image(IG.UtahDDC,"UBUNTU64-STD",42),
+            "urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD:42")
   check_urn(User(IG.Clemson,"kwang"),
             "urn:publicid:IDN+instageni.clemson.edu+user+kwang")
+  check_urn(GENI("wisc.cloudlab.us", "image", "ramcloud-PG0:hq6_ubuntu16.04_singlePC:0"),
+          "urn:publicid:IDN+wisc.cloudlab.us+image+ramcloud-PG0:hq6_ubuntu16.04_singlePC:0")
 
   check_type("urn:isbn:0345371984",Base)
   check_type("urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD",GENI)
+  check_type("urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD:42",GENI)
 
   sys.exit(errors)
