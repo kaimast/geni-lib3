@@ -275,5 +275,5 @@ def aggregateFromHost (host):
   module = sys.modules[__name__]
   for _,obj in inspect.getmembers(module):
     if isinstance(obj, AM):
-      if obj.host == host:
+      if obj._host == host:
         return obj
