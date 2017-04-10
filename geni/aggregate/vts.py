@@ -30,6 +30,12 @@ class HostPOAs(object):
     return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:supervisor-status",
                               options={"client-ids": client_ids})
 
+  def exec (self, context, sname, client_ids, cmd):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:exec",
+                              options={"client-ids": client_ids, "cmd" : cmd})
+
+
 class v4RouterPOAs(object):
   def __init__ (self, vtsam):
     self.am = vtsam
