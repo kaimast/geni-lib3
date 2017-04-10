@@ -30,7 +30,7 @@ class HostPOAs(object):
     return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:supervisor-status",
                               options={"client-ids": client_ids})
 
-  def exec (self, context, sname, client_ids, cmd):
+  def execcmd (self, context, sname, client_ids, cmd):
     if not isinstance(client_ids, list): client_ids = [client_ids]
     return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:exec",
                               options={"client-ids": client_ids, "cmd" : cmd})
