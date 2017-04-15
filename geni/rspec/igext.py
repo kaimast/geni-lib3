@@ -55,9 +55,9 @@ class XenVM(Node):
   """
   def __init__ (self, client_id, component_id = None, exclusive = False):
     super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
-    self.cores = 1
-    self.ram = 512
-    self.disk = 0
+    self.cores = None
+    self.ram = None
+    self.disk = None
     self.xen_ptype = None
 
   def _write (self, root):
@@ -147,7 +147,7 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 class RemoteBlockstore(pg.Node):
   def __init__ (self, name, mount = None, ifacename = "if0"):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
-    bs = Blockstore("%s-bs" % (self.name), mount)
+    bs = Blockstore(self.name, mount)
     bs.where = "remote"
     self._bs = bs
     self._interface = self.addInterface(ifacename)
@@ -377,6 +377,7 @@ class Site(object):
     return site
 
 pg.Node.EXTENSIONS.append(("Site", Site))
+pg.Link.EXTENSIONS.append(("Site", Site))
 
 
 class Desire(object):
