@@ -270,6 +270,7 @@ class Link(Resource):
     self._best_effort = False
     self._ext_children = []
     self._raw_elements = []
+    self._component_managers = []
     self.protocol = None
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
@@ -307,6 +308,9 @@ class Link(Resource):
 
   def addNode (self, node):
     self.interfaces.append(node.addInterface())
+
+  def addComponentManager (self, component_manager):
+    self._component_managers.append(component_manager)
 
   def connectSharedVlan (self, name):
     self.namespaces.append(GNS.SVLAN)
@@ -413,6 +417,10 @@ class Link(Resource):
 
     for elem in self._raw_elements:
       lnk.append(elem)
+
+    for manager in self._component_managers:
+      cm = ET.SubElement(lnk, "{%s}component_manager" % (GNS.REQUEST.name))
+      cm.attrib["name"] = manager
 
     return lnk
 
@@ -585,7 +593,11 @@ class Node(Resource):
   def addInterface (self, name = None, address = None):
     existingNames = [x.name for x in self.interfaces]
     if name is not None:
-      intfName = "%s:%s" % (self.client_id, name)
+      if name.find(":"):
+        intfName = name
+      else:
+        intfName = "%s:%s" % (self.client_id, name)
+        pass
     else:
       for i in range(0, 100):
         intfName = "%s:if%i" % (self.client_id, i)
