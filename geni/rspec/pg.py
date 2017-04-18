@@ -593,7 +593,7 @@ class Node(Resource):
   def addInterface (self, name = None, address = None):
     existingNames = [x.name for x in self.interfaces]
     if name is not None:
-      if name.find(":"):
+      if name.find(":") > 0:
         intfName = name
       else:
         intfName = "%s:%s" % (self.client_id, name)
