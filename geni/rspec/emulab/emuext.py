@@ -14,28 +14,17 @@ from ..pg import Request, Namespaces, Link, Node, Service, Command, RawPC
 import geni.namespaces as GNS
 from lxml import etree as ET
 
-class EmulabExtensionDuplicateStatement(Exception):
-    """This exception gets thrown if something that was only supposed to get
-    added once to a Request, Node, Link, etc. gets added multiple times."""
-    def __init__ (self, classname):
-        self._classname = classname
-
-    def __str__ (self):
-        return "%s may be used only once!" % str(self._classname,)
-
 class setCollocateFactor(object):
     """Added to a top-level Request object, this extension limits the number
     of VMs from one experiment that Emulab will collocate on each physical
     host.
     """
-    _mfactor = None
+    __ONCEONLY__ = True
     
     def __init__(self, mfactor):
         """mfactor is an integer, giving the maximum number of VMs to multiplex
         on each physical host."""
-        if setCollocateFactor._mfactor:
-            raise EmulabExtensionDuplicateStatement("setCollocateFactor")
-        self.mfactor = setCollocateFactor._mfactor = mfactor
+        self.mfactor = mfactor
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -49,13 +38,10 @@ class setPackingStrategy(object):
     """Added to a top-level Request object, this extension controls the
     strategy used for distributing VMs across physical hosts
     """
+    __ONCEONLY__ = True
 
-    _strategy = None
-    
     def __init__(self, strategy):
-        if setPackingStrategy._strategy:
-            raise EmulabExtensionDuplicateStatement("setPackingStrategy")
-        self.strategy = setPackingStrategy._strategy = strategy
+        self.strategy = strategy
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -70,12 +56,10 @@ class setRoutingStyle(object):
     routing that is automatically configured on the experiment (data-plane)
     side of the network.
     """
-    _style = None
+    __ONCEONLY__ = True
     
     def __init__(self, style):
-        if setRoutingStyle._style:
-            raise EmulabExtensionDuplicateStatement("setRoutingStyle")
-        self.style = setRoutingStyle._style = style;
+        self.style = style
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -89,15 +73,13 @@ class setDelayImage(object):
     """Added to a top-level Request object, this extension sets the disk image
     that will be used for all delay nodes configured for the experiment.
     """
-    _urn = None
+    __ONCEONLY__ = True
     
     def __init__(self, urn):
         """urn: URN of any image - to perform the intnded function, the 
         image must be capable of setting up bridging and/or traffic shaping.
         """
-        if setDelayImage._urn:
-            raise EmulabExtensionDuplicateStatement("setDelayImage")
-        self.urn = setDelayImage._urn = urn
+        self.urn = urn
     
     def _write(self, root):
         el = ET.SubElement(root,
@@ -113,7 +95,7 @@ class setForceShaping(object):
     allows the link properties to be changed dynamically via the Emulab event
     system.
     """
-    _enabled = False
+    __ONCEONLY__ = True
     
     def __init__(self):
         self._enabled = True
@@ -133,7 +115,7 @@ class setNoInterSwitchLinks(object):
     link.  This allows users to require that specific nodes in their
     topology be attached to the same switch(es).
     """
-    _enabled = False
+    __ONCEONLY__ = True
     
     def __init__(self):
         self._enabled = True
@@ -153,7 +135,7 @@ class setUseTypeDefaultImage(object):
     standard geni default image. Useful with special hardware that should
     run a special image.
     """
-    _enabled = False
+    __ONCEONLY__ = True
     
     def __init__(self):
         self._enabled = True
@@ -211,7 +193,7 @@ class InstantiateOn(object):
             def __str__ (self):
                 return "%s is not a Raw PC" % (self.parent.name)
     
-    _parent = None
+    __ONCEONLY__ = True
     
     def __init__(self, parent):
         if isinstance(parent, Node):
@@ -266,30 +248,47 @@ latency, and loss. For example:
         link.latency   = 15
         link.plr       = 0.01"""
 
-  # This tells the Request class to pass the request object as the first
-  # argument to the __init__ function, from the extensions wrapper function.
+  # This tells the Request class to set the _parent member after creating the
+  # object
   __WANTPARENT__ = True;
   
-  def __init__ (self, request, name = None):
+  def __init__ (self, name = None):
     if name is None:
       self.name = Link.newLinkID()
     else:
       self.name = name
 
-    self.request     = request
     self.bridge_name = name + "_bridge"
-    self.bridge      = request.Bridge(self.bridge_name)
     self.left_name   = name + "_left"
-    self.left_link   = request.Link(self.left_name)
-    self.left_link.addInterface(self.bridge.iface0);
-    self.left_iface  = None
     self.right_name  = name + "_right"
-    self.right_link  = request.Link(self.right_name)
-    self.right_link.addInterface(self.bridge.iface1);
+    self.left_iface  = None
     self.right_iface = None
+
     self._bandwidth  = Link.DEFAULT_BW
     self._latency    = Link.DEFAULT_LAT
     self._plr        = Link.DEFAULT_PLR
+
+    # This needs to get set with the setter; this helps us remember that we
+    # have not been attached to a parent
+    self.request = None
+
+    # These will be set later when we know the parent
+    self.bridge = None
+    self.left_link = None
+    self.right_link = None
+
+  @property
+  def _parent(self):
+    return self.request
+
+  @_parent.setter
+  def _parent(self, request):
+    self.request     = request
+    self.bridge      = request.Bridge(self.bridge_name)
+    self.left_link   = request.Link(self.left_name)
+    self.left_link.addInterface(self.bridge.iface0);
+    self.right_link  = request.Link(self.right_name)
+    self.right_link.addInterface(self.bridge.iface1);
 
   def addInterface(self, interface):
       if self.left_iface == None:
@@ -337,11 +336,7 @@ Request.EXTENSIONS.append(("BridgedLink", BridgedLink))
 class ShapedLink(BridgedLink):
   """A ShapedLink is a synonym for BridgedLink"""
 
-  # This tells the Request class to pass the request object as the first
-  # argument to the __init__ function, from the extensions wrapper function.
-  __WANTPARENT__ = True;
-  
-  def __init__ (self, request, name = None):
-    super(ShapedLink, self).__init__(request, name=name)
+  def __init__ (self, name = None):
+    super(ShapedLink, self).__init__(name=name)
 
 Request.EXTENSIONS.append(("ShapedLink", ShapedLink))

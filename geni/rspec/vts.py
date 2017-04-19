@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -214,9 +214,177 @@ class OVSOpenFlowImage(OVSImage):
 
     return i
 
+class UnknownSTPModeError(Exception):
+  def __init__ (self, val):
+    self._val = val
+  def __str__ (self):
+    return "Unknown STP Mode (%d)" % (self._val)
+
+class IllegalModeForParamError(Exception):
+  def __init__ (self, param):
+    self.param = param
+  def __str__ (self):
+    return "The parameter '%s' is not configurable in the current STP mode" % (self.param)
+
+class OVSL2STP(object):
+  STP = 1
+  RSTP = 2
+
+  def __init__ (self):
+    self._mode = OVSL2STP.STP
+    self._rstp_params = {}
+    self._stp_params = {}
+
+  @property
+  def mode (self):
+    return self._mode
+
+  @mode.setter
+  def mode (self, val):
+    if val != OVSL2STP.STP and val != OVSL2STP.RSTP:
+      raise UnknownSTPModeError(val)
+    self._mode = val
+
+  @property
+  def type (self):
+    if self._mode == OVSL2STP.STP:
+      return "stp"
+    elif self._mode == OVSL2STP.RSTP:
+      return "rstp"
+
+  @property
+  def priority (self):
+    try:
+      return self._stp_params["priority"]
+    except KeyError:
+      return None
+
+  @priority.setter
+  def priority (self, val):
+    self._stp_params["priority"] = val
+    self._rstp_params["priority"] = val
+
+  @property
+  def max_age (self):
+    try:
+      return self._stp_params["max-age"]
+    except KeyError:
+      return None
+    
+  @max_age.setter
+  def max_age (self, val):
+    self._stp_params["max-age"] = val
+    self._rstp_params["max-age"] = val
+
+  @property
+  def hello_time (self):
+    if self._mode != OVSL2STP.STP:
+      raise IllegalModeForParamError("hello-time")
+    try:
+      return self._stp_params["hello-time"]
+    except KeyError:
+      return None
+
+  @hello_time.setter
+  def hello_time (self, val):
+    if self._mode != OVSL2STP.STP:
+      raise IllegalModeForParamError("hello-time")
+    self._stp_params["hello-time"] = val
+
+  @property
+  def forward_delay (self):
+    try:
+      return self._stp_params["forward-delay"]
+    except KeyError:
+      return None
+    
+  @forward_delay.setter
+  def forward_delay (self, val):
+    self._stp_params["forward-delay"] = val
+    self._rstp_params["forward-delay"] = val
+
+  @property
+  def address (self):
+    try:
+      return self._stp_params["system-id"]
+    except KeyError:
+      return None
+
+  @address.setter
+  def address (self, val):
+    self._stp_params["system-id"] = val
+    self._rstp_params["address"] = val
+
+  @property
+  def ageing_time (self):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("ageing-time")
+    try:
+      return self._rstp_params["ageing-time"]
+    except KeyError:
+      return None
+
+  @ageing_time.setter
+  def ageing_time (self, val):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("ageing-time")
+    self._rstp_params["ageing-time"] = val
+    
+  @property
+  def xmit_hold_count (self):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("xmit-hold-count")
+    try:
+      return self._rstp_params["xmit-hold-count"]
+    except KeyError:
+      return None
+
+  @xmit_hold_count.setter
+  def xmit_hold_count (self, val):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("xmit-hold-count")
+    self._rstp_params["xmit-hold-count"] = val
+
+  def _write (self, element):
+    se = ET.SubElement(element, "{%s}stp" % (Namespaces.VTS))
+
+    if self._mode == OVSL2STP.STP:
+      se.attrib["type"] = "stp"
+      for k,v in self._stp_params.items():
+        pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
+        pe.attrib["value"] = str(v)
+    elif self._mode == OVSL2STP.RSTP:
+      se.attrib["type"] = "rstp"
+      for k,v in self._rstp_params.items():
+        pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
+        pe.attrib["value"] = str(v)
+    elif self._mode == -1:
+      se.attrib["type"] = "disabled"
+
+    return element
+
+  def _as_jsonable (self):
+    obj = {"type" : self.type}
+    if self._mode == OVSL2STP.STP:
+      for k,v in self._stp_params.items():
+        obj[k] = v
+    elif self._mode == OVSL2STP.RSTP:
+      for k,v in self._rstp_params.items():
+        obj[k] = v
+    return obj
+
+OVSL2STP.system_id = OVSL2STP.address
+
 class OVSL2Image(OVSImage):
   def __init__ (self):
     super(OVSL2Image, self).__init__("bss:ovs-201")
+    self.stp = OVSL2STP()
+
+  def _write (self, element):
+    i = super(OVSL2Image, self)._write(element)
+    self.stp._write(i)
+
+
 
 ##################
 # Image Features #

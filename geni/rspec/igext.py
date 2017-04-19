@@ -112,12 +112,20 @@ class Blockstore(object):
     """Creates a BlockStore object with the given name (arbitrary) and mountpoint."""
     self.name = name
     self.mount = mount
-    self.size = None
+    self._size = None
     self.where = "local"    # local|remote
     self.readonly = False
     self.placement = "any"  # any|sysvol|nonsysvol
     self.dataset = None
     self.rwclone = False    # Only for remote blockstores.
+
+  @property
+  def size (self):
+      return self._size
+
+  @size.setter
+  def size (self, val):
+      self._size = int(val)
 
   def _write (self, element):
     bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
@@ -125,10 +133,8 @@ class Blockstore(object):
     if self.mount:
       bse.attrib["mountpoint"] = self.mount
     bse.attrib["class"] = self.where
-    if self.size:
-      if re.match(r"^\d+$", self.size):
-        self.size = str(self.size) + "GB"
-      bse.attrib["size"] = self.size
+    if self._size:
+      bse.attrib["size"] = "%dGB" % (self._size)
     bse.attrib["placement"] = self.placement
     if self.readonly:
       bse.attrib["readonly"] = "true"
@@ -244,20 +250,12 @@ class Bridge(pg.Node):
     return nd;
 
   # pipe0 goes with iface0, and pipe1 goes with iface1
-  def pipe (self, which):
-    which = self.client_id + ":" + which
-    if self.iface0.name == which:
+  def getPipe (self, interface):
+    if self.iface0.name is interface: 
       return self.pipe0
     else:
       return self.pipe1
   
-  def interface (self, which):
-    which = self.client_id + ":" + which
-    if self.iface0.name == which:
-      return self.iface0
-    else:
-      return self.iface1
-
 pg.Request.EXTENSIONS.append(("Bridge", Bridge))
 
 class Firewall(object):

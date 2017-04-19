@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,16 +11,71 @@ import inspect
 
 from .core import AM, APIRegistry
 
+class HostPOAs(object):
+  def __init__ (self, vtsam):
+    self.am = vtsam
+
+  def getARPTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-arp-table",
+                              options={"client-ids": client_ids})
+
+  def getRouteTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:get-route-table",
+                              options={"client-ids": client_ids})
+
+  def svcStatus (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:supervisor-status",
+                              options={"client-ids": client_ids})
+
+  def execcmd (self, context, sname, client_ids, cmd):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "api:uh.host:exec",
+                              options={"client-ids": client_ids, "cmd" : cmd})
+
+
+class v4RouterPOAs(object):
+  def __init__ (self, vtsam):
+    self.am = vtsam
+
+  def addOSPFNetworks (self, context, sname, client_ids, nets):
+    """Add OSPF Networks to areas on the given routers
+
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      client_ids (list): A list of client-id strings
+      nets (list): A list of (network, area) tuples
+    """
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:add-ospf-nets",
+                              options={"client-ids": client_ids, "networks" : nets})
+
+  def getRouteTable (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:get-route-table",
+                              options={"client-ids": client_ids})
+
+  def getOSPFNeighbors (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self.am._apiv3.poa(context, self.am.urlv3, sname, "vts:uh.quagga:get-ospf-neighbors",
+                              options={"client-ids": client_ids})
+
+
 class VTS(AM):
   """Wrapper for all VTS-supposed AMAPI functions"""
 
   def __init__ (self, name, host, url = None):
-    self.host = host
+    self._host = host
     if url is None:
-      url = "https://%s:3626/foam/gapi/2" % (host)
+      url = "https://%s:3626/foam/gapi/2" % (self._host)
     self.urlv3 = "%s3" % (url[:-1])
     self._apiv3 = APIRegistry.get("amapiv3")
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
+    self.Host = HostPOAs(self)
+    self.IPv4Router = v4RouterPOAs(self)
 
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
@@ -133,7 +188,7 @@ class VTS(AM):
 
   def getAllDNSResourceRecords(self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsdhcp:get-all-records",
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:uh.dnsroot:get-all-records",
                            options={"client-ids": client_ids})
 
   def getLastDNSDHCPops(self, context, sname, client_ids, number_of_operations, dns_OR_dhcp):
@@ -142,8 +197,6 @@ class VTS(AM):
                            options={"client-ids": client_ids,
                            "number-of-operations": number_of_operations,
                            "dns-OR-dhcp": dns_OR_dhcp})
-
-
 
 
   def setDeleteLock (self, context, sname):
@@ -223,3 +276,10 @@ def name_to_aggregate ():
     if isinstance(obj, AM):
       result[obj.name] = obj
   return result
+
+def aggregateFromHost (host):
+  module = sys.modules[__name__]
+  for _,obj in inspect.getmembers(module):
+    if isinstance(obj, AM):
+      if obj._host == host:
+        return obj

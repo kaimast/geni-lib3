@@ -269,6 +269,13 @@ class Manifest(object):
       self._xml = xml
     self._root = ET.fromstring(self._xml)
     self._pid = os.getpid()
+    self._info = {}
+
+  def _populate_info (self):
+    ielems = self._root.xpath('v:info', namespaces = XPNS)
+    if ielems:
+      self._info["host"] = ielems[0].get("host")
+      self._info["slice"] = ielems[0].get("slice")
 
   @property
   def root (self):
@@ -321,6 +328,18 @@ class Manifest(object):
     elems = self._root.xpath("v:datapath", namespaces = XPNS)
     for elem in elems:
       yield ManifestDatapath._fromdom(elem)
+
+  @property
+  def host (self):
+    if not self._info:
+      self._populate_info()
+    return self._info["host"]
+
+  @property
+  def slicename (self):
+    if not self._info:
+      self._populate_info()
+    return self._info["slice"]
 
   def findTarget (self, client_id):
     """Get the container or datapath representing the given `client_id` in the manifest.

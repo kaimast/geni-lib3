@@ -17,6 +17,15 @@ import geni.rspec
 import geni.namespaces as GNS
 import geni.urn
 
+# This exception gets thrown if a __ONCEONLY__ extension gets added to a parent
+# element more than one time
+class DuplicateExtensionError(Exception):
+  def __init__ (self, klass):
+    super(DuplicateExtensionError, self).__init__()
+    self.klass = klass
+  def __str__ (self):
+    return "Extension (%s) can only be added to a parent object once" % self.klass.__name__
+
 ################################################
 # Base Request - Must be at top for EXTENSIONS #
 ################################################
@@ -40,10 +49,12 @@ class Request(geni.rspec.RSpec):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
+      instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
-        instance = klass(self, *args, **kw)
-      else:
-        instance = klass(*args, **kw)
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -117,6 +128,9 @@ class Resource(object):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
       instance = klass(*args, **kw)
       self._ext_children.append(instance)
       return instance
@@ -284,10 +298,12 @@ class Link(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
+      instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
-        instance = klass(self, *args, **kw)
-      else:
-        instance = klass(*args, **kw)
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -307,7 +323,9 @@ class Link(Resource):
     self.interfaces.append(intf)
 
   def addNode (self, node):
-    self.interfaces.append(node.addInterface())
+    interface = node.addInterface()
+    self.interfaces.append(interface)
+    return interface
 
   def addComponentManager (self, component_manager):
     self._component_managers.append(component_manager)
@@ -523,10 +541,12 @@ class Node(Resource):
   def _wrapext (self, name, klass):
     @functools.wraps(klass.__init__)
     def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
+      instance = klass(*args, **kw)
       if getattr(klass, "__WANTPARENT__", False):
-        instance = klass(self, *args, **kw)
-      else:
-        instance = klass(*args, **kw)
+        instance._parent = self
       self._ext_children.append(instance)
       return instance
     setattr(self, name, wrap)
@@ -640,7 +660,7 @@ class Namespaces(object):
   JACKS = GNS.Namespace("jacks", "http://www.protogeni.net/resources/rspec/ext/jacks/1")
   INFO = GNS.Namespace("info", "http://www.protogeni.net/resources/rspec/ext/site-info/1")
   PARAMS = GNS.Namespace("parameters", "http://www.protogeni.net/resources/rspec/ext/profile-parameters/1")
-  PARAMS = GNS.Namespace("data", "http://www.protogeni.net/resources/rspec/ext/user-data/1")
+  DATA = GNS.Namespace("data", "http://www.protogeni.net/resources/rspec/ext/user-data/1")
   DELAY =  GNS.Namespace("delay", "http://www.protogeni.net/resources/rspec/ext/delay/1")
 
 

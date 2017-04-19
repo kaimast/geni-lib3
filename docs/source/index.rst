@@ -20,6 +20,8 @@ Contents:
 
    api/api
 
+   dev/index
+
 Indices and tables
 ==================
   * :ref:`modindex`

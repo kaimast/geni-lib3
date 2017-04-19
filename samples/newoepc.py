@@ -98,17 +98,14 @@ params = pc.bindParameters()
 if params.NUMCLI > 32 or params.NUMCLI < 1:
     perr = portal.ParameterError("You cannot ask for fewer than one or more than 32 client nodes!", ['NUMCLI'])
     pc.reportError(perr)
-    pass
 
 if params.NUMENB < 1 or params.NUMENB > 3:
     perr = portal.ParameterError("You cannot ask for fewer than one or more than three eNodeB nodes!", ['NUMENB'])
     pc.reportError(perr)
-    pass
 
 if int(params.LINKBW) not in [0, 10, 100, 1000]:
     pwarn = portal.ParameterWarning("You are asking for a default link bandwidth that is NOT a standard physical link speed. Link shaping resources WILL be inserted!", ['LINKBW'])
     pc.reportWarning(pwarn)
-    pass
 
 #
 # Give the library a chance to return nice JSON-formatted exception(s) and/or
