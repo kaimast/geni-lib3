@@ -320,7 +320,7 @@ class Tour(object):
     if module is None:
       module = sys.modules["__main__"]
     if not self.description and module.__doc__:
-      docstr = inspect.getdoc(module)
+      docstr = module.__doc__
       docparts = Tour.SPLIT_REGEX.split(docstr,2)
       self.Description(Tour.MARKDOWN,docparts[0])
       if len(docparts) == 2 and not self.instructions:
