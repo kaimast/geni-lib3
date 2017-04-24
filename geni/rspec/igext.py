@@ -9,7 +9,6 @@ from __future__ import absolute_import
 import re
 import sys
 import inspect
-import six
 
 from lxml import etree as ET
 
