@@ -462,9 +462,13 @@ class L3GRE(Link):
   def __init__ (self, name = None):
     super(L3GRE, self).__init__(name, "gre-tunnel")
 
+Request.EXTENSIONS.append(("L3GRE", L3GRE))
+
 class L2GRE(Link):
   def __init__ (self, name = None):
     super(L2GRE, self).__init__(name, "egre-tunnel")
+
+Request.EXTENSIONS.append(("L2GRE", L2GRE))
 
 class StitchedLink(Link):
   class UnknownComponentManagerError(Exception):
@@ -494,6 +498,7 @@ class StitchedLink(Link):
       cm.attrib["name"] = intf.node.component_manager_id
     return lnk
 
+Request.EXTENSIONS.append(("StitchedLink", StitchedLink))
 
 class Node(Resource):
   EXTENSIONS = []
