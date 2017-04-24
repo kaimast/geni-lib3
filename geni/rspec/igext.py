@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import re
 import sys
 import inspect
+import six
 
 from lxml import etree as ET
 
@@ -125,7 +126,11 @@ class Blockstore(object):
 
   @size.setter
   def size (self, val):
-      self._size = int(val)
+      match = re.match(r"^(\d+)GB$", val)
+      if match:
+          self._size = int(match.group(1))
+      else:
+          self._size = int(val)
 
   def _write (self, element):
     bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
