@@ -307,6 +307,7 @@ class Tour(object):
     self.instructions = None
     # Type can markdown
     self.instructions_type = Tour.TEXT
+    self._steps = []
 
   def Description(self, type, desc):
     self.description_type = type
@@ -315,6 +316,10 @@ class Tour(object):
   def Instructions(self, type, inst):
     self.instructions_type = type
     self.instructions = inst
+
+  def addStep(self, id, type, description):
+    step = {"id" : id, "type" : type, "description" : description}
+    self._steps.append(step)
 
   def useDocstring(self, module = None):
     if module is None:
@@ -343,6 +348,16 @@ class Tour(object):
       inst = ET.SubElement(td, "instructions")
       inst.text = self.instructions
       inst.attrib["type"] = self.instructions_type
+    if len(self._steps):
+      steps = ET.SubElement(td, "steps")
+      for step in self._steps:
+        stepel = ET.SubElement(steps, "step")
+        stepel.attrib["point_type"] = step["type"]
+        stepel.attrib["point_id"]   = step["id"]
+        desc = ET.SubElement(stepel, "description")
+        desc.text = step["description"]
+        desc.attrib["type"] = "text"
+        pass
     return td
 
 
