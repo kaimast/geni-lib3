@@ -300,6 +300,15 @@ class Tour(object):
   SPLIT_REGEX = re.compile(r"\n+^\w*instructions\w*:?\w*$\n+",
                            re.IGNORECASE | re.MULTILINE)
 
+  class Step(object):
+    def __init__(self, target,  description, description_type = Tour.MARKDOWN):
+      if hasattr(target,'client_id'):
+        self.id = target.client_id
+      else:
+        self.id  = str(target)
+      self.description = description
+      self.description_type = description_type
+
   def __init__ (self):
     self.description = None
     # Type can markdown
@@ -316,10 +325,6 @@ class Tour(object):
   def Instructions(self, type, inst):
     self.instructions_type = type
     self.instructions = inst
-
-  def addStep(self, id, type, description):
-    step = {"id" : id, "type" : type, "description" : description}
-    self._steps.append(step)
 
   def useDocstring(self, module = None):
     if module is None:
@@ -348,14 +353,14 @@ class Tour(object):
       inst = ET.SubElement(td, "instructions")
       inst.text = self.instructions
       inst.attrib["type"] = self.instructions_type
-    if len(self._steps):
+    if len(self.steps):
       steps = ET.SubElement(td, "steps")
-      for step in self._steps:
+      for step in self.steps:
         stepel = ET.SubElement(steps, "step")
-        stepel.attrib["point_type"] = step["type"]
-        stepel.attrib["point_id"]   = step["id"]
+        stepel.attrib["point_type"] = step.type
+        stepel.attrib["point_id"]   = step.id
         desc = ET.SubElement(stepel, "description")
-        desc.text = step["description"]
+        desc.text = step.description
         desc.attrib["type"] = "text"
         pass
     return td
