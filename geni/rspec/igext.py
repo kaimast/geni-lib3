@@ -55,9 +55,9 @@ class XenVM(Node):
   """
   def __init__ (self, client_id, component_id = None, exclusive = False):
     super(XenVM, self).__init__(client_id, "emulab-xen", component_id = component_id, exclusive = exclusive)
-    self.cores = 1
-    self.ram = 512
-    self.disk = 0
+    self.cores = None
+    self.ram = None
+    self.disk = None
     self.xen_ptype = None
 
   def _write (self, root):
@@ -125,7 +125,11 @@ class Blockstore(object):
 
   @size.setter
   def size (self, val):
-      self._size = int(val)
+      match = re.match(r"^(\d+)GB$", val)
+      if match:
+          self._size = int(match.group(1))
+      else:
+          self._size = int(val)
 
   def _write (self, element):
     bse = ET.SubElement(element, "{%s}blockstore" % (PGNS.EMULAB))
@@ -153,7 +157,7 @@ pg.Node.EXTENSIONS.append(("Blockstore", Blockstore))
 class RemoteBlockstore(pg.Node):
   def __init__ (self, name, mount = None, ifacename = "if0"):
     super(RemoteBlockstore, self).__init__(name, "emulab-blockstore")
-    bs = Blockstore("%s-bs" % (self.name), mount)
+    bs = Blockstore(self.name, mount)
     bs.where = "remote"
     self._bs = bs
     self._interface = self.addInterface(ifacename)
@@ -306,19 +310,19 @@ class Tour(object):
     # Type can markdown
     self.instructions_type = Tour.TEXT
 
-  def Description(self, typ, desc):
-    self.description_type = typ
+  def Description(self, type, desc):
+    self.description_type = type
     self.description = desc
 
-  def Instructions(self, typ, inst):
-    self.instructions_type = typ
+  def Instructions(self, type, inst):
+    self.instructions_type = type
     self.instructions = inst
 
   def useDocstring(self, module = None):
     if module is None:
       module = sys.modules["__main__"]
     if not self.description and module.__doc__:
-      docstr = inspect.getdoc(module)
+      docstr = module.__doc__
       docparts = Tour.SPLIT_REGEX.split(docstr,2)
       self.Description(Tour.MARKDOWN,docparts[0])
       if len(docparts) == 2 and not self.instructions:
@@ -375,6 +379,7 @@ class Site(object):
     return site
 
 pg.Node.EXTENSIONS.append(("Site", Site))
+pg.Link.EXTENSIONS.append(("Site", Site))
 
 
 class Desire(object):
