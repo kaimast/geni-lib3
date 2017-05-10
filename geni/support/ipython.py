@@ -382,6 +382,8 @@ replaceSymbol(VTS, "getLastDNSDHCPops", getLastDNSDHCPops)
 ### Extension loader
 #####
 def load_ipython_extension (ipy):
+  import geni.util
+
   if not geni.util.hasDataContext():
     print "No context found, extension cannot be loaded."
     return
