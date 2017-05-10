@@ -382,6 +382,10 @@ replaceSymbol(VTS, "getLastDNSDHCPops", getLastDNSDHCPops)
 ### Extension loader
 #####
 def load_ipython_extension (ipy):
+  if not geni.util.hasDataContext():
+    print "No context found, extension cannot be loaded."
+    return
+
   import geni._coreutil
   imports = geni._coreutil.shellImports()
   imports["genish"] = gsh
@@ -389,18 +393,28 @@ def load_ipython_extension (ipy):
   import getpass
 
   tries = 0
-  while True:
-    pw = getpass.getpass("Private Key Passphrase: ")
-    tries += 1
-    try:
-      imports["context"] = geni.util.loadContext(key_passphrase = pw)
-      break
-    except KeyDecryptionError:
-      if tries < 3:
-        continue
-      break
-    except IOError:
-      break
+  need_pw = False
+
+  try:
+    context = geni.util.loadContext(key_passphrase = "ffffffffff")
+  except TypeError:
+    context = geni.util.loadContext()
+  except KeyDecryptionError:
+    need_pw = True
+
+  if need_pw:
+    while True:
+      pw = getpass.getpass("Private Key Passphrase: ")
+      tries += 1
+      try:
+        imports["context"] = geni.util.loadContext(key_passphrase = pw)
+        break
+      except KeyDecryptionError:
+        if tries < 3:
+          continue
+        break
+      except IOError:
+        break
 
   ipy.push(imports)
   ipy.set_custom_exc((AMError,), am_exc_handler)
