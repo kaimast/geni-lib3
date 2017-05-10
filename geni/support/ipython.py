@@ -426,6 +426,8 @@ def load_ipython_extension (ipy):
         break
       except IOError:
         break
+  else:
+    imports["context"] = context
 
   ipy.push(imports)
   ipy.set_custom_exc((AMError,), am_exc_handler)
