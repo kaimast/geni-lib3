@@ -378,6 +378,10 @@ def getLastDNSDHCPops(self, context, sname, client_ids, count, type):
   return retobj
 replaceSymbol(VTS, "getLastDNSDHCPops", getLastDNSDHCPops)
 
+class NoContextError(Exception):
+  def __str__ (self):
+    return "No context found, extension cannot be loaded."
+
 #####
 ### Extension loader
 #####
@@ -385,8 +389,7 @@ def load_ipython_extension (ipy):
   import geni.util
 
   if not geni.util.hasDataContext():
-    print "No context found, extension cannot be loaded."
-    return
+    raise NoContextError()
 
   import geni._coreutil
   imports = geni._coreutil.shellImports()
