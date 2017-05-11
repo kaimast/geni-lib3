@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -264,7 +264,7 @@ class Link(Resource):
     self.type = ltype
     self.shared_vlan = None
     self._mac_learning = True
-    self._vlan_tagging = False
+    self._vlan_tagging = None
     self._trivial_ok = None
     self._link_multiplexing = False
     self._best_effort = False
@@ -385,9 +385,15 @@ class Link(Resource):
       lrnelem.attrib["key"] = "nomac_learning"
       lrnelem.attrib["value"] = "yep"
 
-    if self._vlan_tagging:
+    # Do not want to spit out a vlan tagging statement unless explicitly
+    # set, since the default is no tagging and always spitting that out
+    # will be bad for regression testing.
+    if self._vlan_tagging != None:
       tagging = ET.SubElement(lnk, "{%s}vlan_tagging" % (Namespaces.EMULAB.name))
-      tagging.attrib["enabled"] = "true"
+      if self._vlan_tagging:
+        tagging.attrib["enabled"] = "true"
+      else:
+        tagging.attrib["enabled"] = "false"
 
     if self._best_effort:
       tagging = ET.SubElement(lnk, "{%s}best_effort" % (Namespaces.EMULAB.name))
