@@ -69,7 +69,7 @@ def main ():
   print "User URN: %s" % (user_urn)
   print "Username: %s" % (username)
 
-  geni.util._buildContext(framework, opts.cert_path, key_path, username, user_urn, opts.pubkey_path, project)
+  geni.util._buildContext(framework, opts.cert_path, key_path, username, user_urn, opts.pubkey_path, opts.project)
 
 
 if __name__ == '__main__':
