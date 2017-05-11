@@ -284,6 +284,7 @@ class Link(Resource):
     self._best_effort = False
     self._ext_children = []
     self._raw_elements = []
+    self._component_managers = []
     self.protocol = None
 
     # If you try to set bandwidth higher than a gigabit, PG probably won't like you
@@ -325,6 +326,9 @@ class Link(Resource):
     interface = node.addInterface()
     self.interfaces.append(interface)
     return interface
+
+  def addComponentManager (self, component_manager):
+    self._component_managers.append(component_manager)
 
   def connectSharedVlan (self, name):
     self.namespaces.append(GNS.SVLAN)
@@ -432,6 +436,10 @@ class Link(Resource):
     for elem in self._raw_elements:
       lnk.append(elem)
 
+    for manager in self._component_managers:
+      cm = ET.SubElement(lnk, "{%s}component_manager" % (GNS.REQUEST.name))
+      cm.attrib["name"] = manager
+
     return lnk
 
   def _write_link_prop(self, lnk, src, dst, bw, lat, plr):
@@ -472,9 +480,13 @@ class L3GRE(Link):
   def __init__ (self, name = None):
     super(L3GRE, self).__init__(name, "gre-tunnel")
 
+Request.EXTENSIONS.append(("L3GRE", L3GRE))
+
 class L2GRE(Link):
   def __init__ (self, name = None):
     super(L2GRE, self).__init__(name, "egre-tunnel")
+
+Request.EXTENSIONS.append(("L2GRE", L2GRE))
 
 class StitchedLink(Link):
   class UnknownComponentManagerError(Exception):
@@ -504,6 +516,7 @@ class StitchedLink(Link):
       cm.attrib["name"] = intf.node.component_manager_id
     return lnk
 
+Request.EXTENSIONS.append(("StitchedLink", StitchedLink))
 
 class Node(Resource):
   EXTENSIONS = []
@@ -605,7 +618,11 @@ class Node(Resource):
   def addInterface (self, name = None, address = None):
     existingNames = [x.name for x in self.interfaces]
     if name is not None:
-      intfName = "%s:%s" % (self.client_id, name)
+      if name.find(":") > 0:
+        intfName = name
+      else:
+        intfName = "%s:%s" % (self.client_id, name)
+        pass
     else:
       for i in range(0, 100):
         intfName = "%s:if%i" % (self.client_id, i)
