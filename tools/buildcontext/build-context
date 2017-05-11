@@ -31,7 +31,7 @@ def parseCert (certpath):
   cert = x509.load_pem_x509_certificate(open(certpath, "rb").read(), default_backend())
 
   san = cert.extensions.get_extension_for_oid(x509.OID_SUBJECT_ALTERNATIVE_NAME)
-  uris = san.value.get_values_for_type(x509.UniformResourcesIdentifier)
+  uris = san.value.get_values_for_type(x509.UniformResourceIdentifier)
   for uri in uris:
     if uri.startswith("urn:publicid"):
       return uri
