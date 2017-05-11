@@ -411,3 +411,19 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   cdata["user-pubkeypath"] = pkpath
   cdata["project"] = project
   json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
+
+
+def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project):
+  # Create the .bssw directories if they don't exist
+  DEF_DIR = GCU.getDefaultDir()
+
+  cdata = {}
+  cdata["framework"] = framework
+  cdata["cert-path"] = cert_path
+  cdata["key-path"] = key_path
+  cdata["user-name"] = username
+  cdata["user-urn"] = user_urn
+  cdata["user-pubkeypath"] = pubkey_path 
+  cdata["project"] = project
+  json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
+
