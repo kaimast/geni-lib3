@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@ import json
 import multiprocessing as MP
 import os
 import os.path
+import shutil
 import tempfile
 import time
 import traceback as tb
@@ -417,10 +418,19 @@ def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_pa
   # Create the .bssw directories if they don't exist
   DEF_DIR = GCU.getDefaultDir()
 
+  new_cert_path = "%s/%s" % (DEF_DIR, os.path.basename(cert_path))
+  shutil.copyfile(cert_path, new_cert_path)
+
+  if key_path != cert_path:
+    new_key_path = "%s/%s" % (DEF_DIR, os.path.basename(key_path))
+    shutil.copyfile(key_path, new_key_path)
+  else:
+    new_key_path = new_cert_path
+
   cdata = {}
   cdata["framework"] = framework
-  cdata["cert-path"] = cert_path
-  cdata["key-path"] = key_path
+  cdata["cert-path"] = new_cert_path
+  cdata["key-path"] = new_key_path
   cdata["user-name"] = username
   cdata["user-urn"] = user_urn
   cdata["user-pubkeypath"] = pubkey_path 
