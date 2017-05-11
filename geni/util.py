@@ -415,6 +415,8 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
 
 
 def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project):
+  import geni._coreutil as GCU
+
   # Create the .bssw directories if they don't exist
   DEF_DIR = GCU.getDefaultDir()
 
