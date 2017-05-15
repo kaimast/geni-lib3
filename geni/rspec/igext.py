@@ -15,6 +15,7 @@ from lxml import etree as ET
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
 from .pg import Node
+from .pg import Link
 from .pg import Resource
 from . import pg
 from .. import urn
@@ -302,6 +303,38 @@ class Tour(object):
   SPLIT_REGEX = re.compile(r"\n+^\w*instructions\w*:?\w*$\n+",
                            re.IGNORECASE | re.MULTILINE)
 
+  class Step(object):
+    # Duplicated because of the awkwardness of accessing class variables in
+    # outer class
+    TEXT = "text"
+    MARKDOWN = "markdown"
+    def __init__(self, target, description,
+        steptype = None, description_type = MARKDOWN):
+      if hasattr(target,'client_id'):
+        self.id = target.client_id
+      else:
+        self.id = str(target)
+
+      if steptype:
+        self.type = steptype
+      elif isinstance(target, Node):
+        self.type = "node"
+      elif isinstance(target, Link):
+        self.type = "link"
+      else:
+        self.type = "node"
+
+      self.description = description
+      self.description_type = description_type
+
+    def _write (self, root):
+      stepel = ET.SubElement(root, "step")
+      stepel.attrib["point_type"] = self.type
+      stepel.attrib["point_id"]   = self.id
+      desc = ET.SubElement(stepel, "description")
+      desc.text = self.description
+      desc.attrib["type"] = self.description_type
+
   def __init__ (self):
     self.description = None
     # Type can markdown
@@ -309,6 +342,10 @@ class Tour(object):
     self.instructions = None
     # Type can markdown
     self.instructions_type = Tour.TEXT
+    self.steps = []
+
+  def addStep(self, step):
+    self.steps.append(step)
 
   def Description(self, type, desc):
     self.description_type = type
@@ -345,6 +382,10 @@ class Tour(object):
       inst = ET.SubElement(td, "instructions")
       inst.text = self.instructions
       inst.attrib["type"] = self.instructions_type
+    if len(self.steps):
+      steps = ET.SubElement(td, "steps")
+      for step in self.steps:
+        step._write(steps)
     return td
 
 
