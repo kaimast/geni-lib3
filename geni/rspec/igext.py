@@ -301,7 +301,11 @@ class Tour(object):
                            re.IGNORECASE | re.MULTILINE)
 
   class Step(object):
-    def __init__(self, target,  description, description_type = Tour.MARKDOWN):
+    # Duplicated because of the awkwardness of accessing class variables in
+    # outer class
+    TEXT = "text"
+    MARKDOWN = "markdown"
+    def __init__(self, target,  description, description_type = MARKDOWN):
       if hasattr(target,'client_id'):
         self.id = target.client_id
       else:
@@ -316,7 +320,7 @@ class Tour(object):
     self.instructions = None
     # Type can markdown
     self.instructions_type = Tour.TEXT
-    self._steps = []
+    self.steps = []
 
   def Description(self, type, desc):
     self.description_type = type
@@ -357,12 +361,11 @@ class Tour(object):
       steps = ET.SubElement(td, "steps")
       for step in self.steps:
         stepel = ET.SubElement(steps, "step")
-        stepel.attrib["point_type"] = step.type
+        stepel.attrib["point_type"] = step.description_type
         stepel.attrib["point_id"]   = step.id
         desc = ET.SubElement(stepel, "description")
         desc.text = step.description
         desc.attrib["type"] = "text"
-        pass
     return td
 
 
