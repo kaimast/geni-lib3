@@ -313,6 +313,14 @@ class Tour(object):
       self.description = description
       self.description_type = description_type
 
+    def _write (self, root):
+      stepel = ET.SubElement(root, "step")
+      stepel.attrib["point_type"] = self.description_type
+      stepel.attrib["point_id"]   = self.id
+      desc = ET.SubElement(stepel, "description")
+      desc.text = self.description
+      desc.attrib["type"] = "text"
+
   def __init__ (self):
     self.description = None
     # Type can markdown
@@ -360,12 +368,7 @@ class Tour(object):
     if len(self.steps):
       steps = ET.SubElement(td, "steps")
       for step in self.steps:
-        stepel = ET.SubElement(steps, "step")
-        stepel.attrib["point_type"] = step.description_type
-        stepel.attrib["point_id"]   = step.id
-        desc = ET.SubElement(stepel, "description")
-        desc.text = step.description
-        desc.attrib["type"] = "text"
+        step._write(steps)
     return td
 
 
