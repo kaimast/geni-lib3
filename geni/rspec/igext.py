@@ -15,6 +15,7 @@ from lxml import etree as ET
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
 from .pg import Node
+from .pg import Link
 from .pg import Resource
 from . import pg
 from .. import urn
@@ -305,13 +306,22 @@ class Tour(object):
     # outer class
     TEXT = "text"
     MARKDOWN = "markdown"
-    def __init__(self, target,
-                 description, steptype, description_type = MARKDOWN):
+    def __init__(self, target, description,
+        steptype = None, description_type = MARKDOWN):
       if hasattr(target,'client_id'):
         self.id = target.client_id
       else:
         self.id = str(target)
-      self.type = steptype
+
+      if steptype:
+        self.type = steptype
+      elif isinstance(target, Node):
+        self.type = "node"
+      elif isinstance(target, Link):
+        self.type = "link"
+      else:
+        self.type = "node"
+
       self.description = description
       self.description_type = description_type
 

@@ -15,7 +15,7 @@ node1 = rspec.XenVM("src")
 node2 = rspec.XenVM("dst")
 link1 = rspec.Link("thelink", members = [node1, node2])
 
-tour.steps.append(ig.Tour.Step(node1,"This is the first node"))
+tour.addStep(ig.Tour.Step(node1,"This is the first node"))
 tour.steps.append(ig.Tour.Step(node2,"This is the second node"))
 tour.steps.append(ig.Tour.Step(link1,"This is the link"))
 
