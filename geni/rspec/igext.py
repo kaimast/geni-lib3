@@ -305,21 +305,23 @@ class Tour(object):
     # outer class
     TEXT = "text"
     MARKDOWN = "markdown"
-    def __init__(self, target,  description, description_type = MARKDOWN):
+    def __init__(self, target,
+                 description, steptype, description_type = MARKDOWN):
       if hasattr(target,'client_id'):
         self.id = target.client_id
       else:
-        self.id  = str(target)
+        self.id = str(target)
+      self.type = steptype
       self.description = description
       self.description_type = description_type
 
     def _write (self, root):
       stepel = ET.SubElement(root, "step")
-      stepel.attrib["point_type"] = self.description_type
+      stepel.attrib["point_type"] = self.type
       stepel.attrib["point_id"]   = self.id
       desc = ET.SubElement(stepel, "description")
       desc.text = self.description
-      desc.attrib["type"] = "text"
+      desc.attrib["type"] = self.description_type
 
   def __init__ (self):
     self.description = None
@@ -329,6 +331,9 @@ class Tour(object):
     # Type can markdown
     self.instructions_type = Tour.TEXT
     self.steps = []
+
+  def addStep(self, step):
+    self.steps.append(step)
 
   def Description(self, type, desc):
     self.description_type = type
