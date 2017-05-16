@@ -1,4 +1,4 @@
-# Copyright (c) 2016 The University of Utah
+# Copyright (c) 2016-2017 The University of Utah
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,6 +149,25 @@ class setUseTypeDefaultImage(object):
         return root
 
 Node.EXTENSIONS.append(("setUseTypeDefaultImage", setUseTypeDefaultImage))
+
+class setFailureAction(object):
+    """Added to a node this extension will tell Emulab based aggregates to
+    ignore errors booting this node when starting an experiment. This allows
+    the experiment to proceed so that the user has time to debug."""
+    __ONCEONLY__ = True
+    
+    def __init__(self, action):
+        self.action = action
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root, "{%s}failure_action" % (Namespaces.EMULAB.name))
+        el.attrib["action"] = self.action
+        return root
+
+Node.EXTENSIONS.append(("setFailureAction", setFailureAction))
 
 #
 # Emulab Program Agents.
