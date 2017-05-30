@@ -77,6 +77,18 @@ class VTS(AM):
     self.Host = HostPOAs(self)
     self.IPv4Router = v4RouterPOAs(self)
 
+  def allocate (self, context, sname, rspec):
+    manifest = self._apiv3.allocate(context, self.am.urlv3, sname, rspec)
+    return self.amtype.parseManifest(manifest)
+
+  def provision (self, context, sname):
+    udata = []
+    for user in context._users:
+      data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
+      udata.append(data)
+
+    return self._apiv3.provision(context, self.am.urlv3, sname, options = {"geni_users" : udata})
+
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
     if ofver:

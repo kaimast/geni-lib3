@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,12 +11,14 @@ from .exceptions import AMError
 from . import pgutil as ProtoGENI
 
 # pylint: disable=multiple-statements
-class GetVersionError(AMError): pass
-class DeleteSliverError(AMError): pass
+class AllocateError(AMError): pass
 class CreateSliverError(AMError): pass
-class SliverStatusError(AMError): pass
-class RenewSliverError(AMError): pass
+class DeleteSliverError(AMError): pass
+class GetVersionError(AMError): pass
 class ListResourcesError(AMError): pass
+class ProvisionError(AMError): pass
+class RenewSliverError(AMError): pass
+class SliverStatusError(AMError): pass
 class POAError(AMError): pass
 # pylint: enable=multiple-statements
 
@@ -50,6 +52,40 @@ class AMAPIv3(object):
 
     raise POAError(res["output"], res)
 
+  @staticmethod
+  def allocate (context, url, sname, rspec, options = None):
+    if not options: options = {}
+    from ..minigcf import amapi3 as AM3
+
+    sinfo = context.getSliceInfo(sname)
+
+    res = AM3.allocate(url, False, context.cf.cert, context.cf.key, [sinfo], sinfo.urn, rspec, options)
+    if res["code"]["geni_code"] == 0:
+      return res
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
+    raise AllocateError(res["output"], res)
+
+  @staticmethod
+  def provision (context, url, sname, urns, options = None):
+    from ..minigcf import amapi3 as AM3
+
+    if not options: options = {}
+    if urns is not None:
+      if not isinstance(urns, list): urns = [urns]
+
+    sinfo = context.getSliceInfo(sname)
+    if not urns:
+      urns = [sinfo.urn]
+
+    res = AM3.provision(url, False, context.cf.cert, context.cf.key, [sinfo], urns, options)
+    if res["code"]["geni_code"] == 0:
+      return res
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
+    raise ProvisionError(res["output"], res)
 
 class AMAPIv2(object):
   @staticmethod
