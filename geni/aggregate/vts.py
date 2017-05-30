@@ -88,7 +88,9 @@ class VTS(AM):
       data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
       udata.append(data)
 
-    return self._apiv3.provision(context, self.urlv3, sname, options = {"geni_users" : udata})
+    res = self._apiv3.provision(context, self.urlv3, sname, options = {"geni_users" : udata})
+    if res["code"]["geni_code"] == 0:
+      return self.amtype.parseManifest(res["value"])
 
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
