@@ -78,7 +78,8 @@ class VTS(AM):
     self.IPv4Router = v4RouterPOAs(self)
 
   def allocate (self, context, sname, rspec):
-    manifest = self._apiv3.allocate(context, self.urlv3, sname, rspec)
+    rspec_data = rspec.toXMLString()
+    manifest = self._apiv3.allocate(context, self.urlv3, sname, rspec_data)
     return self.amtype.parseManifest(manifest)
 
   def provision (self, context, sname):
