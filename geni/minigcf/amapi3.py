@@ -46,6 +46,7 @@ def allocate (url, root_bundle, cert, key, creds, slice_urn, rspec, options = No
     cred_list.append({"geni_value" : open(cred.path, "rb").read(), "geni_type" : cred.type,
                       "geni_version" : cred.version})
 
+  print (slice_urn, cred_list, rspec, options)
   req_data = xmlrpclib.dumps((slice_urn, cred_list, rspec, options),
                              methodname="Allocate")
   return _rpcpost(url, req_data, (cert, key), root_bundle)
