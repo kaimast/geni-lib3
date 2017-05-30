@@ -68,7 +68,7 @@ class AMAPIv3(object):
     raise AllocateError(res["output"], res)
 
   @staticmethod
-  def provision (context, url, sname, urns, options = None):
+  def provision (context, url, sname, urns = None, options = None):
     from ..minigcf import amapi3 as AM3
 
     if not options: options = {}
