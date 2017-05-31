@@ -16,11 +16,14 @@ GCU.disableUrllibWarnings()
 def headers ():
   return GCU.defaultHeaders()
 
+# pylint: disable=unsubscriptable-object
 def _rpcpost (url, req_data, cert, root_bundle):
   if isinstance(config.HTTP.LOG_URLS, tuple):
     config.HTTP.LOG_URLS[0].log(config.HTTP.LOG_URLS[1], "POST: %s" % (url))
   s = requests.Session()
   s.mount(url, GCU.TLSHttpAdapter())
+  if isinstance(HTTP.LOG_RAW_REQUESTS, tuple):
+    HTTP.LOG_RAW_REQUESTS[0].log(HTTP.LOG_RAW_REQUESTS[1], req_data)
   resp = s.post(url, req_data, cert=cert, verify=root_bundle, headers = headers(),
                 timeout = config.HTTP.TIMEOUT, allow_redirects = config.HTTP.ALLOW_REDIRECTS)
   if resp.status_code != 200:
