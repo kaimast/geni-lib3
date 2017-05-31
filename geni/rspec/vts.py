@@ -470,6 +470,11 @@ class Datapath(Resource):
     self.ports.append(port)
     return port
 
+  def connectCrossSliver (self, other_dp):
+    port = InternalCircuit(None, None, None, None)
+    self.attachPort(port)
+    port.target = other_dp.client_id
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}datapath" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
