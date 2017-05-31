@@ -474,6 +474,7 @@ class Datapath(Resource):
     port = InternalCircuit(None, None, None, None)
     self.attachPort(port)
     port.target = other_dp.client_id
+    return port
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}datapath" % (Namespaces.VTS.name))
