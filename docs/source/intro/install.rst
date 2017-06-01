@@ -6,3 +6,4 @@ Installation
    ubuntu16
    macosx
    vagrant
+   centos7
