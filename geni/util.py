@@ -245,9 +245,12 @@ def builddot (manifests):
       for dp in manifest.datapaths:
         dda("\"%s\" [shape=rectangle]" % (dp.client_id))
 
+      dda("subgraph cluster_vf {")
+      dda("label = \"SSL VPNs\"")
       for vf in manifest.functions:
         if isinstance(vf, VTSM.SSLVPNFunction):
           dda("\"%s\" [label=\"%s\",shape=hexagon]" % (vf.client_id, vf.note))
+      dda("}")
 
 
   dda("}")
