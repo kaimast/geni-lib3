@@ -234,8 +234,8 @@ def builddot (manifests):
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
         elif isinstance(port, VTSM.VFPort):
-          dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_client_id)
-          dda("\"%s\" -> \"%s\"" % (port.remote_client_id, port.dpname)
+          dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_client_id))
+          dda("\"%s\" -> \"%s\"" % (port.remote_client_id, port.dpname))
 
         elif isinstance(port, VTSM.GenericPort):
           pass
