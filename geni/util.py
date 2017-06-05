@@ -205,6 +205,17 @@ def builddot (manifests):
 
 
     elif isinstance(manifest, VTSM.Manifest):
+      for dp in manifest.datapaths:
+        dda("\"%s\" [shape=rectangle];" % (dp.client_id))
+
+      dda("subgraph cluster_vf {")
+      dda("label = \"SSL VPNs\";")
+      dda("rank = same;")
+      for vf in manifest.functions:
+        if isinstance(vf, VTSM.SSLVPNFunction):
+          dda("\"%s\" [label=\"%s\",shape=hexagon];" % (vf.client_id, vf.note))
+      dda("}")
+
       # TODO: We need to actually go through datapaths and such, but we can approximate for now
       for port in manifest.ports:
         if isinstance(port, VTSM.GREPort):
@@ -241,17 +252,6 @@ def builddot (manifests):
           pass
         else:
           continue ### TODO: Unsupported Port Type
-
-      for dp in manifest.datapaths:
-        dda("\"%s\" [shape=rectangle]" % (dp.client_id))
-
-      dda("subgraph cluster_vf {")
-      dda("label = \"SSL VPNs\"")
-      dda("rank = same")
-      for vf in manifest.functions:
-        if isinstance(vf, VTSM.SSLVPNFunction):
-          dda("\"%s\" [label=\"%s\",shape=hexagon]" % (vf.client_id, vf.note))
-      dda("}")
 
 
   dda("}")
