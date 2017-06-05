@@ -161,6 +161,7 @@ class VFPort(GenericPort):
     p = cls()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
+    return p
 
 
 class ManifestMount(object):
