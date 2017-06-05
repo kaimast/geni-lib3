@@ -247,6 +247,7 @@ def builddot (manifests):
 
       dda("subgraph cluster_vf {")
       dda("label = \"SSL VPNs\"")
+      dda("rank = same")
       for vf in manifest.functions:
         if isinstance(vf, VTSM.SSLVPNFunction):
           dda("\"%s\" [label=\"%s\",shape=hexagon]" % (vf.client_id, vf.note))
