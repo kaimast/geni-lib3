@@ -233,6 +233,10 @@ def builddot (manifests):
           # No mirror, draw as normal
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
+        elif isinstance(port, VTSM.VFPort):
+          dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_client_id)
+          dda("\"%s\" -> \"%s\"" % (port.remote_client_id, port.dpname)
+
         elif isinstance(port, VTSM.GenericPort):
           pass
         else:
@@ -240,6 +244,10 @@ def builddot (manifests):
 
       for dp in manifest.datapaths:
         dda("\"%s\" [shape=rectangle]" % (dp.client_id))
+
+      for vf in manifest.functions:
+        if isinstance(vf, VTSM.SSLVPNFunction):
+          dda("\"%s\" [label=\"%s\",shape=hexagon]" % (vf.client_id, vf.note))
 
 
   dda("}")
