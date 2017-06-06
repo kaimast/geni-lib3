@@ -7,9 +7,8 @@
 CentOS 7
 ========
 
-geni-lib is currently delivered only as a source repository via mercurial.
-Most dependencies can be installed as proper packages using yum.
-One package, cryptography, must be installed using pip.
+geni-lib is currently delivered only as a source repository via mercurial, although
+dependencies are installed as proper packages using yum.
 
 =======================
 High-Level Dependencies
@@ -26,7 +25,7 @@ The above packages of course have their own dependencies which will be satisfied
 Install Dependencies
 ====================
 
-These instructions install most dependencies using yum - it is also possible to install the Python packages
+These instructions install dependencies using yum - it is also possible to install the Python packages
 using pip if you prefer.
 
 The dependencies rely on EPEL (https://fedoraproject.org/wiki/EPEL), so
