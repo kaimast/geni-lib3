@@ -41,9 +41,7 @@ Now install the dependencies:
 ::
 
   $ yum install mercurial python-lxml python-requests \
-    python-pip python-devel libffi-devel
-
-  $ pip install cryptography
+    python-pip python-devel libffi-devel gcc openssl-devel
 
 ============
 Get geni-lib

@@ -23,6 +23,13 @@ if os.name == "posix" and os.uname()[0] == "Linux":
   if dist_id == "trusty":
     requires.append("setuptools==33.1.1")  # The last setuptools that works with OS pip on trusty
     requires.append("cryptography==1.2.3")
+  elif name == "CentOS Linux":
+    # Determine major version
+    from distutils.version import StrictVersion
+    centos_version = StrictVersion(ver)
+    centos_major = centos_version.version[0]
+    if centos_major == 7:
+      requires.append("cryptography")
 
 setup(name = 'geni-lib',
       version = '0.9.4.7',
