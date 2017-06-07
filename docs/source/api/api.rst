@@ -2,11 +2,10 @@ API
 ===
 
 .. toctree::
+   geniaggregate/index
    geniminigcfconfig
    geniportal
-   genirspecigext
-   genirspecpg
-   genirspecpgad
+   genirspec/index
    genitypes
    geniurn
    geniutil

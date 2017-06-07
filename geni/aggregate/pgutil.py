@@ -18,16 +18,23 @@ class NoMappingError(ProtoGENIError): pass
 
 def raiseError(res):
   amcode = res["code"]["am_code"]
-  value = res["value"]
+  output = res["output"]
   if amcode == 24:
-    raise VLANUnavailableError(value, res)
+    e = VLANUnavailableError(output, res)
   elif amcode == 25:
-    raise InsufficientBandwidthError(value, res)
+    e = InsufficientBandwidthError(output, res)
   elif amcode == 26:
-    raise InsufficientNodesError(value, res)
+    e = InsufficientNodesError(output, res)
   elif amcode == 27:
-    raise InsufficientMemoryError(value, res)
+    e = InsufficientMemoryError(output, res)
   elif amcode == 28:
-    raise NoMappingError(value, res)
+    e = NoMappingError(output, res)
   else:
-    raise ProtoGENIError(value, res)
+    e = ProtoGENIError(output, res)
+
+  try:
+    e.error_url = res["code"]["protogeni_error_url"]
+  except KeyError:
+    pass
+
+  raise e

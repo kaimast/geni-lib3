@@ -14,7 +14,7 @@ class DPID(object):
   This class tries to handle all likely inputs and desired outputs, while
   providing a single internal type to work with in the code.
 
-  String representations passwd in must be represented in hex, but may contain
+  String representations passed in must be represented in hex, but may contain
   common separators (colon, dash, and period) in any configuration.
 
   Args:
@@ -90,7 +90,7 @@ class EthernetMAC (object):
   This class tries to handle all likely inputs and desired outputs, while
   providing a single internal type to work with in the code.
 
-  String representations passwd in must be represented in hex, but may contain
+  String representations passed in must be represented in hex, but may contain
   common separators (colon, dash, and period) in any configuration.
 
   Args:

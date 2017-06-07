@@ -3,9 +3,9 @@ Tutorials / How-Tos
 
 .. toctree::
    portalcontext
+   cloudlabcontext
    createcontext
    federationquery
-   gettingresources
    singlevm
    simplevts
    wanvts

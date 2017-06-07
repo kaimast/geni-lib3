@@ -7,7 +7,7 @@
 class AMError(Exception):
   def __init__ (self, text, data = None):
     super(AMError, self).__init__()
-    self.text = text
+    self.text = str(text)
     self.data = data
   def __str__ (self):
     return self.text

@@ -73,8 +73,8 @@ class AdInterface(pg.Interface):
   Attributes:
     component_id (str): Component ID URN
     role (str): The resource role of this interface (typically
-      "control" or "experimental").  None if unset.
-    name (str): Friendly name for this interface, None if unset.
+      "control" or "experimental").  `None` if unset.
+    name (str): Friendly name for this interface, `None` if unset.
   """
   def __init__ (self, name):
     super(AdInterface, self).__init__(name, None)
@@ -103,27 +103,26 @@ class AdNode(object):
     but you can load this object from a Node XML element by using the `_fromdom`
     classmethod.
 
-  Attributes:
-    component_id (str): Component ID URN
-    component_manager_id (str): Component Manager ID URN
-    name (str): Friendly name provided by aggregate for this resource.
-    exclusive (bool): True if a node can be reserved as a raw PC
-    available (bool): Whether this node is currently available for reservations
-    hardware_types (dict): Mapping of { type_name : type_slots, ... }
-    sliver_types (set): Supported sliver type
-    images (dict): Mapping of { sliver_type : [supported_image_name, ...], ... }
-    shared (bool): True if currently being used as a shared resource
-    interfaces (list): List of AdInterface objects for this Node
-    location (AdLocation): None if not available
-    ram (int): Currently available system RAM in megabytes.  None if not available.
-    cpu (int): Maximum Per-core CPU speed in Mhz.  None if not available.
-
+    Attributes:
+      component_id (str): Component ID URN
+      component_manager_id (str): Component Manager ID URN
+      name (str): Friendly name provided by aggregate for this resource.
+      exclusive (bool): True if a node can be reserved as a raw PC
+      available (bool): Whether this node is currently available for reservations
+      hardware_types (dict): Mapping of `{ type_name : type_slots, ... }`
+      sliver_types (set): Supported sliver type
+      images (dict): Mapping of `{ sliver_type : [supported_image_name, ...], ... }`
+      shared (bool): `True` if currently being used as a shared resource
+      interfaces (list): List of :py:class:`AdInterface` objects for this Node
+      location (:py:class:`AdLocation`): `None` if not available
+      ram (int): Currently available system RAM in megabytes.  `None` if not available.
+      cpu (int): Maximum Per-core CPU speed in Mhz.  `None` if not available.
   """
-
 
   def __init__ (self):
     self.component_id = None
     self.component_manager_id = None
+
     self.name = None
     self.exclusive = True
     self.available = False

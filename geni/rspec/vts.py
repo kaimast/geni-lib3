@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import functools
 import decimal
 
+import ipaddress
 from lxml import etree as ET
 
 import geni.rspec
@@ -29,7 +30,7 @@ class Request(geni.rspec.RSpec):
 
   def __init__ (self):
     super(Request, self).__init__("request")
-    self.resources = []
+    self._resources = []
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.VTS)
@@ -50,7 +51,7 @@ class Request(geni.rspec.RSpec):
   def addResource (self, rsrc):
     for ns in rsrc.namespaces:
       self.addNamespace(ns)
-    self.resources.append(rsrc)
+    self._resources.append(rsrc)
 
   def writeXML (self, path):
     f = open(path, "w+")
@@ -60,7 +61,7 @@ class Request(geni.rspec.RSpec):
   def toXMLString (self, pretty_print = False):
     rspec = self.getDOM()
 
-    for resource in self.resources:
+    for resource in self._resources:
       resource._write(rspec)
 
     for obj in self._ext_children:
@@ -69,6 +70,9 @@ class Request(geni.rspec.RSpec):
     buf = ET.tostring(rspec, pretty_print = pretty_print)
     return buf
 
+  @property
+  def resources(self):
+      return self._resources + self._ext_children
 
 ###################
 # Utility Objects #
@@ -128,12 +132,20 @@ class Image(object):
   def __init__ (self, name):
     self.name = name
     self._features = []
+    self._image_attrs = []
+
+  def setImageAttribute (self, name, val):
+    self._image_attrs.append((name, val))
 
   def _write (self, element):
     i = ET.SubElement(element, "{%s}image" % (Namespaces.VTS.name))
     i.attrib["name"] = self.name
     for feature in self._features:
       feature._write(i)
+    for (name,val) in self._image_attrs:
+      ae = ET.SubElement(i, "{%s}image-attribute" % (Namespaces.VTS))
+      ae.attrib["name"] = name
+      ae.attrib["value"] = str(val)
     return i
 
 class SimpleDHCPImage(Image):
@@ -177,6 +189,9 @@ class OVSImage(DatapathImage):
       self._features.append(val)
     # TODO: Throw exception
 
+  def setMirror (self, port):
+    self._features.append(MirrorPort(port))
+
 
 class OVSOpenFlowImage(OVSImage):
   def __init__ (self, controller, ofver = "1.0", dpid = None):
@@ -199,9 +214,177 @@ class OVSOpenFlowImage(OVSImage):
 
     return i
 
+class UnknownSTPModeError(Exception):
+  def __init__ (self, val):
+    self._val = val
+  def __str__ (self):
+    return "Unknown STP Mode (%d)" % (self._val)
+
+class IllegalModeForParamError(Exception):
+  def __init__ (self, param):
+    self.param = param
+  def __str__ (self):
+    return "The parameter '%s' is not configurable in the current STP mode" % (self.param)
+
+class OVSL2STP(object):
+  STP = 1
+  RSTP = 2
+
+  def __init__ (self):
+    self._mode = OVSL2STP.STP
+    self._rstp_params = {}
+    self._stp_params = {}
+
+  @property
+  def mode (self):
+    return self._mode
+
+  @mode.setter
+  def mode (self, val):
+    if val != OVSL2STP.STP and val != OVSL2STP.RSTP:
+      raise UnknownSTPModeError(val)
+    self._mode = val
+
+  @property
+  def type (self):
+    if self._mode == OVSL2STP.STP:
+      return "stp"
+    elif self._mode == OVSL2STP.RSTP:
+      return "rstp"
+
+  @property
+  def priority (self):
+    try:
+      return self._stp_params["priority"]
+    except KeyError:
+      return None
+
+  @priority.setter
+  def priority (self, val):
+    self._stp_params["priority"] = val
+    self._rstp_params["priority"] = val
+
+  @property
+  def max_age (self):
+    try:
+      return self._stp_params["max-age"]
+    except KeyError:
+      return None
+    
+  @max_age.setter
+  def max_age (self, val):
+    self._stp_params["max-age"] = val
+    self._rstp_params["max-age"] = val
+
+  @property
+  def hello_time (self):
+    if self._mode != OVSL2STP.STP:
+      raise IllegalModeForParamError("hello-time")
+    try:
+      return self._stp_params["hello-time"]
+    except KeyError:
+      return None
+
+  @hello_time.setter
+  def hello_time (self, val):
+    if self._mode != OVSL2STP.STP:
+      raise IllegalModeForParamError("hello-time")
+    self._stp_params["hello-time"] = val
+
+  @property
+  def forward_delay (self):
+    try:
+      return self._stp_params["forward-delay"]
+    except KeyError:
+      return None
+    
+  @forward_delay.setter
+  def forward_delay (self, val):
+    self._stp_params["forward-delay"] = val
+    self._rstp_params["forward-delay"] = val
+
+  @property
+  def address (self):
+    try:
+      return self._stp_params["system-id"]
+    except KeyError:
+      return None
+
+  @address.setter
+  def address (self, val):
+    self._stp_params["system-id"] = val
+    self._rstp_params["address"] = val
+
+  @property
+  def ageing_time (self):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("ageing-time")
+    try:
+      return self._rstp_params["ageing-time"]
+    except KeyError:
+      return None
+
+  @ageing_time.setter
+  def ageing_time (self, val):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("ageing-time")
+    self._rstp_params["ageing-time"] = val
+    
+  @property
+  def xmit_hold_count (self):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("xmit-hold-count")
+    try:
+      return self._rstp_params["xmit-hold-count"]
+    except KeyError:
+      return None
+
+  @xmit_hold_count.setter
+  def xmit_hold_count (self, val):
+    if self._mode != OVSL2STP.RSTP:
+      raise IllegalModeForParamError("xmit-hold-count")
+    self._rstp_params["xmit-hold-count"] = val
+
+  def _write (self, element):
+    se = ET.SubElement(element, "{%s}stp" % (Namespaces.VTS))
+
+    if self._mode == OVSL2STP.STP:
+      se.attrib["type"] = "stp"
+      for k,v in self._stp_params.items():
+        pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
+        pe.attrib["value"] = str(v)
+    elif self._mode == OVSL2STP.RSTP:
+      se.attrib["type"] = "rstp"
+      for k,v in self._rstp_params.items():
+        pe = ET.SubElement(se, "{%s}%s" % (Namespaces.VTS, k))
+        pe.attrib["value"] = str(v)
+    elif self._mode == -1:
+      se.attrib["type"] = "disabled"
+
+    return element
+
+  def _as_jsonable (self):
+    obj = {"type" : self.type}
+    if self._mode == OVSL2STP.STP:
+      for k,v in self._stp_params.items():
+        obj[k] = v
+    elif self._mode == OVSL2STP.RSTP:
+      for k,v in self._rstp_params.items():
+        obj[k] = v
+    return obj
+
+OVSL2STP.system_id = OVSL2STP.address
+
 class OVSL2Image(OVSImage):
   def __init__ (self):
     super(OVSL2Image, self).__init__("bss:ovs-201")
+    self.stp = OVSL2STP()
+
+  def _write (self, element):
+    i = super(OVSL2Image, self)._write(element)
+    self.stp._write(i)
+
+
 
 ##################
 # Image Features #
@@ -234,6 +417,15 @@ class NetFlow(object):
     s = ET.SubElement(element, "{%s}netflow" % (Namespaces.VTS))
     s.attrib["collector"] = "%s:%d" % (self.collector_ip, self.collector_port)
     s.attrib["timeout"] = str(self.timeout)
+    return s
+
+class MirrorPort(object):
+  def __init__ (self, port):
+    self.target = port.client_id
+
+  def _write (self, element):
+    s = ET.SubElement(element, "{%s}mirror" % (Namespaces.VTS))
+    s.attrib["target"] = self.target
     return s
 
 ##################
@@ -270,11 +462,11 @@ class Datapath(Resource):
     self.client_id = val
 
   def attachPort (self, port):
-    if port.clientid is None:
+    if port.client_id is None:
       if port.name is None:
-        port.clientid = "%s:%d" % (self.name, len(self.ports))
+        port.client_id = "%s:%d" % (self.name, len(self.ports))
       else:
-        port.clientid = "%s:%s" % (self.name, port.name)
+        port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
 
@@ -290,26 +482,42 @@ Request.EXTENSIONS.append(("Datapath", Datapath))
 
 
 class Container(Resource):
+  EXTENSIONS = []
+
   def __init__ (self, image, name):
     super(Container, self).__init__()
     self.image = image
     self.ports =[]
     self.name = name
+    self.ram = None
+    self.routes = []
+
+    for name,ext in Container.EXTENSIONS:
+      self._wrapext(name, ext)
 
   def attachPort (self, port):
     if port.name is None:
-      port.clientid = "%s:%d" % (self.name, len(self.ports))
+      port.client_id = "%s:%d" % (self.name, len(self.ports))
     else:
-      port.clientid = "%s:%s" % (self.name, port.name)
+      port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
     return port
+
+  def addIPRoute (self, network, gateway):
+    self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
+    if self.ram: d.attrib["ram"] = str(self.ram)
     self.image._write(d)
     for port in self.ports:
       port._write(d)
+    for net,gw in self.routes:
+      re = ET.SubElement(d, "{%s}route" % (Namespaces.VTS))
+      re.attrib["network"] = str(net)
+      re.attrib["gateway"] = str(gw)
+    super(Container, self)._write(d)
     return d
 
 Request.EXTENSIONS.append(("Container", Container))
@@ -317,12 +525,12 @@ Request.EXTENSIONS.append(("Container", Container))
 
 class Port(object):
   def __init__ (self, name = None):
-    self.clientid = None
+    self.client_id = None
     self.name = name
 
   def _write (self, element):
     p = ET.SubElement(element, "{%s}port" % (Namespaces.VTS.name))
-    p.attrib["client_id"] = self.clientid
+    p.attrib["client_id"] = self.client_id
     return p
 
 
@@ -373,6 +581,22 @@ class InternalCircuit(Port):
     return p
 
 
+class ContainerPort(InternalCircuit):
+  def __init__ (self, target, vlan = None, delay_info = None, loss_info = None):
+    super(ContainerPort, self).__init__(target, vlan, delay_info, loss_info)
+    self._v4addresses = []
+
+  def _write (self, element):
+    p = super(ContainerPort, self)._write(element)
+    for addr in self._v4addresses:
+      ae = ET.SubElement(p, "{%s}ipv4-address" % (Namespaces.VTS))
+      ae.attrib["value"] = str(addr)
+    return p
+
+  def addIPv4Address (self, value):
+    self._v4addresses.append(ipaddress.IPv4Interface(unicode(value)))
+
+
 class GRECircuit(Port):
   def __init__ (self, circuit_plane, endpoint):
     super(GRECircuit, self).__init__()
@@ -386,6 +610,44 @@ class GRECircuit(Port):
     p.attrib["endpoint"] = self.endpoint
     return p
 
+
+######################
+# Element Extensions #
+######################
+
+class Mount(Resource):
+  def __init__ (self, type, name, mount_path):
+    self.type = type
+    self.name = name
+    self.mount_path = mount_path
+    self.attrs = {}
+
+  def _write (self, element):
+    melem = ET.SubElement(element, "{%s}mount" % (Namespaces.VTS))
+    melem.attrib["type"] = self.type
+    melem.attrib["name"] = self.name
+    melem.attrib["path"] = self.mount_path
+    for k,v in self.attrs.iteritems():
+      melem.attrib[k] = str(v)
+    return melem
+
+Container.EXTENSIONS.append(("Mount", Mount))
+
+
+class HgMount(Mount):
+  def __init__ (self, name, source, mount_path, branch = "default"):
+    super(HgMount, self).__init__("hg", name, mount_path)
+    self.attrs["source"] = source
+    self.attrs["branch"] = branch
+
+Container.EXTENSIONS.append(("HgMount", HgMount))
+
+
+class DropboxMount(Mount):
+  def __init__ (self, name, mount_path):
+    super(DropboxMount, self).__init__("dropbox", name, mount_path)
+
+Container.EXTENSIONS.append(("DropboxMount", DropboxMount))
 
 
 #############
@@ -404,11 +666,20 @@ def connectInternalCircuit (dp1, dp2, delay_info = None, loss_info = None):
     dp2v = dp2[1]
     dp2 = dp2[0]
 
-  sp = InternalCircuit(None, dp1v, delay_info, loss_info)
-  dp = InternalCircuit(None, dp2v, delay_info, loss_info)
+  if isinstance(dp1, Container):
+    sp = ContainerPort(None, dp1v, delay_info, loss_info)
+  elif isinstance(dp1, Datapath):
+    sp = InternalCircuit(None, dp1v, delay_info, loss_info)
+
+  if isinstance(dp2, Container):
+    dp = ContainerPort(None, dp2v, delay_info, loss_info)
+  elif isinstance(dp2, Datapath):
+    dp = InternalCircuit(None, dp2v, delay_info, loss_info)
 
   dp1.attachPort(sp)
   dp2.attachPort(dp)
 
-  sp.target = dp.clientid
-  dp.target = sp.clientid
+  sp.target = dp.client_id
+  dp.target = sp.client_id
+
+  return (sp, dp)

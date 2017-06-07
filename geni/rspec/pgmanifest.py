@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ from .pg import Namespaces as PGNS
 from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
-         'i' : PGNS.INFO.name }
+         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name}
 
 class ManifestLink(Link):
   def __init__ (self):
@@ -86,10 +86,30 @@ class ManifestNode(object):
     self.component_id = None
     self.sliver_id = None
     self._elem = None
+    self._hostfqdn = None
+    self._hostipv4 = None
 
   @property
   def name (self):
     return self.client_id
+
+  @property
+  def hostfqdn (self):
+    if not self._hostfqdn:
+      self._populateHostInfo()
+    return self._hostfqdn
+
+  @property
+  def hostipv4 (self):
+    if not self._hostipv4:
+      self._populateHostInfo()
+    return self._hostipv4
+
+  def _populateHostInfo (self):
+    host = self._elem.xpath('g:host', namespaces = _XPNS)
+    if host:
+      self._hostfqdn = host[0].get("name", None)
+      self._hostipv4 = host[0].get("ipv4", None)
 
   @classmethod
   def _fromdom (cls, elem):
@@ -123,6 +143,18 @@ class ManifestNode(object):
   @property
   def text (self):
     return ET.tostring(self._elem, pretty_print=True)
+
+
+class ManifestParameter(object):
+  def __init__ (self, name, value):
+    super(ManifestParameter, self).__init__()
+    self.name = name
+    self.value = value
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = ManifestParameter(elem.get('name'), elem.get('value'))
+    return n
 
 
 class Manifest(object):
@@ -164,6 +196,12 @@ class Manifest(object):
   @property
   def nodes (self):
     return XPathXRange(self.root.findall("{%s}node" % (GNS.REQUEST)), ManifestNode)
+
+  @property
+  def parameters (self):
+    for param in self.root.findall("{%s}data_set/{%s}data_item"
+                                   % (PGNS.PARAMS.name,PGNS.PARAMS.name)):
+      yield ManifestParameter._fromdom(param)
 
   @property
   def text (self):
