@@ -107,7 +107,25 @@ class setForceShaping(object):
         el.attrib["enabled"] = "true"
         return root
 
-Link.EXTENSIONS.append(("setForceShaping", setForceShaping))
+class setNoBandwidthShaping(object):
+    """Added to a Link or LAN object, this extension forces Emulab link
+    shaping to be disabled for bandwidth, even if it is necessary. This
+    is ignored if the link must be shaped for other reason (delay, loss).
+    """
+    __ONCEONLY__ = True
+    
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root,
+                           "{%s}force_nobwshaping" % (Namespaces.EMULAB.name))
+        el.attrib["enabled"] = "true"
+        return root
+
+Link.EXTENSIONS.append(("setNoBandwidthShaping", setNoBandwidthShaping))
 
 class setNoInterSwitchLinks(object):
     """Added to a Link or LAN object, this extension forces the Emulab mapper
