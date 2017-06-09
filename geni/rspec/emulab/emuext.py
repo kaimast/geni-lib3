@@ -107,6 +107,8 @@ class setForceShaping(object):
         el.attrib["enabled"] = "true"
         return root
 
+Link.EXTENSIONS.append(("setForceShaping", setForceShaping))
+
 class setNoBandwidthShaping(object):
     """Added to a Link or LAN object, this extension forces Emulab link
     shaping to be disabled for bandwidth, even if it is necessary. This
