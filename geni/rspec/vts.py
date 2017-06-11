@@ -512,6 +512,12 @@ class Container(Resource):
   def addIPRoute (self, network, gateway):
     self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
 
+  def connectCrossSliver (self, other_dp):
+    port = InternalCircuit(None, None, None, None)
+    self.attachPort(port)
+    port.target = other_dp.client_id
+    return port
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
