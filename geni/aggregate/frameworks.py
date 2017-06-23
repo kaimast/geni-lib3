@@ -140,6 +140,7 @@ class Framework(object):
     self._ma = None
     self._sa = None
     self._cert = None
+    self._key_path = None
     self._key = None
     self._project = None
     self._userurn = None
@@ -166,6 +167,7 @@ class Framework(object):
 
   @key.setter
   def key (self, path):
+    self._key_path = path
     self._key = path
 
   def setKey (self, path, passwd):

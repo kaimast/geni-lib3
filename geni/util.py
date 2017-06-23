@@ -167,6 +167,43 @@ def deleteSliverExists(am, context, slice):
   except DeleteSliverError:
     pass
 
+def _buildaddot(ad, drop_nodes = []):
+  """Constructs a dotfile of a topology described by an advertisement rspec.  Only works on very basic GENIv3 advertisements,
+  and probably has lots of broken edge cases."""
+  # pylint: disable=too-many-branches
+
+  dot_data = []
+  dda = dot_data.append # Save a lot of typing
+
+  dda("graph {")
+
+  for node in ad.nodes:
+    if node.name in drop_nodes:
+      continue
+
+    if node.available:
+      dda("\"%s\"" % (node.name))
+    else:
+      dda("\"%s\" [style=dashed]" % (node.name))
+
+  for link in ad.links:
+    if not len(link.interface_refs) == 2:
+      print("Link with more than 2 interfaces:")
+      print(link.text)
+    
+    name_1 = link.interface_refs[0].split(":")[-2].split("+")[-1]
+    name_2 = link.interface_refs[1].split(":")[-2].split("+")[-1]
+
+    if name_1 in drop_nodes or name_2 in drop_nodes:
+      continue
+
+    dda("\"%s\" -- \"%s\"" % (name_1, name_2))
+
+  dda("}")
+
+  return "\n".join(dot_data)
+
+
 def builddot (manifests):
   """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
   # pylint: disable=too-many-branches
@@ -294,6 +331,7 @@ def loadContext (path = None, key_passphrase = None):
     context.addUser(user)
     context.cf = cf
     context.project = obj["project"]
+    context.path = path
 
   elif version == 2:
     context = Context()
@@ -307,6 +345,7 @@ def loadContext (path = None, key_passphrase = None):
       cf.key = fobj["key-path"]
     context.cf = cf
     context.project = fobj["project"]
+    context.path = path
 
     ulist = obj["users"]
     for uobj in ulist:
