@@ -265,17 +265,12 @@ class VTS(AM):
 
 
 
-DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")
 GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
 Illinois = VTS("vts-illinois", "uiuc.vts.bsswks.net")
-MAX = VTS("vts-max", "max.vts.bsswks.net")
 NPS = VTS("vts-nps", "nps.vts.bsswks.net")
 UKYPKS2 = VTS("vts-ukypks2", "ukypks2.vts.bsswks.net")
-UtahDDC = DDC
 StarLight = VTS("vts-starlight", "starlight.vts.bsswks.net")
-UH = VTS("vts-uh", "uh.vts.bsswks.net")
-UWashington = VTS("vts-uwashington", "uwash.vts.bsswks.net")
 
 
 def aggregates ():
