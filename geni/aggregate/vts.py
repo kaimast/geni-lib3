@@ -65,7 +65,7 @@ class v4RouterPOAs(object):
 
 
 class VTS(AM):
-  """Wrapper for all VTS-supposed AMAPI functions"""
+  """Wrapper for all VTS-supported AMAPI functions"""
 
   def __init__ (self, name, host, url = None):
     self._host = host
