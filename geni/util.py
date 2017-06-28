@@ -245,6 +245,9 @@ def builddot (manifests):
       for dp in manifest.datapaths:
         dda("\"%s\" [shape=rectangle];" % (dp.client_id))
 
+      for ctr in manifest.containers:
+        dda("\"%s\" [shape=oval];" % (ctr.client_id))
+
       dda("subgraph cluster_vf {")
       dda("label = \"SSL VPNs\";")
       dda("rank = same;")
