@@ -379,10 +379,21 @@ class OVSL2Image(OVSImage):
   def __init__ (self):
     super(OVSL2Image, self).__init__("bss:ovs-201")
     self.stp = OVSL2STP()
+    self.mac_table_size = None
+    self.mac_age = None
 
   def _write (self, element):
     i = super(OVSL2Image, self)._write(element)
     self.stp._write(i)
+    mpe = ET.SubElement(element, "{%s}mac-table-params" % (Namespaces.VTS))
+    if self.mac_table_size:
+      mse = ET.SubElement(mpe, "{%s}max-size" % (Namespaces.VTS))
+      mse.attrib["value"] = str(self.mac_table_size)
+    if self.mac_age:
+      mae = ET.SubElement(mpe, "{%s}max-age" % (Namespaces.VTS))
+      mae.attrib["value"] = str(self.mac_age)
+      
+    return i
 
 
 
