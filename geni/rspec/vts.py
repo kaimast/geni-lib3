@@ -385,7 +385,7 @@ class OVSL2Image(OVSImage):
   def _write (self, element):
     i = super(OVSL2Image, self)._write(element)
     self.stp._write(i)
-    mpe = ET.SubElement(element, "{%s}mac-table-params" % (Namespaces.VTS))
+    mpe = ET.SubElement(i, "{%s}mac-table-params" % (Namespaces.VTS))
     if self.mac_table_size:
       mse = ET.SubElement(mpe, "{%s}max-size" % (Namespaces.VTS))
       mse.attrib["value"] = str(self.mac_table_size)
