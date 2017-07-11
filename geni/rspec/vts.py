@@ -87,7 +87,9 @@ def _am_encrypt (gv, plaintext):
 
   pubkey = serialization.load_pem_public_key(gv["request.pubkey"], backend=default_backend())
 
-  if gv["request.hash"] == "sha256":
+  if gv["request.hash"] == "sha1":
+    hfunc = hashes.SHA1
+  elif gv["request.hash"] == "sha256":
     hfunc = hashes.SHA256
   elif gv["request.hash"] == "sha384":
     hfunc = hashes.SHA384
