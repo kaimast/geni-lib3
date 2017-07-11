@@ -698,7 +698,7 @@ class SecureHgMount(Mount):
   def rebind (self, getversion_output):
     self.attrs["source"] = _am_encrypt(getversion_output, self._source)
 
-Container.EXTENSIONS.append("SecureHgMount", SecureHgMount)
+Container.EXTENSIONS.append(("SecureHgMount", SecureHgMount))
 
 
 class DropboxMount(Mount):
