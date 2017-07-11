@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import base64
 import functools
 import decimal
 
@@ -93,7 +94,7 @@ def _am_encrypt (gv, plaintext):
   elif gv["request.hash"] == "sha512":
     hfunc = hashes.SHA512
 
-  return pubkey.encrypt(plaintext, padding.OAEP(padding.MGF1(hfunc()), hfunc(), None))
+  return base64.b64encode(pubkey.encrypt(plaintext, padding.OAEP(padding.MGF1(hfunc()), hfunc(), None)))
 
 
 ###################
