@@ -38,3 +38,27 @@ def paa (url, root_bundle, cert, key, action, options = None):
                              methodname="PerformAggregateAction")
   return _rpcpost(url, req_data, (cert, key), root_bundle)
 
+def allocate (url, root_bundle, cert, key, creds, slice_urn, rspec, options = None):
+  if not options: options = {}
+
+  cred_list = []
+  for cred in creds:
+    cred_list.append({"geni_value" : open(cred.path, "rb").read(), "geni_type" : cred.type,
+                      "geni_version" : cred.version})
+
+  req_data = xmlrpclib.dumps((slice_urn, cred_list, rspec, options),
+                             methodname="Allocate")
+  return _rpcpost(url, req_data, (cert, key), root_bundle)
+
+def provision (url, root_bundle, cert, key, creds, urns, options = None):
+  if not options: options = {}
+  if not isinstance(urns, list): urns = [urns]
+
+  cred_list = []
+  for cred in creds:
+    cred_list.append({"geni_value" : open(cred.path, "rb").read(), "geni_type" : cred.type,
+                      "geni_version" : cred.version})
+
+  req_data = xmlrpclib.dumps((urns, cred_list, options), methodname="Provision")
+  return _rpcpost(url, req_data, (cert, key), root_bundle)
+

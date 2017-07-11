@@ -65,7 +65,7 @@ class v4RouterPOAs(object):
 
 
 class VTS(AM):
-  """Wrapper for all VTS-supposed AMAPI functions"""
+  """Wrapper for all VTS-supported AMAPI functions"""
 
   def __init__ (self, name, host, url = None):
     self._host = host
@@ -76,6 +76,21 @@ class VTS(AM):
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
     self.Host = HostPOAs(self)
     self.IPv4Router = v4RouterPOAs(self)
+
+  def allocate (self, context, sname, rspec):
+    rspec_data = rspec.toXMLString()
+    manifest = self._apiv3.allocate(context, self.urlv3, sname, rspec_data)
+    return self.amtype.parseManifest(manifest)
+
+  def provision (self, context, sname):
+    udata = []
+    for user in context._users:
+      data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
+      udata.append(data)
+
+    res = self._apiv3.provision(context, self.urlv3, sname, options = {"geni_users" : udata})
+    if res["code"]["geni_code"] == 0:
+      return self.amtype.parseManifest(res["value"])
 
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
@@ -250,17 +265,12 @@ class VTS(AM):
 
 
 
-DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")
 GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
 Illinois = VTS("vts-illinois", "uiuc.vts.bsswks.net")
-MAX = VTS("vts-max", "max.vts.bsswks.net")
 NPS = VTS("vts-nps", "nps.vts.bsswks.net")
 UKYPKS2 = VTS("vts-ukypks2", "ukypks2.vts.bsswks.net")
-UtahDDC = DDC
 StarLight = VTS("vts-starlight", "starlight.vts.bsswks.net")
-UH = VTS("vts-uh", "uh.vts.bsswks.net")
-UWashington = VTS("vts-uwashington", "uwash.vts.bsswks.net")
 
 
 def aggregates ():
