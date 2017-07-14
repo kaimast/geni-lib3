@@ -69,7 +69,7 @@ class Shell(object):
       if self.path:
         passwd = getpass.getpass("Private key passphrase: ")
         imports["context"] = geni.util.loadContext(path = self.path, key_passphrase=passwd)
-      if geni.util.hasDataContext():
+      elif geni.util.hasDataContext():
         passwd = getpass.getpass("Private key passphrase: ")
         imports["context"] = geni.util.loadContext(key_passphrase=passwd)
     except IOError:
