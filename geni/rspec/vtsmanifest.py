@@ -151,6 +151,19 @@ class PGLocalPort(GenericPort):
     return p
 
 
+class VFPort(GenericPort):
+  def __init__ (self):
+    super(VFPort, self).__init__("vf")
+    self.remote_client_id = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    p = cls()
+    p.client_id = elem.get("client_id")
+    p.remote_client_id = elem.get("remote-clientid")
+    return p
+
+
 class ManifestMount(object):
   def __init__ (self):
     self.type = None
@@ -250,6 +263,7 @@ class SSLVPNFunction(ManifestFunction):
     self.tp_port = None
     self.local_ip = None
     self.key = None
+    self.note = None
 
   @classmethod
   def _fromdom (cls,elem):
@@ -257,6 +271,7 @@ class SSLVPNFunction(ManifestFunction):
     vpn.tp_port = elem.get('tp-port')
     vpn.local_ip = elem.get('local-ip')
     vpn.key = elem.text
+    vpn.note = elem.get('note')
     return vpn
 
 class Manifest(object):
@@ -380,7 +395,7 @@ class Manifest(object):
     elif t == "pg-local":
       return PGLocalPort._fromdom(elem)
     elif t == "vf-port":
-      return GenericPort._fromdom(elem)
+      return VFPort._fromdom(elem)
     elif t == "internal":
       if container:
         return InternalContainerPort._fromdom(elem)

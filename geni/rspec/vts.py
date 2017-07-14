@@ -379,10 +379,21 @@ class OVSL2Image(OVSImage):
   def __init__ (self):
     super(OVSL2Image, self).__init__("bss:ovs-201")
     self.stp = OVSL2STP()
+    self.mac_table_size = None
+    self.mac_age = None
 
   def _write (self, element):
     i = super(OVSL2Image, self)._write(element)
     self.stp._write(i)
+    mpe = ET.SubElement(i, "{%s}mac-table-params" % (Namespaces.VTS))
+    if self.mac_table_size:
+      mse = ET.SubElement(mpe, "{%s}max-size" % (Namespaces.VTS))
+      mse.attrib["value"] = str(self.mac_table_size)
+    if self.mac_age:
+      mae = ET.SubElement(mpe, "{%s}max-age" % (Namespaces.VTS))
+      mae.attrib["value"] = str(self.mac_age)
+      
+    return i
 
 
 
@@ -470,6 +481,12 @@ class Datapath(Resource):
     self.ports.append(port)
     return port
 
+  def connectCrossSliver (self, other_dp):
+    port = InternalCircuit(None, None, None, None)
+    self.attachPort(port)
+    port.target = other_dp.client_id
+    return port
+
   def _write (self, element):
     d = ET.SubElement(element, "{%s}datapath" % (Namespaces.VTS.name))
     d.attrib["client_id"] = self.name
@@ -505,6 +522,12 @@ class Container(Resource):
 
   def addIPRoute (self, network, gateway):
     self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
+
+  def connectCrossSliver (self, other_dp):
+    port = InternalCircuit(None, None, None, None)
+    self.attachPort(port)
+    port.target = other_dp.client_id
+    return port
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016 The University of Utah and Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017 The University of Utah and Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,33 @@ class ParameterType (object):
   argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
                   LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float }
+
+class Parameter(object):
+  UNSET = (-1, -2, -1)
+
+  def __init__ (self):
+    self.name = None
+    self.description = None
+    self.type = None
+    self.defaultValue = None
+    self.legalValues = None
+    self.longDescription = None
+    self.advanced = False
+    self.hide = False
+    self.prefix = "emulab.net.parameter."
+    self.groupId = None
+
+    self.is_set = False
+
+  def __contains__ (self, key):
+    return self.__dict__.has_key(key)
+
+  def __getitem__ (self, key):
+    return self.__dict__[key]
+
+  def __setitem__ (self, key, val):
+    self.__dict__[key] = val
+
 
 class Context (object):
   """Handle context for scripts being run inside a portal.
@@ -170,12 +197,23 @@ class Context (object):
       raise IllegalParameterDefaultError(defaultValue)
 
     self._parameterOrder.append(name)
-    self._parameters[name] = {'description': description, 'type': typ,
-                              'defaultValue': defaultValue, 'legalValues': legalValues,
-                              'longDescription': longDescription, 'advanced': advanced,
-                              'hide': hide, 'prefix': prefix}
+
+    param = Parameter()
+    param.name = name
+    param.description = description
+    param.type = typ
+    param.defaultValue = defaultValue
+    param.legalValues = legalValues
+    param.longDescription = longDescription
+    param.advanced = advanced
+    param.hide = hide
+    param.prefix = prefix
+
     if groupId is not None:
-      self._parameters[name]['groupId'] = groupId
+      param.groupId = groupId
+
+    self._parameters[name] = param
+
     if len(self._parameters) == 1:
       atexit.register(self._checkBind)
 
@@ -312,14 +350,47 @@ class Context (object):
         legal = Context._legalList(opts['legalValues'])
       else:
         legal = None
-      parser.add_argument("--" + name,
-                          type    = ParameterType.argparsemap[opts['type']],
-                          default = opts['defaultValue'],
-                          choices = legal,
-                          help    = opts['description'])
+      if 'GENILIB_PARAMS_ASK' in os.environ:
+        parser.add_argument("--" + name,
+                            type    = ParameterType.argparsemap[opts['type']],
+                            default = Parameter.UNSET,
+                            choices = legal,
+                            help    = opts['description'])
+      else:
+        parser.add_argument("--" + name,
+                            type    = ParameterType.argparsemap[opts['type']],
+                            default = opts['defaultValue'],
+                            choices = legal,
+                            help    = opts['description'])
+
     args = parser.parse_args()
     for name in self._parameterOrder:
-      self._parameters[name]['value'] = getattr(args, name)
+      val = getattr(args, name)
+      if val != Parameter.UNSET:
+        self._parameters[name]['value'] = val
+        self._parameters[name].is_set = True
+
+    for name in self._parameterOrder:
+      param = self._parameters[name]
+      if param.is_set:
+        continue
+
+      while True:
+        val = raw_input("%s (%s) [%s]: " % (param.description, param.type, str(param.defaultValue)))
+        if val == "?":
+          if param.longDescription:
+            print param.longDescription
+          else:
+            print "No help available for this parameter"
+        elif not val:
+          val = param.defaultValue
+          break
+        else:
+          break
+      param.value = ParameterType.argparsemap[param.type](val)
+      param.is_set = True
+
+      setattr(args, name, param.value)
 
     return args
 

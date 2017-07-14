@@ -124,6 +124,15 @@ class Context(object):
     self._slicecreds = {}
     self.debug = False
     self.uname = None
+    self.path = None
+
+  def save (self):
+    import geni._coreutil as GCU
+
+    obj = {}
+    obj["framework"] = context.cf.name
+    obj["cert-path"] = context.cf.cert_path
+    obj["key-path"] = context._key
 
   @property
   def userurn (self):

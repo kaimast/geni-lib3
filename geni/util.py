@@ -167,6 +167,43 @@ def deleteSliverExists(am, context, slice):
   except DeleteSliverError:
     pass
 
+def _buildaddot(ad, drop_nodes = []):
+  """Constructs a dotfile of a topology described by an advertisement rspec.  Only works on very basic GENIv3 advertisements,
+  and probably has lots of broken edge cases."""
+  # pylint: disable=too-many-branches
+
+  dot_data = []
+  dda = dot_data.append # Save a lot of typing
+
+  dda("graph {")
+
+  for node in ad.nodes:
+    if node.name in drop_nodes:
+      continue
+
+    if node.available:
+      dda("\"%s\"" % (node.name))
+    else:
+      dda("\"%s\" [style=dashed]" % (node.name))
+
+  for link in ad.links:
+    if not len(link.interface_refs) == 2:
+      print("Link with more than 2 interfaces:")
+      print(link.text)
+    
+    name_1 = link.interface_refs[0].split(":")[-2].split("+")[-1]
+    name_2 = link.interface_refs[1].split(":")[-2].split("+")[-1]
+
+    if name_1 in drop_nodes or name_2 in drop_nodes:
+      continue
+
+    dda("\"%s\" -- \"%s\"" % (name_1, name_2))
+
+  dda("}")
+
+  return "\n".join(dot_data)
+
+
 def builddot (manifests):
   """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
   # pylint: disable=too-many-branches
@@ -205,6 +242,20 @@ def builddot (manifests):
 
 
     elif isinstance(manifest, VTSM.Manifest):
+      for dp in manifest.datapaths:
+        dda("\"%s\" [shape=rectangle];" % (dp.client_id))
+
+      for ctr in manifest.containers:
+        dda("\"%s\" [shape=oval];" % (ctr.client_id))
+
+      dda("subgraph cluster_vf {")
+      dda("label = \"SSL VPNs\";")
+      dda("rank = same;")
+      for vf in manifest.functions:
+        if isinstance(vf, VTSM.SSLVPNFunction):
+          dda("\"%s\" [label=\"%s\",shape=hexagon];" % (vf.client_id, vf.note))
+      dda("}")
+
       # TODO: We need to actually go through datapaths and such, but we can approximate for now
       for port in manifest.ports:
         if isinstance(port, VTSM.GREPort):
@@ -233,13 +284,14 @@ def builddot (manifests):
           # No mirror, draw as normal
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
+        elif isinstance(port, VTSM.VFPort):
+          dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_client_id))
+          dda("\"%s\" -> \"%s\"" % (port.remote_client_id, port.dpname))
+
         elif isinstance(port, VTSM.GenericPort):
           pass
         else:
           continue ### TODO: Unsupported Port Type
-
-      for dp in manifest.datapaths:
-        dda("\"%s\" [shape=rectangle]" % (dp.client_id))
 
 
   dda("}")
@@ -282,6 +334,7 @@ def loadContext (path = None, key_passphrase = None):
     context.addUser(user)
     context.cf = cf
     context.project = obj["project"]
+    context.path = path
 
   elif version == 2:
     context = Context()
@@ -295,6 +348,7 @@ def loadContext (path = None, key_passphrase = None):
       cf.key = fobj["key-path"]
     context.cf = cf
     context.project = fobj["project"]
+    context.path = path
 
     ulist = obj["users"]
     for uobj in ulist:

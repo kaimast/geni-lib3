@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -194,6 +194,7 @@ class AdLink(object):
     self.component_id = None
     self.link_types = set()
     self._elem = None
+    self.interface_refs = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -204,6 +205,10 @@ class AdLink(object):
     ltypes = elem.xpath('g:link_type', namespaces = _XPNS)
     for ltype in ltypes:
       link.link_types.add(ltype.get("name"))
+
+    irefs = elem.xpath('g:interface_ref', namespaces = _XPNS)
+    for iref in irefs:
+      link.interface_refs.append(iref.get("component_id"))
 
     return link
 
