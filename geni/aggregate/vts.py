@@ -261,8 +261,19 @@ class VTS(AM):
       data.setdefault(cid, []).append(volid)
     return self._apiv3.poa(context, self.urlv3, sname, "vts:dropbox:upload", options = {"vols" : [data]})
 
+  def hgPull (self, context, sname, cvols):
+    """Update an HgMount volume with the latest data from the source repository.
 
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      cvols (list): List of `(container client-id, volume-id)` tuples
+    """
 
+    data = {}
+    for (cid,volid) in cvols:
+      data.setdefault(cid, []).append((volid, True))
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:hg:pull", options = {"vols" : [data]})
 
 
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")

@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import base64
 import functools
 import decimal
 
@@ -73,6 +74,30 @@ class Request(geni.rspec.RSpec):
   @property
   def resources(self):
       return self._resources + self._ext_children
+
+######################
+# Internal Functions #
+######################
+
+def _am_encrypt (gv, plaintext):
+  # This should be turned into an Encryptor object that you can init once and carry around
+  from cryptography.hazmat.backends import default_backend
+  from cryptography.hazmat.primitives import hashes, serialization
+  from cryptography.hazmat.primitives.asymmetric import padding
+
+  pubkey = serialization.load_pem_public_key(gv["request.pubkey"], backend=default_backend())
+
+  if gv["request.hash"] == "sha1":
+    hfunc = hashes.SHA1
+  elif gv["request.hash"] == "sha256":
+    hfunc = hashes.SHA256
+  elif gv["request.hash"] == "sha384":
+    hfunc = hashes.SHA384
+  elif gv["request.hash"] == "sha512":
+    hfunc = hashes.SHA512
+
+  return base64.b64encode(pubkey.encrypt(plaintext, padding.OAEP(padding.MGF1(hfunc()), hfunc(), None)))
+
 
 ###################
 # Utility Objects #
@@ -664,6 +689,19 @@ class HgMount(Mount):
     self.attrs["branch"] = branch
 
 Container.EXTENSIONS.append(("HgMount", HgMount))
+
+
+class SecureHgMount(Mount):
+  def __init__ (self, getversion_output, name, source, mount_path, branch = "default"):
+    super(SecureHgMount, self).__init__("hg-secure", name, mount_path)
+    self._source = source
+    self.attrs["source"] = _am_encrypt(getversion_output, source)
+    self.attrs["branch"] = branch
+
+  def rebind (self, getversion_output):
+    self.attrs["source"] = _am_encrypt(getversion_output, self._source)
+
+Container.EXTENSIONS.append(("SecureHgMount", SecureHgMount))
 
 
 class DropboxMount(Mount):
