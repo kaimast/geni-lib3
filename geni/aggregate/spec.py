@@ -60,6 +60,7 @@ class AMSpec(object):
       from .vts import VTS
       am = VTS(self.shortname, None, self.url)
       am.cert_data = self.cert
-    am._amspec = self
+    if am:
+      am._amspec = self
     return am
 
