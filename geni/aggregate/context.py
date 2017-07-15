@@ -239,16 +239,17 @@ class Context(object):
         f.close()
 
       (expires, urn, typ, version) = self._getCredInfo(ucpath)
-
-      if expires < datetime.datetime.now():
-        cred = self.cf.getUserCredentials(self.userurn)
-        f = open(ucpath, "w+")
-        f.write(cred)
-        path = f.name
-        f.close()
-        (expires, urn, typ, version) = self._getCredInfo(ucpath)
-
       self._usercred_info = (ucpath, expires, urn, typ, version)
+
+    if self._usercred_info[1] < datetime.datetime.now():
+      cred = self.cf.getUserCredentials(self.userurn)
+      f = open(ucpath, "w+")
+      f.write(cred)
+      path = f.name
+      f.close()
+      (expires, urn, typ, version) = self._getCredInfo(ucpath)
+      self._usercred_info = (ucpath, expires, urn, typ, version)
+
     return self._usercred_info
 
   @property
