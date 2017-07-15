@@ -319,7 +319,7 @@ def loadAggregates (path = None):
   ammap = {}
   obj = json.loads(open(path, "r").read())
   for aminfo in obj:
-    ams = AMSpec._jconstruct(obj)
+    ams = AMSpec._jconstruct(aminfo)
     am = ams.build()
     if am:
       ammap[am.name] = am
