@@ -324,8 +324,13 @@ def loadAggregates (path):
   return amlist
 
 
-def saveAggregates (amlist, path):
-  obj = {"specs" : [x._amspec for x in amlist if x._amspec]}
+def saveAggregates (ammap, path = None):
+  from . import _coreutil as GCU
+
+  if not path:
+    path = GCU.getDefaultAggregatePath()
+
+  obj = {"specs" : [x._amspec for x in ammap.values() if x._amspec]}
   with open(path, "w+") as f:
     data = json.dumps(obj, cls=APIEncoder)
     f.write(data)
