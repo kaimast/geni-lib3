@@ -29,7 +29,7 @@ def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
 
 def lookup_service_info (url, root_bundle, cert, key, cred_strings, service_type):
   options = {"match" : {"SERVICE_TYPE" : service_type} }
-  return _lookup(url, root-bundle, cert, key, "SERVICE", cred_strings, options)
+  return _lookup(url, root_bundle, cert, key, "SERVICE", cred_strings, options)
 
 def lookup_member_info (url, root_bundle, cert, key, cred_strings, urn = None, uid = None,
                         email = None, lastname = None):
