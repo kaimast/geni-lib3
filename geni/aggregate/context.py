@@ -230,7 +230,7 @@ class Context(object):
   def _ucred_info (self):
     if (self._usercred_info is None) or (self._usercred_info[1] < datetime.datetime.now()):
       ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self.cf.name, self.uname)
-      if not os.path.exists(ucpath) or (self._usercred_info[1] < datetime.datetime.now()):
+      if not os.path.exists(ucpath):
         cred = self.cf.getUserCredentials(self.userurn)
 
         f = open(ucpath, "w+")
@@ -239,6 +239,15 @@ class Context(object):
         f.close()
 
       (expires, urn, typ, version) = self._getCredInfo(ucpath)
+
+      if expires < datetime.datetime.now():
+        cred = self.cf.getUserCredentials(self.userurn)
+        f = open(ucpath, "w+")
+        f.write(cred)
+        path = f.name
+        f.close()
+        (expires, urn, typ, version) = self._getCredInfo(ucpath)
+
       self._usercred_info = (ucpath, expires, urn, typ, version)
     return self._usercred_info
 
