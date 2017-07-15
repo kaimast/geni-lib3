@@ -545,9 +545,9 @@ class EmulabCH2(CHAPI2):
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
     self._authority = ""
-    self._ch = None
-    self._sa = None
-    self._ma = None
+    self._ch = EmulabCH2.SA
+    self._sa = EmulabCH2.SA
+    self._ma = EmulabCH2.MA
 
   @property
   def projecturn (self):
