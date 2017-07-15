@@ -40,6 +40,7 @@ class AM(object):
   def __init__ (self, name, url, api, amtype, cmid=None):
     self.url = url
     self.name = name
+    self.cert_data = None
     self._cmid = cmid
     self._apistr = api
     self._api = None

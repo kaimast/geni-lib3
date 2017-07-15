@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
+import json
 import os
 import os.path
 import pkg_resources
@@ -38,6 +41,30 @@ def getOSName ():
     return "%s-%s" % (platform.platform(), platform.architecture()[0])
   else:
     return "unknown"
+
+class APIEncoder(json.JSONEncoder):
+  def default (self, obj):
+    if hasattr(obj, "__json__"):
+      return obj.__json__()
+    elif isinstance(obj, set):
+      return list(obj)
+    else:
+      return json.JSONEncoder.default(self, obj)
+
+def loadAggregates (path):
+  from .aggregate.spec import AMSpec
+
+  amlist = []
+
+  obj = json.loads(open(path, "r").read())
+  for aminfo in obj:
+    ams = AMSpec._jconstruct(obj)
+    am = ams.build()
+    if am:
+      amlist.append(am)
+
+  return amlist
+
 
 def defaultHeaders ():
   d = {"User-Agent" : "GENI-LIB %s (%s)" % (VERSION, getOSName())}
