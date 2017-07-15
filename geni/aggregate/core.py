@@ -20,7 +20,7 @@ class _Registry(object):
     return self._data[name]
 
 def convertCH2AggregateSpecs(ch2info, path = None):
-  from .aggregate.spec import AMSpec, AMTYPE
+  from .spec import AMSpec, AMTYPE
 
   typemap = {
     "ui_instageni_am" : AMTYPE.IG,
