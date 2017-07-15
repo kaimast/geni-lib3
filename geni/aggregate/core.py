@@ -26,7 +26,8 @@ def convertCH2AggregateSpecs(ch2info, path = None):
     "ui_instageni_am" : AMTYPE.IG,
     "ui_exogeni_am" : AMTYPE.EG,
     "ui_vts_am" : AMTYPE.VTS,
-    "ui_foam_am" : AMTYPE.FOAM
+    "ui_foam_am" : AMTYPE.FOAM,
+    "ui_other_am" : AMTYPE.OTHER
   }
 
   speclist = []
