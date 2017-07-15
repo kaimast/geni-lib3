@@ -179,7 +179,6 @@ class Context(object):
   def ucred_pg (self):
     return open(ucinfo[0], "r").read()
 
-
   @property
   def project (self):
     return self.cf.project
