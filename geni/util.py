@@ -309,19 +309,22 @@ class APIEncoder(json.JSONEncoder):
       return json.JSONEncoder.default(self, obj)
 
 
-def loadAggregates (path):
+def loadAggregates (path = None):
   from .aggregate.spec import AMSpec
+  from . import _coreutil as GCU
 
-  amlist = []
+  if not path:
+    path = GCU.getDefaultAggregatePath()
 
+  ammap = {}
   obj = json.loads(open(path, "r").read())
   for aminfo in obj:
     ams = AMSpec._jconstruct(obj)
     am = ams.build()
     if am:
-      amlist.append(am)
+      ammap[am.name] = am
 
-  return amlist
+  return ammap
 
 
 def saveAggregates (ammap, path = None):
