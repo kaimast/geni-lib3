@@ -20,6 +20,17 @@ class _Registry(object):
     return self._data[name]
 
 
+def loadFromRegistry (context):
+  from . import spec
+  svclist = context.cf.loadAggregates()
+  ammap = {}
+  for info in svclist:
+    ams = spec.AMSpec._jconstruct(info)
+    am = ams.build()
+    if am:
+      ammap[am.name] = am
+  return ammap
+
 class AM(object):
   """Base class wrapping GENI AM APIv2 and AM APIv3 functionality."""
 
@@ -46,6 +57,7 @@ class AM(object):
     self._api = None
     self._typestr = amtype
     self._type = None
+    self._amspec = None
 
   @property
   def component_manager_id (self):

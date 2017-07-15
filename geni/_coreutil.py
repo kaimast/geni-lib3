@@ -33,6 +33,10 @@ def getDefaultDir ():
 
   return DEF_DIR
 
+def getDefaultAggregatePath():
+  ddir = getDefaultDir()
+  return "%s/aggregates.json" % (ddir)
+
 def getOSName ():
   if os.name == "posix":
     return "%s-%s" % (os.uname()[0], os.uname()[4])
@@ -41,29 +45,6 @@ def getOSName ():
     return "%s-%s" % (platform.platform(), platform.architecture()[0])
   else:
     return "unknown"
-
-class APIEncoder(json.JSONEncoder):
-  def default (self, obj):
-    if hasattr(obj, "__json__"):
-      return obj.__json__()
-    elif isinstance(obj, set):
-      return list(obj)
-    else:
-      return json.JSONEncoder.default(self, obj)
-
-def loadAggregates (path):
-  from .aggregate.spec import AMSpec
-
-  amlist = []
-
-  obj = json.loads(open(path, "r").read())
-  for aminfo in obj:
-    ams = AMSpec._jconstruct(obj)
-    am = ams.build()
-    if am:
-      amlist.append(am)
-
-  return amlist
 
 
 def defaultHeaders ():

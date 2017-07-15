@@ -264,6 +264,15 @@ class CHAPI2(Framework):
     ### TODO: Exception
     return None
 
+  def loadAggregates (self):
+    from ..minigcf import chapi2
+    
+    res = chapi2.lookup_service_info(self._ch, False, self.cert, self.key, [], "AGGREGATE_MANAGER")
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
   def createProject (self, context, name, exp, desc):
     from ..minigcf import chapi2
 

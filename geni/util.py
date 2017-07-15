@@ -330,6 +330,7 @@ class APIEncoder(json.JSONEncoder):
     else:
       return json.JSONEncoder.default(self, obj)
 
+
 def loadAggregates (path):
   from .aggregate.spec import AMSpec
 
@@ -343,6 +344,13 @@ def loadAggregates (path):
       amlist.append(am)
 
   return amlist
+
+
+def saveAggregates (amlist, path):
+  obj = {"specs" : [x._amspec for x in amlist if x._amspec]}
+  with open(path, "w+") as f:
+    data = json.dumps(obj, cls=APIEncoder)
+    f.write(data)
 
 
 def loadContext (path = None, key_passphrase = None):
