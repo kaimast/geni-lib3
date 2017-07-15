@@ -37,28 +37,6 @@ given aggregate."""
         avail.append(node)
   return avail
 
-def convertCH2AggregateSpecs(ch2info, path = None):
-  from .aggregate.spec import AMSpec, AMTYPE
-
-  typemap = {
-    "ui_instageni_am" : AMTYPE.IG,
-    "ui_exogeni_am" : AMTYPE.EG,
-    "ui_vts_am" : AMTYPE.VTS,
-    "ui_foam_am" : AMTYPE.FOAM
-  }
-
-  speclist = []
-  for info in ch2info:
-    ams = AMSpec()
-    ams.cmid = info["SERVICE_URN"]
-    ams.desc = info["SERVICE_DESCRIPTION"]
-    ams.longname = info["SERVICE_NAME"]
-    ams.shortname = info["_GENI_SERVICE_ATTRIBUTES"]["_GENI_SERVICE_SHORT_NAME"]
-    ams.url = info["SERVICE_URL"]
-    ams.type = typemap[info["_GENI_SERVICE_ATTRIBUTES"]["UI_AM_TYPE"]]
-    speclist.append(ams)
-
-  return speclist
 
 def _corelogininfo (manifest):
   from .rspec.vtsmanifest import Manifest as VTSM
