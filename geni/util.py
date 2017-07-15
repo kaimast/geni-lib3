@@ -326,6 +326,14 @@ def loadAggregates (path = None):
 
   return ammap
 
+def updateAggregates (context, ammap):
+  from .aggregate.core import loadFromRegistry
+
+  new_map = loadFromRegistry(context)
+  for k,v in new_map:
+    if k not in ammap:
+      ammap[k] = v
+  saveAggregates(ammap)
 
 def saveAggregates (ammap, path = None):
   from . import _coreutil as GCU
