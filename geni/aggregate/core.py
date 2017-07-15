@@ -35,7 +35,7 @@ def convertCH2AggregateSpecs(ch2info, path = None):
     ams.cmid = info["SERVICE_URN"]
     ams.desc = info["SERVICE_DESCRIPTION"]
     ams.longname = info["SERVICE_NAME"]
-    ams.shortname = info["_GENI_SERVICE_ATTRIBUTES"]["_GENI_SERVICE_SHORT_NAME"]
+    ams.shortname = info["_GENI_SERVICE_SHORT_NAME"]
     ams.url = info["SERVICE_URL"]
     ams.type = typemap[info["_GENI_SERVICE_ATTRIBUTES"]["UI_AM_TYPE"]]
     speclist.append(ams)
