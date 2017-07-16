@@ -64,7 +64,10 @@ def loadFromRegistry (context):
         continue
       ams = AMSpec()
       ams.cmid = info["urn"]
-      ams.shortname = info["hrn"]
+      if info["hrn"][-3:] == ".cm":
+        ams.shortname = info["hrn"][:-3]
+      else:
+        ams.shortname = info["hrn"]
       ams.cert = fixCert(info["gid"])
       if info["url"].count("instageni"):
         ams.type = AMTYPE.IG
