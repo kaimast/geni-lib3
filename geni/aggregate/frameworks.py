@@ -216,33 +216,43 @@ class Framework(object):
     return self._userurn
 
 
-
 class ProtoGENI(Framework):
-  def __init__ (self, name = "pg"):
-    super(ProtoGENI, self).__init__(name)
-    self._type = "pgch"
-
-
-class Emulab(ProtoGENI):
   SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
-  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/ma"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
 
-  def __init__ (self):
-    super(Emulab, self).__init__("emulab")
+  def __init__ (self, name = "pg"):
+    super(ProtoGENI, self).__init__("emulab")
     self._type = "pgch"
-    self._ch = "https://www.emulab.net:443/protogeni/xmlrpc/ch"
+    self._ch = "https://www.emulab.net:12369/protogeni/xmlrpc/ch"
     self._sa = None
     self._ma = None
 
   @property
   def project (self):
-    return super(Emulab, self).project
+    return super(ProtoGENI, self).project
 
   @project.setter
   def project (self, val):
-    super(Emulab, self).project.fset(self, val)
-    self._sa = Emulab.SA % (val)
-    self._ma = Emulab.MA % (val)
+    super(ProtoGENI, self.__class__).project.fset(self, val) # This is hinky
+    self._sa = ProtoGENI.SA % (val)
+    self._ma = ProtoGENI.MA % (val)
+
+  def loadComponents (self, context):
+    from ..minigcf import pgch1
+
+    res = pgch1.ListComponents(self._ch, False, self.cert, self.key, context.ucred_pg)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def getUserCredentials (self, owner_urn):
+    from ..minigcf import pgch1
+    res = pgch1.GetCredential(self._sa, False, self.cert, self.key)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
 
 class CHAPI1(Framework):

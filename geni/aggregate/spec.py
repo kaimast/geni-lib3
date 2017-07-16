@@ -10,6 +10,7 @@ class AMTYPE(object):
   FOAM = "foam"
   VTS = "vts"
   IG = "ig"
+  PG = "ig"
   EG = "eg"
   OTHER = "other"
 
@@ -63,4 +64,11 @@ class AMSpec(object):
     if am:
       am._amspec = self
     return am
+
+
+# Emulab GID PEM data often lacks begin/end markers
+def fixCert (data):
+  if data[0:3] != "---":
+    data = "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n" % (data)
+  return data
 

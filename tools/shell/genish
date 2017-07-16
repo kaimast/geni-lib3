@@ -55,10 +55,12 @@ class Shell(object):
     if self.debug:
       import geni.minigcf.chapi2
       import geni.minigcf.amapi2
+      import geni.minigcf.pgch1
       import geni.minigcf.config
       imports["CH2"] = geni.minigcf.chapi2
       imports["AM2"] = geni.minigcf.amapi2
       imports["CFG"] = geni.minigcf.config
+      imports["PG1"] = geni.minigcf.pgch1
 
     if self.admin:
       import geni.admin.vts

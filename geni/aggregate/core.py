@@ -44,13 +44,38 @@ def convertCH2AggregateSpecs(ch2info, path = None):
   return speclist
 
 def loadFromRegistry (context):
+  from . import frameworks
   from . import spec
-  svclist = convertCH2AggregateSpecs(context.cf.loadAggregates())
+  from .. import urn
+  from .spec import AMSpec, AMTYPE, fixCert
+
   ammap = {}
-  for ams in svclist:
-    am = ams.build()
-    if am:
-      ammap[am.name] = am
+  if isinstance(context.cf, frameworks.CHAPI2):
+    svclist = convertCH2AggregateSpecs(context.cf.loadAggregates())
+    for ams in svclist:
+      am = ams.build()
+      if am:
+        ammap[am.name] = am
+  elif isinstance(context.cf, frameworks.ProtoGENI):
+    components = context.cf.loadComponents(context)
+    for info in components:
+      u = urn.GENI(info["urn"])
+      if u.name not in ["cm", "am"]:
+        continue
+      ams = AMSpec()
+      ams.cmid = info["urn"]
+      ams.shortname = info["hrn"]
+      ams.cert = fixCert(info["gid"])
+      if info["url"].count("instageni"):
+        ams.type = AMTYPE.IG
+      elif info["url"].count("protogeni"):
+        ams.type = AMTYPE.PG
+      elif info["url"].count("orca"):
+        ams.type = AMTYPE.EG
+      am = ams.build()
+      if am:
+        ammap[am.name] = am
+
   return ammap
 
 class AM(object):

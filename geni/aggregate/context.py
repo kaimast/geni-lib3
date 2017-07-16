@@ -177,7 +177,7 @@ class Context(object):
 
   @property
   def ucred_pg (self):
-    return open(ucinfo[0], "r").read()
+    return open(self._ucred_info[0], "r").read()
 
   @property
   def project (self):
