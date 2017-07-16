@@ -517,7 +517,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
 
 
-def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project):
+def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
   import geni._coreutil as GCU
 
   # Create the .bssw directories if they don't exist
@@ -532,6 +532,9 @@ def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_pa
   else:
     new_key_path = new_cert_path
 
+  if not path:
+    path = "%s/context.json" % (DEF_DIR)
+
   cdata = {}
   cdata["framework"] = framework
   cdata["cert-path"] = new_cert_path
@@ -540,5 +543,5 @@ def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_pa
   cdata["user-urn"] = user_urn
   cdata["user-pubkeypath"] = pubkey_path 
   cdata["project"] = project
-  json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
+  json.dump(cdata, open(path, "w+"))
 
