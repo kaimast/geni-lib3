@@ -69,6 +69,7 @@ def loadFromRegistry (context):
       else:
         ams.shortname = info["hrn"]
       ams.cert = fixCert(info["gid"])
+      ams.url = info["url"]
       if info["url"].count("instageni"):
         ams.type = AMTYPE.IG
       elif info["url"].count("protogeni"):
