@@ -129,23 +129,29 @@ class DelayInfo(object):
 
 class LossInfo(object):
   def __init__ (self, percent):
-    self._percent = None
     self.percent = percent
 
-  @property
-  def percent (self):
-    return self._percent
-
-  @percent.setter
-  def percent (self, val):
-    self._percent = decimal.Decimal(val)
-
   def __json__ (self):
-    return {"type" : "egress-loss", "percent" : "%s" % (self.percent)}
+    return {"type" : "egress-loss", "percent" : "%d" % (self.percent)}
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
-    d.attrib["percent"] = "%s" % (self.percent)
+    d.attrib["percent"] = "%d" % (self.percent)
+    return d
+
+
+class ReorderInfo(object):
+  def __init__ (self, percent, correlation, gap = None):
+    self.percent = percent
+    self.correlation = correlation
+    self.gap = gap
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}egress-reorder" % (Namespaces.VTS))
+    d.attrib["percent"] = str(self.percent)
+    d.attrib["correlation"] = str(self.correlation)
+    if self.gap:
+      d.attrib["gap"] = str(self.gap)
     return d
 
 
