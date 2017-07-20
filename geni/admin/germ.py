@@ -69,4 +69,3 @@ class Connection(object):
     d = json.dumps({"country" : country, "long" : longitude, "lat" : latitude})
     r = requests.post(url, d, **self.rkwargs)
     return r.json()["value"]
-

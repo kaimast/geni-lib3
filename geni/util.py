@@ -302,7 +302,7 @@ def builddot (manifests):
 
 
 class APIEncoder(json.JSONEncoder):
-  def default (self, obj):
+  def default (self, obj): # pylint: disable=E0202
     if hasattr(obj, "__json__"):
       return obj.__json__()
     elif isinstance(obj, set):

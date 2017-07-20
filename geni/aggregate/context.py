@@ -12,8 +12,6 @@ import datetime
 
 import lxml.etree as ET
 
-from ..exceptions import NoUserError
-
 class SlicecredProxy(object):
   def __init__ (self, context):
     self._context = context
@@ -126,13 +124,13 @@ class Context(object):
     self.uname = None
     self.path = None
 
-  def save (self):
-    import geni._coreutil as GCU
+#  def save (self):
+#    import geni._coreutil as GCU
 
-    obj = {}
-    obj["framework"] = context.cf.name
-    obj["cert-path"] = context.cf.cert_path
-    obj["key-path"] = context._key
+#    obj = {}
+#    obj["framework"] = context.cf.name
+#    obj["cert-path"] = context.cf.cert_path
+#    obj["key-path"] = context._key
 
   @property
   def userurn (self):
@@ -142,7 +140,7 @@ class Context(object):
     info = self.getSliceInfo(sname)
     return info.path
 
-  def _getCredInfo(self, path):
+  def _getCredInfo (self, path):
     r = ET.parse(path)
     expstr = r.find("credential/expires").text
     if expstr[-1] == 'Z':
@@ -234,7 +232,6 @@ class Context(object):
 
         f = open(ucpath, "w+")
         f.write(cred)
-        path = f.name
         f.close()
 
       (expires, urn, typ, version) = self._getCredInfo(ucpath)
@@ -244,7 +241,6 @@ class Context(object):
       cred = self.cf.getUserCredentials(self.userurn)
       f = open(ucpath, "w+")
       f.write(cred)
-      path = f.name
       f.close()
       (expires, urn, typ, version) = self._getCredInfo(ucpath)
       self._usercred_info = (ucpath, expires, urn, typ, version)
@@ -292,4 +288,3 @@ class Context(object):
       scinfo = SliceCredInfo(self, sname)
       self._slicecreds["%s-%s" % (project, sname)] = scinfo
     return self._slicecreds["%s-%s" % (project, sname)]
-

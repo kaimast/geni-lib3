@@ -70,7 +70,7 @@ class Context (object):
   """Handle context for scripts being run inside a portal.
 
   This class handles context for the portal, including where to put output
-  RSpecs and handling parameterized scripts. 
+  RSpecs and handling parameterized scripts.
 
   Scripts using this class can also be run "standalone" (ie. not by the
   portal), in which case they take parameters on the command line and put
@@ -249,11 +249,11 @@ class Context (object):
     document.  No other forms of altParamSrc are currently specified."""
     self._bindingDone = True
     if altParamSrc:
-      if type(altParamSrc) == dict:
+      if isinstance(altParamSrc, dict):
         return self._bindParametersDict(altParamSrc)
-      elif type(altParamSrc) == pgmanifest.Manifest:
-        return self._bindParametersManifest(manifestObj)
-      elif type(altParamSrc) == str:
+      elif isinstance(altParamSrc, pgmanifest.Manifest):
+        return self._bindParametersManifest(altParamSrc)
+      elif isinstance(altParamSrc, (str, unicode)):
         try:
           manifestObj = pgmanifest.Manifest(xml=altParamSrc)
           return self._bindParametersManifest(manifestObj)
@@ -310,8 +310,8 @@ class Context (object):
     nice JSON-formatted exception info on stderr
     """
     if len(self._parameterErrors) == 0 \
-         and (len(self._parameterWarnings) == 0 \
-              or not self._parameterWarningsAreFatal):
+      and (len(self._parameterWarnings) == 0 \
+        or not self._parameterWarningsAreFatal):
       return 0
 
     #
@@ -418,7 +418,7 @@ class Context (object):
     # This might not return.
     self.verifyParameters()
     return namespace
-    
+
   def _bindParametersDict(self,paramValues):
     namespace = Namespace()
     for name in self._parameterOrder:
@@ -443,11 +443,11 @@ class Context (object):
       else:
         setattr(namespace, name, val)
         self._parameters[name]['value'] = val
-    # This might not return. 
+    # This might not return.
     self.verifyParameters()
     self._bindingDone = True
     return namespace
-    
+
   def _bindParametersManifest(self,manifest):
     pdict = {}
     for manifestParameter in manifest.parameters:
@@ -502,7 +502,7 @@ this rather than trying to create a new Context object
 """
 
 def get_context():
-    return context
+  return context
 
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):

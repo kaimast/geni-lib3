@@ -35,8 +35,7 @@ class Project(object):
   def __str__ (self):
     if self.expired:
       return "[%s, %s, %s, EXPIRED]" % (self.urn, self.uid, self.role)
-    else:
-      return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
+    return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
 
   def __repr__ (self):
     return "<%s, %s>" % (self.urn, self.role)
@@ -82,7 +81,7 @@ class Member(object):
     try:
       self.emulab_role = project_info["PROJECT_EMULAB_ROLE"]
     except KeyError:
-     pass
+      pass
 
   def _set_from_member (self, member_info):
     self.urn = member_info["MEMBER_URN"]
@@ -246,7 +245,7 @@ class ProtoGENI(Framework):
     else:
       raise ClearinghouseError(res["output"], res)
 
-  def getUserCredentials (self, owner_urn):
+  def getUserCredentials (self, owner_urn): # pylint: disable=unused-argument
     from ..minigcf import pgch1
     res = pgch1.GetCredential(self._sa, False, self.cert, self.key)
     if res["code"] == 0:
@@ -276,7 +275,7 @@ class CHAPI2(Framework):
 
   def loadAggregates (self):
     from ..minigcf import chapi2
-    
+
     res = chapi2.lookup_service_info(self._ch, False, self.cert, self.key, [], "AGGREGATE_MANAGER")
     if res["code"] == 0:
       return res["value"]
@@ -352,7 +351,7 @@ class CHAPI2(Framework):
       else:
         for info in res["value"]:
           projects.append(CHAPI2Project(info))
-      return projects 
+      return projects
     else:
       raise ClearinghouseError(res["output"], res)
 
@@ -397,7 +396,7 @@ class CHAPI2(Framework):
       members = [members]
 
     slice_urn = self.sliceNameToURN(slicename)
-    
+
     res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                          slice_urn, add = [(x.urn, role) for x in members])
 
@@ -413,7 +412,7 @@ class CHAPI2(Framework):
       members = [members]
 
     slice_urn = self.sliceNameToURN(slicename)
-    
+
     res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                          slice_urn, remove = [x.urn for x in members])
 
@@ -528,9 +527,9 @@ class Portal(CHAPI2):
 
   def getPendingProjectRequests (self, context):
     from ..minigcf import chapi2
-    res = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key, 
-                                           [context.ucred_api3], self._getMemberUID(context),
-                                           self.projectInfo(context).uid)
+    res = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key,
+                                      [context.ucred_api3], self._getMemberUID(context),
+                                      self.projectInfo(context).uid)
     if res["code"] == 0:
       return res["value"]
     else:

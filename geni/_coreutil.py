@@ -6,11 +6,11 @@
 
 from __future__ import absolute_import
 
-import json
 import os
 import os.path
-import pkg_resources
 import ssl
+
+import pkg_resources
 
 WIN32_ATTR_HIDDEN = 0x02
 VERSION = pkg_resources.require("geni-lib")[0].version
@@ -43,8 +43,7 @@ def getOSName ():
   elif os.name == "nt":
     import platform
     return "%s-%s" % (platform.platform(), platform.architecture()[0])
-  else:
-    return "unknown"
+  return "unknown"
 
 
 def defaultHeaders ():
@@ -124,7 +123,7 @@ from requests.adapters import HTTPAdapter
 try:
   from requests.packages.urllib3.poolmanager import PoolManager
   class TLSHttpAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
+    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
       self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
                                      block = block, ssl_version = ssl.PROTOCOL_TLSv1)
 except ImportError:
