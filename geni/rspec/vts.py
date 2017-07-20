@@ -622,6 +622,7 @@ class InternalCircuit(Port):
     self.target = target
     self.delay_info = delay_info
     self.loss_info = loss_info
+    self.reorder_info = None
 
   def _write (self, element):
     p = super(InternalCircuit, self)._write(element)
@@ -630,6 +631,7 @@ class InternalCircuit(Port):
       p.attrib["vlan-id"] = str(self.vlan)
     if self.delay_info: self.delay_info._write(p)
     if self.loss_info: self.loss_info._write(p)
+    if self.reorder_info: self.reorder_info._write(p)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
