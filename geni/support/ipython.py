@@ -388,6 +388,8 @@ class NoContextError(Exception):
 ### Extension loader
 #####
 def load_ipython_extension (ipy):
+  import geni.util
+
   if not geni.util.hasDataContext():
     path = os.path.expanduser("~/omni.bundle")
     if os.path.exists(path):
