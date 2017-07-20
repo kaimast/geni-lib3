@@ -119,6 +119,7 @@ def shellImports ():
   return imports
 
 
+# pylint: disable=wrong-import-position
 from requests.adapters import HTTPAdapter
 try:
   from requests.packages.urllib3.poolmanager import PoolManager
@@ -128,4 +129,3 @@ try:
                                      block = block, ssl_version = ssl.PROTOCOL_TLSv1)
 except ImportError:
   TLSHttpAdapter = HTTPAdapter
-

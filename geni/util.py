@@ -22,8 +22,7 @@ from .aggregate.apis import ListResourcesError, DeleteSliverError
 def _getdefault (obj, attr, default):
   if hasattr(obj, attr):
     return obj[attr]
-  else:
-    return default
+  return default
 
 def checkavailrawpc (context, am):
   """Returns a list of node objects representing available raw PCs at the
@@ -167,10 +166,13 @@ def deleteSliverExists(am, context, slice):
   except DeleteSliverError:
     pass
 
-def _buildaddot(ad, drop_nodes = []):
+def _buildaddot(ad, drop_nodes = None):
   """Constructs a dotfile of a topology described by an advertisement rspec.  Only works on very basic GENIv3 advertisements,
   and probably has lots of broken edge cases."""
   # pylint: disable=too-many-branches
+
+  if not drop_nodes:
+    drop_nodes = []
 
   dot_data = []
   dda = dot_data.append # Save a lot of typing
@@ -190,7 +192,7 @@ def _buildaddot(ad, drop_nodes = []):
     if not len(link.interface_refs) == 2:
       print("Link with more than 2 interfaces:")
       print(link.text)
-    
+
     name_1 = link.interface_refs[0].split(":")[-2].split("+")[-1]
     name_2 = link.interface_refs[1].split(":")[-2].split("+")[-1]
 
@@ -278,7 +280,7 @@ def builddot (manifests):
             if port.remote_client_id == dp.mirror:
               remote_port_name = port.remote_client_id.split(":")[-1]
               dda("\"%s\" -> \"%s\" [headlabel=\"%s\",taillabel=\"%s\",style=dashed]" % (
-                            port.remote_dpname, port.dpname, port.name, remote_port_name))
+                  port.remote_dpname, port.dpname, port.name, remote_port_name))
               continue
 
           # No mirror, draw as normal
@@ -305,8 +307,7 @@ class APIEncoder(json.JSONEncoder):
       return obj.__json__()
     elif isinstance(obj, set):
       return list(obj)
-    else:
-      return json.JSONEncoder.default(self, obj)
+    return json.JSONEncoder.default(self, obj)
 
 
 def loadAggregates (path = None):
@@ -431,6 +432,7 @@ class MissingPublicKeyError(Exception):
 
 class PathNotFoundError(Exception):
   def __init__ (self, path):
+    super(PathNotFoundError, self).__init__()
     self._path = path
 
   def __str__ (self):
@@ -468,13 +470,13 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
       urn = l.split("=")[1].strip()
     elif l.startswith("default_project"):
       project = l.split("=")[1].strip()
-  
+
   uname = urn.rsplit("+")[-1]
 
   # Create .ssh if it doesn't exist
   try:
     os.makedirs("%s/.ssh" % (HOME), 0775)
-  except OSError, e:
+  except OSError:
     pass
 
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
@@ -485,11 +487,11 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
         # If your umask isn't already 0, we can't safely create this file with the right permissions
         with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
-    
+
     pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
     if not os.path.exists(pkpath):
-        with open(pkpath, "w+") as tf:
-          tf.write(zf.open(zip_pubkey_path).read())
+      with open(pkpath, "w+") as tf:
+        tf.write(zf.open(zip_pubkey_path).read())
   else:
     pkpath = os.path.expanduser(pubkey_path)
     if not os.path.exists(pkpath):
@@ -541,7 +543,6 @@ def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_pa
   cdata["key-path"] = new_key_path
   cdata["user-name"] = username
   cdata["user-urn"] = user_urn
-  cdata["user-pubkeypath"] = pubkey_path 
+  cdata["user-pubkeypath"] = pubkey_path
   cdata["project"] = project
   json.dump(cdata, open(path, "w+"))
-
