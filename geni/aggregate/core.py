@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,10 +66,12 @@ def loadFromRegistry (context):
       ams.cmid = info["urn"]
       if info["hrn"][-3:] == ".cm":
         ams.shortname = info["hrn"][:-3]
+        ams.url = "%s/am" % (info["url"][:-3])
       else:
         ams.shortname = info["hrn"]
+        ams.url = info["url"]
+
       ams.cert = fixCert(info["gid"])
-      ams.url = info["url"]
       if info["url"].count("instageni"):
         ams.type = AMTYPE.IG
       elif info["url"].count("protogeni"):
