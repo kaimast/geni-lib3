@@ -50,14 +50,22 @@ def loadFromRegistry (context):
   from .spec import AMSpec, AMTYPE, fixCert
 
   ammap = {}
-  if isinstance(context.cf, frameworks.CHAPI2):
-    svclist = convertCH2AggregateSpecs(context.cf.loadAggregates())
-    for ams in svclist:
-      am = ams.build()
-      if am:
-        ammap[am.name] = am
-  elif isinstance(context.cf, frameworks.ProtoGENI):
-    components = context.cf.loadComponents(context)
+  cf = context.cf
+  if isinstance(cf, frameworks.CHAPI2):
+    if cf.name == "emulab-ch2":
+      from .frameworks import ProtoGENI
+      # Make a synthetic PG CF to get the aggregates
+      cf = ProtoGENI()
+      cf.key = context.cf.key
+      cf.cert = context.cf.cert
+    else:
+      svclist = convertCH2AggregateSpecs(cf.loadAggregates())
+      for ams in svclist:
+        am = ams.build()
+        if am:
+          ammap[am.name] = am
+  if isinstance(cf, frameworks.ProtoGENI):
+    components = cf.loadComponents(context)
     for info in components:
       u = urn.GENI(info["urn"])
       if u.name not in ["cm", "am"]:
@@ -66,7 +74,7 @@ def loadFromRegistry (context):
       ams.cmid = info["urn"]
       if info["hrn"][-3:] == ".cm":
         ams.shortname = info["hrn"][:-3]
-        ams.url = "%s/am" % (info["url"][:-3])
+        ams.url = "%s/am/2.0" % (info["url"][:-3])
       else:
         ams.shortname = info["hrn"]
         ams.url = info["url"]
