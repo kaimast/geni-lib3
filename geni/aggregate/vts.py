@@ -122,6 +122,11 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "api:uh.vswitch:get-l2table",
                            options={"client-ids" : client_ids})
 
+  def clearL2Table (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.vswitch:clear-l2table",
+                           options={"client-ids" : client_ids})
+
   def clearFlows (self, context, sname, datapaths):
     """Clear all installed flows from the requested datapaths.
 

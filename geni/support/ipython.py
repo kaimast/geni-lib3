@@ -319,7 +319,25 @@ def getL2Table (self, context, sname, client_ids):
 
   return retd
 
+def clearL2Table (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
+  res = self._clearL2Table(context, sname, client_ids)
+  retd = {}
+  for vsw, table in res.items():
+    rowobjs = []
+    for mac, iface in table.iteritems():
+      d = {}
+      d["mac"] = mac
+      d["interface"] = iface
+      rowobjs.append(d)
+    retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
+
+  return retd
+
 replaceSymbol(VTS, "getL2Table", getL2Table)
+replaceSymbol(VTS, "clearL2Table", clearL2Table)
 
 
 ARP_FILTER = ["hw-address", "ip-address", "status", "device"]
