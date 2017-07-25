@@ -299,6 +299,19 @@ replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
 
 
+L2TABLECOLS = ["Port", "MAC"]
+L2TABLEROW = "<tr><td>{interface}</td><td>{mac}</td></tr>"
+
+def getL2Table (self, context, sname, client_ids):
+  res = self._getL2Table(context, sname, client_ids)
+  retobj = {}
+  for k,v in res.items():
+    retobj[k] = RetListProxy(v, L2TABLECOLS, L2TABLEROW)
+  return retobj
+
+replaceSymbol(VTS, "getL2Table", getL2Table)
+
+
 ARP_FILTER = ["hw-address", "ip-address", "status", "device"]
 ARP_COLS = ["HW Address", "IP Address", "Status", "Interface"]
 def getARPTable (self, context, sname, client_ids):
