@@ -312,8 +312,8 @@ def getL2Table (self, context, sname, client_ids):
     rowobjs = []
     for row in table[1:]:
       d = {}
-      d["mac"] = int(row[0])
-      d["interface"] = int(row[1])
+      d["mac"] = row[0]
+      d["interface"] = row[1]
       rowobjs.append(d)
     retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
 
