@@ -117,7 +117,8 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:dump-macs",
                            options={"datapaths" : datapaths})
 
-  def getL2Table (self, context, sname, datapaths):
+  def getL2Table (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
     return self._apiv3.poa(context, self.urlv3, sname, "api:uh.vswitch:get-l2table",
                            options={"client-ids" : client_ids})
 

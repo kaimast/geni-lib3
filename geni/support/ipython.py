@@ -303,11 +303,21 @@ L2TABLECOLS = ["Port", "MAC"]
 L2TABLEROW = "<tr><td>{interface}</td><td>{mac}</td></tr>"
 
 def getL2Table (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
   res = self._getL2Table(context, sname, client_ids)
-  retobj = {}
-  for k,v in res.items():
-    retobj[k] = RetListProxy(v, L2TABLECOLS, L2TABLEROW)
-  return retobj
+  retd = {}
+  for vsw, table in res.items():
+    rowobjs = []
+    for row in table[1:]:
+      d = {}
+      d["mac"] = int(row[0])
+      d["interface"] = int(row[1])
+      rowobjs.append(d)
+    retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
+
+  return retd
 
 replaceSymbol(VTS, "getL2Table", getL2Table)
 
