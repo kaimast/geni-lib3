@@ -63,7 +63,7 @@ def loginInfo (manifests):
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
 def showErrorURL (show = False):
-  global SHOW_ERROR_URL
+  global SHOW_ERROR_URL # pylint disable=global-statement
   SHOW_ERROR_URL = show
 
 
@@ -173,7 +173,8 @@ class RetListProxy(object):
     return self._obj[i]
 
   def __getslice__ (self, i, j):
-    i = max(i, 0); j = max(j, 0)
+    i = max(i, 0)
+    j = max(j, 0)
     return self._obj[i:j]
 
   def __contains__ (self, item):
@@ -256,7 +257,7 @@ def dumpFlows (self, context, sname, datapaths, **kwargs):
         rmap[key] = val
       rmap["rule"] = row[-1]
       rmaps.append(rmap)
-        
+
     retd[brname] = RetListProxy(rmaps, FLOWCOLS, FLOWROW)
   return retd
 
@@ -431,4 +432,3 @@ def load_ipython_extension (ipy):
 
   ipy.push(imports)
   ipy.set_custom_exc((AMError,), am_exc_handler)
-
