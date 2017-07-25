@@ -117,6 +117,10 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:dump-macs",
                            options={"datapaths" : datapaths})
 
+  def getL2Table (self, context, sname, datapaths):
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.vswitch:get-l2table",
+                           options={"client-ids" : client_ids})
+
   def clearFlows (self, context, sname, datapaths):
     """Clear all installed flows from the requested datapaths.
 
