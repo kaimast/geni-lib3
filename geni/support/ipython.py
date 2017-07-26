@@ -277,6 +277,9 @@ def getSTPInfo (self, context, sname, datapaths):
     datapaths = [datapaths]
 
   res = self._getSTPInfo(context, sname, datapaths)
+  if len(res) == 1:
+    return STPProxy.values()[0]
+
   retobj = {}
   for br in res:
     retobj[br["client-id"]] = STPProxy(br)
