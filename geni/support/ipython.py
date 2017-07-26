@@ -45,7 +45,7 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   print "\n".join(out)
 
 
-def topo (manifests, graph_engine = "neato"):
+def topo (manifests, graph_engine = "circo"):
   if not isinstance(manifests, list):
     manifests = [manifests]
 
