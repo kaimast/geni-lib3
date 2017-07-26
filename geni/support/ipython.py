@@ -290,6 +290,10 @@ def getLeaseInfo (self, context, sname, client_ids):
     client_ids = [client_ids]
 
   res = self._getLeaseInfo(context, sname, client_ids)
+  
+  if len(res) == 1:
+    return RetListProxy(res.values()[0], LEASECOLS, LEASEROW)
+  
   retobj = {}
   for k,v in res.items():
     retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
