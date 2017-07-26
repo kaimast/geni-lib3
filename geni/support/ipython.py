@@ -265,7 +265,7 @@ def dumpFlows (self, context, sname, datapaths, **kwargs):
   res = self._dumpFlows(context, sname, datapaths, **kwargs)
 
   if len(res) == 1:
-    RetListProxy(flowTableDecomp(res.values()[0]), FLOWCOLS, FLOWROW)
+    return RetListProxy(flowTableDecomp(res.values()[0]), FLOWCOLS, FLOWROW)
 
   retd = {}
   for brname,table in res.items():
