@@ -220,7 +220,7 @@ def replaceSymbol (module, name, func):
   setattr(module, "_%s" % (name), getattr(module, name))
   setattr(module, name, func)
 
-def macTableDecomp (row):
+def macRowDecomp (row):
   d = {}
   d["port"] = int(row[0])
   d["vlan"] = int(row[1])
@@ -238,7 +238,7 @@ def dumpMACs (self, context, sname, datapaths):
   for br,table in res.items():
     rowobjs = []
     for row in table[1:]:
-      rowobjs.append(macTableDecomp(row))
+      rowobjs.append(macRowDecomp(row))
     retd[br] = RetListProxy(rowobjs, MACCOLS, MACROW)
   if len(res) == 1:
     return RetListProxy(rowobjs, MACCOLS, MACROW)
