@@ -226,6 +226,16 @@ def dumpMACs (self, context, sname, datapaths):
     datapaths = [datapaths]
 
   res = self._dumpMACs(context, sname, datapaths)
+
+  if len(res) == 1:
+    row = res.popitem()[1]
+    d = {}
+    d["port"] = int(row[0])
+    d["vlan"] = int(row[1])
+    d["mac"] = geni.types.EthernetMAC(row[2])
+    d["age"] = int(row[3])
+    return dictListBuilder(d, MACCOLS, MACROW)
+
   retd = {}
   for br,table in res.items():
     rowobjs = []
