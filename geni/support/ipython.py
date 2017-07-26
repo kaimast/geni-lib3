@@ -301,6 +301,10 @@ def getLeaseInfo (self, context, sname, client_ids):
 
 def getPortInfo (self, context, sname, client_ids):
   res = self._getPortInfo(context, sname, client_ids)
+
+  if len(res) == 1:
+    return RetListProxy(res.values()[0], PINFOCOLS, PINFOROW)
+
   retobj = {}
   for k,v in res.items():
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
