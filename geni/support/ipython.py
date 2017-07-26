@@ -261,6 +261,9 @@ def dumpFlows (self, context, sname, datapaths, **kwargs):
       rmap["rule"] = row[-1]
       rmaps.append(rmap)
 
+    if len(res) == 1:
+      return RetListProxy(rmaps, FLOWCOLS, FLOWROW)
+
     retd[brname] = RetListProxy(rmaps, FLOWCOLS, FLOWROW)
   return retd
 
