@@ -236,8 +236,9 @@ def dumpMACs (self, context, sname, datapaths):
     datapaths = [datapaths]
 
   res = self._dumpMACs(context, sname, datapaths)
+
   if len(res) == 1:
-    return RetListProxy(macTableDecomp(res.values()[0], MACCOLS, MACROW)
+    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
 
   retd = {}
   for br,table in res.items():
