@@ -245,26 +245,31 @@ def dumpMACs (self, context, sname, datapaths):
     retd[br] = RetListProxy(macTableDecomp(table), MACCOLS, MACROW)
   return retd
 
+def flowTableDecomp (table):
+  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
+  rows = [[y.strip(",") for y in x.split(" ")] for x in table]
+  rmaps = []
+  for row in rows:
+    rmap = copy.copy(TEMPLATE)
+    for item in row[:-1]:
+      (key,val) = item.split("=")
+      rmap[key] = val
+    rmap["rule"] = row[-1]
+    rmaps.append(rmap)
+  return rmaps
 
 def dumpFlows (self, context, sname, datapaths, **kwargs):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
 
   res = self._dumpFlows(context, sname, datapaths, **kwargs)
-  retd = {}
-  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
-  for brname,table in res.items():
-    rows = [[y.strip(",") for y in x.split(" ")] for x in table]
-    rmaps = []
-    for row in rows:
-      rmap = copy.copy(TEMPLATE)
-      for item in row[:-1]:
-        (key,val) = item.split("=")
-        rmap[key] = val
-      rmap["rule"] = row[-1]
-      rmaps.append(rmap)
 
-    retd[brname] = RetListProxy(rmaps, FLOWCOLS, FLOWROW)
+  if len(res) == 1:
+    RetListProxy(flowTableDecomp(res.values()[0]), FLOWCOLS, FLOWROW)
+
+  retd = {}
+  for brname,table in res.items():
+    retd[brname] = RetListProxy(flowTableDecomp(table), FLOWCOLS, FLOWROW)
   return retd
 
 def getSTPInfo (self, context, sname, datapaths):
