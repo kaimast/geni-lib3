@@ -220,6 +220,13 @@ def replaceSymbol (module, name, func):
   setattr(module, "_%s" % (name), getattr(module, name))
   setattr(module, name, func)
 
+def macTableDecomp (row):
+  d = {}
+  d["port"] = int(row[0])
+  d["vlan"] = int(row[1])
+  d["mac"] = geni.types.EthernetMAC(row[2])
+  d["age"] = int(row[3])
+  return d
 
 def dumpMACs (self, context, sname, datapaths):
   if not isinstance(datapaths, list):
@@ -231,15 +238,10 @@ def dumpMACs (self, context, sname, datapaths):
   for br,table in res.items():
     rowobjs = []
     for row in table[1:]:
-      d = {}
-      d["port"] = int(row[0])
-      d["vlan"] = int(row[1])
-      d["mac"] = geni.types.EthernetMAC(row[2])
-      d["age"] = int(row[3])
-      rowobjs.append(d)
-    if len(res) == 1:
-      return RetListProxy(rowobjs, MACCOLS, MACROW)
+      rowobjs.append(macTableDecomp(row))
     retd[br] = RetListProxy(rowobjs, MACCOLS, MACROW)
+  if len(res) == 1:
+    return RetListProxy(rowobjs, MACCOLS, MACROW)
   return retd
 
 
