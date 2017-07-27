@@ -45,13 +45,13 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   print "\n".join(out)
 
 
-def topo (manifests):
+def topo (manifests, engine = "circo"):
   if not isinstance(manifests, list):
     manifests = [manifests]
 
   dotstr = geni.util.builddot(manifests)
   g = graphviz.Source(dotstr)
-  g.engine = "circo"
+  g.engine = engine
   return g
 
 LOGINROW = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td></tr>"
