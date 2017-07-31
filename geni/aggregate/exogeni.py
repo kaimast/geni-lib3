@@ -12,10 +12,10 @@ import sys
 from .core import AM
 
 class EGCompute(AM):
-  def __init__ (self, name, host, url = None):
+  def __init__ (self, name, host, cmid = None, url = None):
     if url is None:
       url = "https://%s:11443/orca/xmlrpc" % (host)
-    super(EGCompute, self).__init__(name, url, "amapiv2", "exogeni")
+    super(EGCompute, self).__init__(name, url, "amapiv2", "exogeni", cmid)
 
 EXOSM = EGCompute("exosm", "geni.renci.org")
 GPO = EGCompute("eg-gpo", "bbn-hn.exogeni.net")

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015 The University of Utah and Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017 The University of Utah and Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +22,7 @@ def Make(s):
   valid URN at all."""
   if GENI.isValidGENIURN(s):
     return GENI(s)
-  else:
-    return Base(s)
+  return Base(s)
 
 class MalformedURNError(Exception):
   """Exception indicating that a string is not a proper URN."""
@@ -249,8 +248,7 @@ class GENI (Base):
     matches = GENI.GENIURN_REGEX.match(s)
     if matches is None:
       return None
-    else:
-      return matches.group("type")
+    return matches.group("type")
 
   @staticmethod
   def isValidGENIURN(s):
@@ -269,9 +267,9 @@ def Interface (authorities, name):
 def Image (authorities, name, version = None):
   """Create a new GENI URN with type 'image'."""
   if version is not None:
-      constructed_name = "%s:%s" % (name, str(version))
+    constructed_name = "%s:%s" % (name, str(version))
   else:
-      constructed_name = name
+    constructed_name = name
   return GENI(authorities, GENI.TYPE_IMAGE, constructed_name)
 
 def Link (authorities, name):
@@ -338,7 +336,7 @@ if __name__ == "__main__":
   check_urn(User(IG.Clemson,"kwang"),
             "urn:publicid:IDN+instageni.clemson.edu+user+kwang")
   check_urn(GENI("wisc.cloudlab.us", "image", "ramcloud-PG0:hq6_ubuntu16.04_singlePC:0"),
-          "urn:publicid:IDN+wisc.cloudlab.us+image+ramcloud-PG0:hq6_ubuntu16.04_singlePC:0")
+            "urn:publicid:IDN+wisc.cloudlab.us+image+ramcloud-PG0:hq6_ubuntu16.04_singlePC:0")
 
   check_type("urn:isbn:0345371984",Base)
   check_type("urn:publicid:IDN+utahddc.geniracks.net+image+UBUNTU64-STD",GENI)

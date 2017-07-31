@@ -35,8 +35,7 @@ class Project(object):
   def __str__ (self):
     if self.expired:
       return "[%s, %s, %s, EXPIRED]" % (self.urn, self.uid, self.role)
-    else:
-      return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
+    return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
 
   def __repr__ (self):
     return "<%s, %s>" % (self.urn, self.role)
@@ -82,7 +81,7 @@ class Member(object):
     try:
       self.emulab_role = project_info["PROJECT_EMULAB_ROLE"]
     except KeyError:
-     pass
+      pass
 
   def _set_from_member (self, member_info):
     self.urn = member_info["MEMBER_URN"]
@@ -216,33 +215,43 @@ class Framework(object):
     return self._userurn
 
 
-
 class ProtoGENI(Framework):
-  def __init__ (self, name = "pg"):
-    super(ProtoGENI, self).__init__(name)
-    self._type = "pgch"
-
-
-class Emulab(ProtoGENI):
   SA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
-  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/ma"
+  MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
 
-  def __init__ (self):
-    super(Emulab, self).__init__("emulab")
+  def __init__ (self, name = "pg"):
+    super(ProtoGENI, self).__init__("emulab")
     self._type = "pgch"
-    self._ch = "https://www.emulab.net:443/protogeni/xmlrpc/ch"
+    self._ch = "https://www.emulab.net:12369/protogeni/xmlrpc/ch"
     self._sa = None
     self._ma = None
 
   @property
   def project (self):
-    return super(Emulab, self).project
+    return super(ProtoGENI, self).project
 
   @project.setter
   def project (self, val):
-    super(Emulab, self).project.fset(self, val)
-    self._sa = Emulab.SA % (val)
-    self._ma = Emulab.MA % (val)
+    super(ProtoGENI, self.__class__).project.fset(self, val) # This is hinky
+    self._sa = ProtoGENI.SA % (val)
+    self._ma = ProtoGENI.MA % (val)
+
+  def loadComponents (self, context):
+    from ..minigcf import pgch1
+
+    res = pgch1.ListComponents(self._ch, False, self.cert, self.key, context.ucred_pg)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
+
+  def getUserCredentials (self, owner_urn): # pylint: disable=unused-argument
+    from ..minigcf import pgch1
+    res = pgch1.GetCredential(self._sa, False, self.cert, self.key)
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
 
 class CHAPI1(Framework):
@@ -263,6 +272,15 @@ class CHAPI2(Framework):
   def sliceNameToURN (self, slice_name, project = None):
     ### TODO: Exception
     return None
+
+  def loadAggregates (self):
+    from ..minigcf import chapi2
+
+    res = chapi2.lookup_service_info(self._ch, False, self.cert, self.key, [], "AGGREGATE_MANAGER")
+    if res["code"] == 0:
+      return res["value"]
+    else:
+      raise ClearinghouseError(res["output"], res)
 
   def createProject (self, context, name, exp, desc):
     from ..minigcf import chapi2
@@ -333,7 +351,7 @@ class CHAPI2(Framework):
       else:
         for info in res["value"]:
           projects.append(CHAPI2Project(info))
-      return projects 
+      return projects
     else:
       raise ClearinghouseError(res["output"], res)
 
@@ -378,7 +396,7 @@ class CHAPI2(Framework):
       members = [members]
 
     slice_urn = self.sliceNameToURN(slicename)
-    
+
     res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                          slice_urn, add = [(x.urn, role) for x in members])
 
@@ -394,7 +412,7 @@ class CHAPI2(Framework):
       members = [members]
 
     slice_urn = self.sliceNameToURN(slicename)
-    
+
     res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                          slice_urn, remove = [x.urn for x in members])
 
@@ -509,9 +527,9 @@ class Portal(CHAPI2):
 
   def getPendingProjectRequests (self, context):
     from ..minigcf import chapi2
-    res = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key, 
-                                           [context.ucred_api3], self._getMemberUID(context),
-                                           self.projectInfo(context).uid)
+    res = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key,
+                                      [context.ucred_api3], self._getMemberUID(context),
+                                      self.projectInfo(context).uid)
     if res["code"] == 0:
       return res["value"]
     else:
@@ -536,9 +554,9 @@ class EmulabCH2(CHAPI2):
   def __init__ (self):
     super(EmulabCH2, self).__init__("emulab-ch2")
     self._authority = ""
-    self._ch = None
-    self._sa = None
-    self._ma = None
+    self._ch = EmulabCH2.SA
+    self._sa = EmulabCH2.SA
+    self._ma = EmulabCH2.MA
 
   @property
   def projecturn (self):
