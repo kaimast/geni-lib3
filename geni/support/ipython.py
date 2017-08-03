@@ -324,17 +324,18 @@ def clearL2Table (self, context, sname, client_ids):
     client_ids = [client_ids]
 
   res = self._clearL2Table(context, sname, client_ids)
-  retd = {}
-  for vsw, table in res.items():
-    rowobjs = []
-    for mac, iface in table.iteritems():
-      d = {}
-      d["mac"] = mac
-      d["interface"] = iface
-      rowobjs.append(d)
-    retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
+  # Return nothing when cleared
+  #retd = {}
+  #for vsw, table in res.items():
+  #  rowobjs = []
+  #  for mac, iface in table.iteritems():
+  #    d = {}
+  #    d["mac"] = mac
+  #    d["interface"] = iface
+  #    rowobjs.append(d)
+  #  retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
 
-  return retd
+  return res
 
 replaceSymbol(VTS, "getL2Table", getL2Table)
 replaceSymbol(VTS, "clearL2Table", clearL2Table)
