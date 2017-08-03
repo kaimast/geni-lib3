@@ -299,8 +299,8 @@ replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
 
 
-L2TABLECOLS = ["Port", "MAC"]
-L2TABLEROW = "<tr><td>{interface}</td><td>{mac}</td></tr>"
+L2TABLECOLS = ["Port", "VLAN", "MAC", "Age"]
+L2TABLEROW = "<tr><td>{interface}</td><td>{vlan}</td><td>{mac}</td><td>{age}</td></tr>"
 
 def getL2Table (self, context, sname, client_ids):
   if not isinstance(client_ids, list):
@@ -314,7 +314,7 @@ def getL2Table (self, context, sname, client_ids):
       d = {}
       d["port"] = row[0]
       d["vlan"] = int(row[1])
-      d["mac"] = geni.types.EthernetMAC(row[2])
+      d["mac"] = row[2]
       d["age"] = int(row[3])
       rowobjs.append(d)
     retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
