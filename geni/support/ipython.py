@@ -311,11 +311,12 @@ def getL2Table (self, context, sname, client_ids):
   for vsw, table in res.items():
     rowobjs = []
     for row in table:
+      interface, vlan, mac, age = row
       d = {}
-      d["port"] = row[0]
-      d["vlan"] = row[1]
-      d["mac"] = row[2]
-      d["age"] = row[3]
+      d["interface"] = interface
+      d["vlan"] = vlan
+      d["mac"] = mac
+      d["age"] = age
       rowobjs.append(d)
     retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
 
@@ -326,16 +327,6 @@ def clearL2Table (self, context, sname, client_ids):
     client_ids = [client_ids]
 
   res = self._clearL2Table(context, sname, client_ids)
-  # Return nothing when cleared
-  #retd = {}
-  #for vsw, table in res.items():
-  #  rowobjs = []
-  #  for mac, iface in table.iteritems():
-  #    d = {}
-  #    d["mac"] = mac
-  #    d["interface"] = iface
-  #    rowobjs.append(d)
-  #  retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
 
   return res
 
