@@ -310,10 +310,12 @@ def getL2Table (self, context, sname, client_ids):
   retd = {}
   for vsw, table in res.items():
     rowobjs = []
-    for mac, iface in table.iteritems():
+    for row in table:
       d = {}
-      d["mac"] = mac
-      d["interface"] = iface
+      d["port"] = row[0]
+      d["vlan"] = int(row[1])
+      d["mac"] = geni.types.EthernetMAC(row[2])
+      d["age"] = int(row[3])
       rowobjs.append(d)
     retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
 
