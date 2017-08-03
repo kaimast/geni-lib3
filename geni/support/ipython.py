@@ -316,6 +316,8 @@ def getL2Table (self, context, sname, client_ids):
       d["interface"] = interface
       d["vlan"] = vlan
       d["mac"] = mac
+      if str(age) == "None":
+        age = "-"
       d["age"] = age
       rowobjs.append(d)
     retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
