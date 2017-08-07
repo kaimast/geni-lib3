@@ -222,9 +222,12 @@ def replaceSymbol (module, name, func):
 
 def macTableDecomp (table):
   rowobjs = []
-  for row in table[1:]:
+  for row in table:
     d = {}
-    d["port"] = int(row[0])
+    if "eth" in row[0]:
+      d["port"] = row[0]
+    else:
+      d["port"] = int(row[0])
     d["vlan"] = int(row[1])
     d["mac"] = geni.types.EthernetMAC(row[2])
     if str(row[3]) == "None":
@@ -321,7 +324,7 @@ replaceSymbol(VTS, "getPortInfo", getPortInfo)
 
 
 L2TABLECOLS = ["Port", "VLAN", "MAC", "Age"]
-L2TABLEROW = "<tr><td>{interface}</td><td>{vlan}</td><td>{mac}</td><td>{age}</td></tr>"
+L2TABLEROW = "<tr><td>{port}</td><td>{vlan}</td><td>{mac}</td><td>{age}</td></tr>"
 
 def getL2Table (self, context, sname, client_ids):
   if not isinstance(client_ids, list):
