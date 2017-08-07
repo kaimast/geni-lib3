@@ -222,7 +222,7 @@ def replaceSymbol (module, name, func):
 
 def macTableDecomp (table):
   rowobjs = []
-  for row in table:
+  for row in table[1:]:
     d = {}
     if "eth" in row[0]:
       d["port"] = row[0]
