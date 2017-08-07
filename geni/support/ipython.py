@@ -333,9 +333,10 @@ def getL2Table (self, context, sname, client_ids):
     return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
 
   retd = {}
-  for bridge, table in res.items():
-    rowobjs = macTableDecomp(table)
-    retd[bridge] = RetListProxy(rowobjs, MACCOLS, MACROW)
+  for l2d in res:
+    for bridge, table in l2d.items():
+      rowobjs = macTableDecomp(table)
+      retd[bridge] = RetListProxy(rowobjs, MACCOLS, MACROW)
 
   return retd
 
