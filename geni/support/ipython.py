@@ -323,18 +323,18 @@ replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
 
 
-L2TABLECOLS = ["Port", "VLAN", "MAC", "Age"]
-L2TABLEROW = "<tr><td>{port}</td><td>{vlan}</td><td>{mac}</td><td>{age}</td></tr>"
-
 def getL2Table (self, context, sname, client_ids):
   if not isinstance(client_ids, list):
     client_ids = [client_ids]
 
   res = self._getL2Table(context, sname, client_ids)
+  if len(res) == 1:
+    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
+
   retd = {}
-  for vsw, table in res.items():
+  for bridge, table in res.items():
     rowobjs = macTableDecomp(table)
-    retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
+    retd[bridge] = RetListProxy(rowobjs, MACCOLS, MACROW)
 
   return retd
 
