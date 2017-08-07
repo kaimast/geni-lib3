@@ -227,7 +227,10 @@ def macTableDecomp (table):
     d["port"] = int(row[0])
     d["vlan"] = int(row[1])
     d["mac"] = geni.types.EthernetMAC(row[2])
-    d["age"] = int(row[3])
+    if str(row[3]) == "None":
+      d["age"] = "-"
+    else:
+      d["age"] = int(row[3])
     rowobjs.append(d)
   return rowobjs
 
@@ -327,17 +330,7 @@ def getL2Table (self, context, sname, client_ids):
   res = self._getL2Table(context, sname, client_ids)
   retd = {}
   for vsw, table in res.items():
-    rowobjs = []
-    for row in table:
-      interface, vlan, mac, age = row
-      d = {}
-      d["interface"] = interface
-      d["vlan"] = vlan
-      d["mac"] = mac
-      if str(age) == "None":
-        age = "-"
-      d["age"] = age
-      rowobjs.append(d)
+    rowobjs = macTableDecomp(table)
     retd[vsw] = RetListProxy(rowobjs, L2TABLECOLS, L2TABLEROW)
 
   return retd
