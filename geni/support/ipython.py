@@ -328,6 +328,7 @@ def getL2Table (self, context, sname, client_ids):
     client_ids = [client_ids]
 
   res = self._getL2Table(context, sname, client_ids)
+
   if len(res) == 1:
     return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
 
