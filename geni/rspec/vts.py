@@ -129,23 +129,29 @@ class DelayInfo(object):
 
 class LossInfo(object):
   def __init__ (self, percent):
-    self._percent = None
     self.percent = percent
 
-  @property
-  def percent (self):
-    return self._percent
-
-  @percent.setter
-  def percent (self, val):
-    self._percent = decimal.Decimal(val)
-
   def __json__ (self):
-    return {"type" : "egress-loss", "percent" : "%s" % (self.percent)}
+    return {"type" : "egress-loss", "percent" : "%d" % (self.percent)}
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
-    d.attrib["percent"] = "%s" % (self.percent)
+    d.attrib["percent"] = "%d" % (self.percent)
+    return d
+
+
+class ReorderInfo(object):
+  def __init__ (self, percent, correlation, gap = None):
+    self.percent = percent
+    self.correlation = correlation
+    self.gap = gap
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}egress-reorder" % (Namespaces.VTS))
+    d.attrib["percent"] = str(self.percent)
+    d.attrib["correlation"] = str(self.correlation)
+    if self.gap:
+      d.attrib["gap"] = str(self.gap)
     return d
 
 
@@ -616,6 +622,7 @@ class InternalCircuit(Port):
     self.target = target
     self.delay_info = delay_info
     self.loss_info = loss_info
+    self.reorder_info = None
 
   def _write (self, element):
     p = super(InternalCircuit, self)._write(element)
@@ -624,6 +631,7 @@ class InternalCircuit(Port):
       p.attrib["vlan-id"] = str(self.vlan)
     if self.delay_info: self.delay_info._write(p)
     if self.loss_info: self.loss_info._write(p)
+    if self.reorder_info: self.reorder_info._write(p)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p

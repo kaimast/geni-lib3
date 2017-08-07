@@ -30,4 +30,3 @@ class REQSTATUS(object):
   APPROVED = 1
   CANCELLED = 2
   REJECTED = 3
-

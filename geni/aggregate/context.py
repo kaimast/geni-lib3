@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,6 @@ import os.path
 import datetime
 
 import lxml.etree as ET
-
-from ..exceptions import NoUserError
 
 class SlicecredProxy(object):
   def __init__ (self, context):
@@ -126,13 +124,13 @@ class Context(object):
     self.uname = None
     self.path = None
 
-  def save (self):
-    import geni._coreutil as GCU
+#  def save (self):
+#    import geni._coreutil as GCU
 
-    obj = {}
-    obj["framework"] = context.cf.name
-    obj["cert-path"] = context.cf.cert_path
-    obj["key-path"] = context._key
+#    obj = {}
+#    obj["framework"] = context.cf.name
+#    obj["cert-path"] = context.cf.cert_path
+#    obj["key-path"] = context._key
 
   @property
   def userurn (self):
@@ -142,7 +140,7 @@ class Context(object):
     info = self.getSliceInfo(sname)
     return info.path
 
-  def _getCredInfo(self, path):
+  def _getCredInfo (self, path):
     r = ET.parse(path)
     expstr = r.find("credential/expires").text
     if expstr[-1] == 'Z':
@@ -174,6 +172,10 @@ class Context(object):
     ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
     ucd["geni_value"] = open(ucinfo[0], "r").read()
     return ucd
+
+  @property
+  def ucred_pg (self):
+    return open(self._ucred_info[0], "r").read()
 
   @property
   def project (self):
@@ -223,18 +225,26 @@ class Context(object):
 ### TODO: User credentials need to belong to Users, or fix up this profile nonsense
   @property
   def _ucred_info (self):
-    if self._usercred_info is None:
+    if (self._usercred_info is None) or (self._usercred_info[1] < datetime.datetime.now()):
       ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self.cf.name, self.uname)
       if not os.path.exists(ucpath):
         cred = self.cf.getUserCredentials(self.userurn)
 
         f = open(ucpath, "w+")
         f.write(cred)
-        path = f.name
         f.close()
 
       (expires, urn, typ, version) = self._getCredInfo(ucpath)
       self._usercred_info = (ucpath, expires, urn, typ, version)
+
+    if self._usercred_info[1] < datetime.datetime.now():
+      cred = self.cf.getUserCredentials(self.userurn)
+      f = open(ucpath, "w+")
+      f.write(cred)
+      f.close()
+      (expires, urn, typ, version) = self._getCredInfo(ucpath)
+      self._usercred_info = (ucpath, expires, urn, typ, version)
+
     return self._usercred_info
 
   @property
@@ -278,4 +288,3 @@ class Context(object):
       scinfo = SliceCredInfo(self, sname)
       self._slicecreds["%s-%s" % (project, sname)] = scinfo
     return self._slicecreds["%s-%s" % (project, sname)]
-

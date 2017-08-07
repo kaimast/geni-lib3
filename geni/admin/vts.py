@@ -147,5 +147,3 @@ class Connection(germ.Connection):
     url = "https://%s:%d/core/admin/vts/sliver/%s/deallocate" % (self.host, self.port, sliver_urn)
     r = requests.get(url, **self.rkwargs)
     return r.json()["value"]
-
-

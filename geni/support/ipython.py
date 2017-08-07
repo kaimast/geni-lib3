@@ -45,13 +45,13 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   print "\n".join(out)
 
 
-def topo (manifests):
+def topo (manifests, engine = "circo"):
   if not isinstance(manifests, list):
     manifests = [manifests]
 
   dotstr = geni.util.builddot(manifests)
   g = graphviz.Source(dotstr)
-  g.engine = "circo"
+  g.engine = engine
   return g
 
 LOGINROW = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td></tr>"
@@ -63,7 +63,7 @@ def loginInfo (manifests):
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
 def showErrorURL (show = False):
-  global SHOW_ERROR_URL
+  global SHOW_ERROR_URL # pylint disable=global-statement
   SHOW_ERROR_URL = show
 
 
@@ -173,7 +173,8 @@ class RetListProxy(object):
     return self._obj[i]
 
   def __getslice__ (self, i, j):
-    i = max(i, 0); j = max(j, 0)
+    i = max(i, 0)
+    j = max(j, 0)
     return self._obj[i:j]
 
   def __contains__ (self, item):
@@ -219,45 +220,56 @@ def replaceSymbol (module, name, func):
   setattr(module, "_%s" % (name), getattr(module, name))
   setattr(module, name, func)
 
+def macTableDecomp (table):
+  rowobjs = []
+  for row in table[1:]:
+    d = {}
+    d["port"] = int(row[0])
+    d["vlan"] = int(row[1])
+    d["mac"] = geni.types.EthernetMAC(row[2])
+    d["age"] = int(row[3])
+    rowobjs.append(d)
+  return rowobjs
 
 def dumpMACs (self, context, sname, datapaths):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
 
   res = self._dumpMACs(context, sname, datapaths)
+
+  if len(res) == 1:
+    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
+
   retd = {}
   for br,table in res.items():
-    rowobjs = []
-    for row in table[1:]:
-      d = {}
-      d["port"] = int(row[0])
-      d["vlan"] = int(row[1])
-      d["mac"] = geni.types.EthernetMAC(row[2])
-      d["age"] = int(row[3])
-      rowobjs.append(d)
-    retd[br] = RetListProxy(rowobjs, MACCOLS, MACROW)
+    retd[br] = RetListProxy(macTableDecomp(table), MACCOLS, MACROW)
   return retd
 
+def flowTableDecomp (table):
+  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
+  rows = [[y.strip(",") for y in x.split(" ")] for x in table]
+  rmaps = []
+  for row in rows:
+    rmap = copy.copy(TEMPLATE)
+    for item in row[:-1]:
+      (key,val) = item.split("=")
+      rmap[key] = val
+    rmap["rule"] = row[-1]
+    rmaps.append(rmap)
+  return rmaps
 
 def dumpFlows (self, context, sname, datapaths, **kwargs):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
 
   res = self._dumpFlows(context, sname, datapaths, **kwargs)
+
+  if len(res) == 1:
+    return RetListProxy(flowTableDecomp(res.values()[0]), FLOWCOLS, FLOWROW)
+
   retd = {}
-  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
   for brname,table in res.items():
-    rows = [[y.strip(",") for y in x.split(" ")] for x in table]
-    rmaps = []
-    for row in rows:
-      rmap = copy.copy(TEMPLATE)
-      for item in row[:-1]:
-        (key,val) = item.split("=")
-        rmap[key] = val
-      rmap["rule"] = row[-1]
-      rmaps.append(rmap)
-        
-    retd[brname] = RetListProxy(rmaps, FLOWCOLS, FLOWROW)
+    retd[brname] = RetListProxy(flowTableDecomp(table), FLOWCOLS, FLOWROW)
   return retd
 
 def getSTPInfo (self, context, sname, datapaths):
@@ -265,6 +277,9 @@ def getSTPInfo (self, context, sname, datapaths):
     datapaths = [datapaths]
 
   res = self._getSTPInfo(context, sname, datapaths)
+  if len(res) == 1:
+    return STPProxy(res[0])
+
   retobj = {}
   for br in res:
     retobj[br["client-id"]] = STPProxy(br)
@@ -275,18 +290,21 @@ def getLeaseInfo (self, context, sname, client_ids):
     client_ids = [client_ids]
 
   res = self._getLeaseInfo(context, sname, client_ids)
+  
+  if len(res) == 1:
+    return RetListProxy(res.values()[0], LEASECOLS, LEASEROW)
+  
   retobj = {}
-  if isinstance(res, list):
-    for entry in res:
-      for k,v in entry.items():
-        retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
-  else:
-    for k,v in res.items():
-      retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
+  for k,v in res.items():
+    retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
   return retobj
 
 def getPortInfo (self, context, sname, client_ids):
   res = self._getPortInfo(context, sname, client_ids)
+
+  if len(res) == 1:
+    return RetListProxy(res.values()[0], PINFOCOLS, PINFOROW)
+
   retobj = {}
   for k,v in res.items():
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
@@ -468,4 +486,3 @@ def load_ipython_extension (ipy):
 
   ipy.push(imports)
   ipy.set_custom_exc((AMError,), am_exc_handler)
-

@@ -21,6 +21,7 @@ def parse_args ():
     help="Path to certificate private key, if not in the same file as the certificate", default = None)
   parser.add_argument("--pubkey", dest="pubkey_path", help = "Path to SSH public key")
   parser.add_argument("--project", dest="project", help = "Name of the default project to set in this context")
+  parser.add_argument("--out-path", dest="out_path", default=None, help="Filename to save context to")
   return parser.parse_args()
 
 def parseCert (certpath):
@@ -69,7 +70,8 @@ def main ():
   print "User URN: %s" % (user_urn)
   print "Username: %s" % (username)
 
-  geni.util._buildContext(framework, opts.cert_path, key_path, username, user_urn, opts.pubkey_path, opts.project)
+  geni.util._buildContext(framework, opts.cert_path, key_path, username, user_urn, opts.pubkey_path,
+                          opts.project, opts.out_path)
 
 
 if __name__ == '__main__':
