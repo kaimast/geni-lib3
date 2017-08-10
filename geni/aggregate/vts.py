@@ -113,10 +113,6 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
 
-  def dumpMACs (self, context, sname, datapaths):
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:dump-macs",
-                           options={"datapaths" : datapaths})
-
   def getL2Table (self, context, sname, client_ids):
     if not isinstance(client_ids, list): client_ids = [client_ids]
     return self._apiv3.poa(context, self.urlv3, sname, "api:l2-switch:get-l2-table",
