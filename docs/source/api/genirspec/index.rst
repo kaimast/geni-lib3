@@ -7,4 +7,5 @@ geni.rspec
   igext
   pg
   pgad
+  vts
   vtsmanifest
