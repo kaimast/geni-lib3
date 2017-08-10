@@ -224,11 +224,8 @@ def macTableDecomp (table):
   rowobjs = []
   for row in table[1:]:
     d = {}
-    if "eth" in row[0]:
-      d["port"] = row[0]
-    else:
-      d["port"] = int(row[0])
-    d["vlan"] = int(row[1])
+    d["port"] = row[0]
+    d["vlan"] = row[1]
     d["mac"] = geni.types.EthernetMAC(row[2])
     if str(row[3]) == "None":
       d["age"] = "-"
