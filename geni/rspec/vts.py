@@ -694,11 +694,10 @@ class HgMount(Mount):
   """ Clone a public mercurial repo on a host
 
   Args:
-    name (str): a reference name given on the mounting AM, must be unique within a slice
-    source (str): the path to the source of repo
-    mount_path (str): the path where repo should be placed on the host
+    name (str): a reference name given on the mounting AM, must be unique within a sliver
+    source (str): the URL to the source of repo
+    mount_path (str): the path where the repo would be mounted in the host filesystem
     branch (str): the branch of the repo to be cloned on host (if any)
-                  (default = 'default' branch of repo)
   """
   def __init__ (self, name, source, mount_path, branch = "default"):
     super(HgMount, self).__init__("hg", name, mount_path)
