@@ -234,20 +234,6 @@ def macTableDecomp (table):
     rowobjs.append(d)
   return rowobjs
 
-def dumpMACs (self, context, sname, datapaths):
-  if not isinstance(datapaths, list):
-    datapaths = [datapaths]
-
-  res = self._dumpMACs(context, sname, datapaths)
-
-  if len(res) == 1:
-    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
-
-  retd = {}
-  for br,table in res.items():
-    retd[br] = RetListProxy(macTableDecomp(table), MACCOLS, MACROW)
-  return retd
-
 def flowTableDecomp (table):
   TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
   rows = [[y.strip(",") for y in x.split(" ")] for x in table]
@@ -313,7 +299,6 @@ def getPortInfo (self, context, sname, client_ids):
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
   return retobj
 
-replaceSymbol(VTS, "dumpMACs", dumpMACs)
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
 replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
