@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@ import xmlrpclib
 class HTTP(object):
   """Global configuration options for MiniGCF HTTP(S) calls."""
 
-  TIMEOUT = 30
+  TIMEOUT = 60
   """Initial response timeout.  Note that this is not the time limit on the entire
   download, just the initial server response."""
 
