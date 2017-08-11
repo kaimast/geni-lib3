@@ -36,6 +36,9 @@ class GenericPort(object):
     p.client_id = elem.get("client_id")
     return p
 
+  def _decomposeClientID (self):
+    
+
   @property
   def name (self):
     # Assumes that the client_id is in the format "dp_name:port_name"
