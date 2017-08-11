@@ -30,6 +30,8 @@ class GenericPort(object):
     self.client_id = None
     self.type = typ
     self.cross_sliver = False
+    self._name = None
+    self._dpname = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -40,10 +42,10 @@ class GenericPort(object):
   def _decomposeClientID (self):
     # Assumes that the client_id is in the format "dp_name:port_name"
     if self.client_id.count(":") == 1:
-      (self._name, self_dpname) = self.client_id.split(":")
+      (self._name, self._dpname) = self.client_id.split(":")
     # Assumes that the client_id is in the format "dp_name:_x_:port_name"
     elif self.client_id.count(":") == 2: 
-      (self._name, _, self_dpname) = self.client_id.split(":")
+      (self._name, _, self._dpname) = self.client_id.split(":")
       self.cross_sliver = True
 
   @property
@@ -72,6 +74,7 @@ class InternalContainerPort(GenericPort):
     self.remote_client_id = None
     self._macaddress = None
     self._alias = None
+    self._remote_dpname = None
 
   @property
   def macaddress (self):
@@ -100,16 +103,19 @@ class InternalContainerPort(GenericPort):
 
   @property
   def remote_dpname (self):
-    if self.remote_client_id.count(":") == 1:
-      return self.remote_client_id.split(":")[0]
-    return None
-    ### TODO: Raise an exception here
+    if not self._remote_dpname:
+      if self.remote_client_id.count(":") == 1:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+      elif self.remote_client_id.count(":") == 2:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+    return self._remote_dpname
 
 
 class InternalPort(GenericPort):
   def __init__ (self):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
+    self._remote_dpname = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -121,10 +127,12 @@ class InternalPort(GenericPort):
 
   @property
   def remote_dpname (self):
-    if self.remote_client_id.count(":") == 1:
-      return self.remote_client_id.split(":")[0]
-    return None
-    ### TODO: Raise an exception here
+    if not self._remote_dpname:
+      if self.remote_client_id.count(":") == 1:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+      elif self.remote_client_id.count(":") == 2:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+    return self._remote_dpname
 
 
 class GREPort(GenericPort):
