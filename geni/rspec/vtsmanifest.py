@@ -29,6 +29,7 @@ class GenericPort(object):
   def __init__ (self, typ):
     self.client_id = None
     self.type = typ
+    self.cross_sliver = False
 
   @classmethod
   def _fromdom (cls, elem):
@@ -37,22 +38,25 @@ class GenericPort(object):
     return p
 
   def _decomposeClientID (self):
-    
+    # Assumes that the client_id is in the format "dp_name:port_name"
+    if self.client_id.count(":") == 1:
+      (self._name, self_dpname) = self.client_id.split(":")
+    # Assumes that the client_id is in the format "dp_name:_x_:port_name"
+    elif self.client_id.count(":") == 2: 
+      (self._name, _, self_dpname) = self.client_id.split(":")
+      self.cross_sliver = True
 
   @property
   def name (self):
-    # Assumes that the client_id is in the format "dp_name:port_name"
-    if self.client_id.count(":") == 1:
-      return self.client_id[self.client_id.index(":")+1:]
-    return None
-    ### TODO: Raise an exception here
+    if not self._name:
+      self._decomposeClientID()
+    return self._name
 
   @property
   def dpname (self):
-    if self.client_id.count(":") == 1:
-      return self.client_id.split(":")[0]
-    return None
-    ### TODO: Raise an exception here
+    if not self._dpname:
+      self._decomposeClientID()
+    return self._dpname
 
 
 class InternalContainerPort(GenericPort):
