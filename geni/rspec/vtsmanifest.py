@@ -42,10 +42,10 @@ class GenericPort(object):
   def _decomposeClientID (self):
     # Assumes that the client_id is in the format "dp_name:port_name"
     if self.client_id.count(":") == 1:
-      (self._name, self._dpname) = self.client_id.split(":")
+      (self._dpname, self._name) = self.client_id.split(":")
     # Assumes that the client_id is in the format "dp_name:_x_:port_name"
     elif self.client_id.count(":") == 2: 
-      (self._name, _, self._dpname) = self.client_id.split(":")
+      (self._dpname, _, self._name) = self.client_id.split(":")
       self.cross_sliver = True
 
   @property
