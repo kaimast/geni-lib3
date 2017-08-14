@@ -22,6 +22,12 @@ class Namespaces(object):
   VTS = GNS.Namespace("vts", "http://geni.bssoftworks.com/rspec/ext/vts/request/1")
   SDN = GNS.Namespace("sdn", "http://geni.bssoftworks.com/rspec/ext/sdn/request/1")
 
+class BadImageTypeError(Exception):
+  def __init__ (self, rtype):
+    self.rtype = rtype
+  def __str__ (self):
+    return "Supplied image must be of type %s" % (self.rtype)
+
 ################################################
 # Base Request - Must be at top for EXTENSIONS #
 ################################################
@@ -492,6 +498,8 @@ Request.EXTENSIONS.append(("L2SSLVPNServer", SSLVPNFunction))
 class Datapath(Resource):
   def __init__ (self, image, client_id):
     super(Datapath, self).__init__()
+    if not isinstance(image, DatapathImage):
+      raise BadImageTypeError(str(DatapathImage))
     self.image = image
     self.ports = []
     self.client_id = client_id
