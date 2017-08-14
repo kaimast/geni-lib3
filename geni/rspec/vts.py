@@ -487,6 +487,7 @@ class SSLVPNFunction(Resource):
     return d
 
 Request.EXTENSIONS.append(("SSLVPNFunction", SSLVPNFunction))
+Request.EXTENSIONS.append(("L2SSLVPNServer", SSLVPNFunction))
 
 class Datapath(Resource):
   def __init__ (self, image, client_id):
