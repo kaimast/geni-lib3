@@ -692,6 +692,14 @@ Container.EXTENSIONS.append(("Mount", Mount))
 
 
 class HgMount(Mount):
+  """ Clone a public mercurial repo on a host
+
+  Args:
+    name (str): a reference name given on the mounting AM, must be unique within a sliver
+    source (str): the URL to the source of repository
+    mount_path (str): the path where the repository would be mounted in the host filesystem
+    branch (str): the branch of the repository to be cloned on host (if any)
+  """
   def __init__ (self, name, source, mount_path, branch = "default"):
     super(HgMount, self).__init__("hg", name, mount_path)
     self.attrs["source"] = source

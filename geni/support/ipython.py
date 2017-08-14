@@ -224,26 +224,15 @@ def macTableDecomp (table):
   rowobjs = []
   for row in table[1:]:
     d = {}
-    d["port"] = int(row[0])
-    d["vlan"] = int(row[1])
+    d["port"] = row[0]
+    d["vlan"] = row[1]
     d["mac"] = geni.types.EthernetMAC(row[2])
-    d["age"] = int(row[3])
+    if row[3] is None:
+      d["age"] = "-"
+    else:
+      d["age"] = int(row[3])
     rowobjs.append(d)
   return rowobjs
-
-def dumpMACs (self, context, sname, datapaths):
-  if not isinstance(datapaths, list):
-    datapaths = [datapaths]
-
-  res = self._dumpMACs(context, sname, datapaths)
-
-  if len(res) == 1:
-    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
-
-  retd = {}
-  for br,table in res.items():
-    retd[br] = RetListProxy(macTableDecomp(table), MACCOLS, MACROW)
-  return retd
 
 def flowTableDecomp (table):
   TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
@@ -310,11 +299,39 @@ def getPortInfo (self, context, sname, client_ids):
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
   return retobj
 
-replaceSymbol(VTS, "dumpMACs", dumpMACs)
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
 replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
+
+
+def getL2Table (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
+  res = self._getL2Table(context, sname, client_ids)
+
+  if len(res) == 1:
+    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
+
+  retd = {}
+  for l2d in res:
+    for bridge, table in l2d.items():
+      rowobjs = macTableDecomp(table)
+      retd[bridge] = RetListProxy(rowobjs, MACCOLS, MACROW)
+
+  return retd
+
+def clearL2Table (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
+  res = self._clearL2Table(context, sname, client_ids)
+
+  return res
+
+replaceSymbol(VTS, "getL2Table", getL2Table)
+replaceSymbol(VTS, "clearL2Table", clearL2Table)
 
 
 ARP_FILTER = ["hw-address", "ip-address", "status", "device"]
