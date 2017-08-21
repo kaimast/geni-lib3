@@ -12,6 +12,7 @@ import multiprocessing as MP
 import os
 import os.path
 import shutil
+import subprocess
 import tempfile
 import time
 import traceback as tb
@@ -438,6 +439,13 @@ class PathNotFoundError(Exception):
   def __str__ (self):
     return "The path %s does not exist." % (self._path)
 
+def _find_ssh_keygen (self):
+  PATHS = ["/usr/bin/ssh-keygen", "/bin/ssh-keygen", "/usr/sbin/ssh-keygen", "/sbin/ssh-keygen"]
+  for path in PATHS:
+    if os.path.exists(path):
+      return path
+
+MAKE_KEYPAIR = (-1, 1)
 
 def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
   import geni._coreutil as GCU
@@ -479,10 +487,15 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   except OSError:
     pass
 
-  # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
   pkpath = pubkey_path
-  if not pkpath:
+
+  # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
+  # This will catch if creation was requested but failed
+  if not pkpath or pkpath == MAKE_KEYPAIR:
+    found_private = False
+
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
+      found_private = True
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
         # If your umask isn't already 0, we can't safely create this file with the right permissions
         with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
@@ -492,6 +505,13 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     if not os.path.exists(pkpath):
       with open(pkpath, "w+") as tf:
         tf.write(zf.open(zip_pubkey_path).read())
+
+    # If we don't find a proper keypair, we'll make you one if you asked for it
+    # This preserves your old pubkey if it existed in case you want to use that later
+    if not found_private and pkpath == MAKE_KEYPAIR:
+      keygen = _find_ssh_keygen()
+      subprocess.call("%s -t rsa -b 2048 -f ~/.ssh/genilib_rsa -N ''" % (keygen))
+      pkpath = os.path.expanduser("~/.ssh/genilib_rsa.pub")
   else:
     pkpath = os.path.expanduser(pubkey_path)
     if not os.path.exists(pkpath):

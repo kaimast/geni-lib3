@@ -427,7 +427,7 @@ def load_ipython_extension (ipy):
   if not geni.util.hasDataContext():
     path = os.path.expanduser("~/omni.bundle")
     if os.path.exists(path):
-      geni.util.buildContextFromBundle(path)
+      geni.util.buildContextFromBundle(path, pubkey_path = geni.util.MAKE_KEYPAIR)
 
   if not geni.util.hasDataContext():
     raise NoContextError()
