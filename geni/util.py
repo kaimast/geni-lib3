@@ -458,7 +458,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   zf = zipfile.ZipFile(os.path.expanduser(bundle_path))
 
   zip_pubkey_path = None
-  if pubkey_path is None:
+  if pubkey_path is None or pubkey_path == MAKE_KEYPAIR:
     # search for pubkey-like file in zip
     for fname in zf.namelist():
       if fname.startswith("ssh/public/") and fname.endswith(".pub"):
@@ -487,10 +487,9 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   except OSError:
     pass
 
-  pkpath = pubkey_path
-
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
   # This will catch if creation was requested but failed
+  pkpath = pubkey_path
   if not pkpath or pkpath == MAKE_KEYPAIR:
     found_private = False
 
@@ -508,7 +507,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
 
     # If we don't find a proper keypair, we'll make you one if you asked for it
     # This preserves your old pubkey if it existed in case you want to use that later
-    if not found_private and pkpath == MAKE_KEYPAIR:
+    if not found_private and pubkey_path == MAKE_KEYPAIR:
       keygen = _find_ssh_keygen()
       subprocess.call("%s -t rsa -b 2048 -f ~/.ssh/genilib_rsa -N ''" % (keygen))
       pkpath = os.path.expanduser("~/.ssh/genilib_rsa.pub")
