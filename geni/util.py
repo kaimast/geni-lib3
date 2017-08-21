@@ -510,7 +510,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     # This preserves your old pubkey if it existed in case you want to use that later
     if not found_private and pubkey_path == MAKE_KEYPAIR:
       keygen = _find_ssh_keygen()
-      subprocess.call("%s -t rsa -b 2048 -f ~/.ssh/genilib_rsa -N ''" % (keygen))
+      subprocess.call("%s -t rsa -b 2048 -f ~/.ssh/genilib_rsa -N ''" % (keygen), shell = True)
       pkpath = os.path.expanduser("~/.ssh/genilib_rsa.pub")
   else:
     pkpath = os.path.expanduser(pubkey_path)
