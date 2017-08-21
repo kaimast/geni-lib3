@@ -500,10 +500,11 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
         with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
 
-    pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
-    if not os.path.exists(pkpath):
-      with open(pkpath, "w+") as tf:
-        tf.write(zf.open(zip_pubkey_path).read())
+    if zip_pubkey_path:
+      pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
+      if not os.path.exists(pkpath):
+        with open(pkpath, "w+") as tf:
+          tf.write(zf.open(zip_pubkey_path).read())
 
     # If we don't find a proper keypair, we'll make you one if you asked for it
     # This preserves your old pubkey if it existed in case you want to use that later
