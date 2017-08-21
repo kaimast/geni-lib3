@@ -439,7 +439,7 @@ class PathNotFoundError(Exception):
   def __str__ (self):
     return "The path %s does not exist." % (self._path)
 
-def _find_ssh_keygen (self):
+def _find_ssh_keygen ():
   PATHS = ["/usr/bin/ssh-keygen", "/bin/ssh-keygen", "/usr/sbin/ssh-keygen", "/sbin/ssh-keygen"]
   for path in PATHS:
     if os.path.exists(path):
