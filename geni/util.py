@@ -12,6 +12,7 @@ import multiprocessing as MP
 import os
 import os.path
 import shutil
+import subprocess
 import tempfile
 import time
 import traceback as tb
@@ -438,6 +439,13 @@ class PathNotFoundError(Exception):
   def __str__ (self):
     return "The path %s does not exist." % (self._path)
 
+def _find_ssh_keygen ():
+  PATHS = ["/usr/bin/ssh-keygen", "/bin/ssh-keygen", "/usr/sbin/ssh-keygen", "/sbin/ssh-keygen"]
+  for path in PATHS:
+    if os.path.exists(path):
+      return path
+
+MAKE_KEYPAIR = (-1, 1)
 
 def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
   import geni._coreutil as GCU
@@ -450,14 +458,14 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   zf = zipfile.ZipFile(os.path.expanduser(bundle_path))
 
   zip_pubkey_path = None
-  if pubkey_path is None:
+  if pubkey_path is None or pubkey_path == MAKE_KEYPAIR:
     # search for pubkey-like file in zip
     for fname in zf.namelist():
       if fname.startswith("ssh/public/") and fname.endswith(".pub"):
         zip_pubkey_path = fname
         break
 
-    if not zip_pubkey_path:
+    if not zip_pubkey_path and pubkey_path != MAKE_KEYPAIR:
       raise MissingPublicKeyError()
 
   # Get URN/Project/username from omni_config
@@ -480,18 +488,30 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     pass
 
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
+  # This will catch if creation was requested but failed
   pkpath = pubkey_path
-  if not pkpath:
+  if not pkpath or pkpath == MAKE_KEYPAIR:
+    found_private = False
+
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
+      found_private = True
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
         # If your umask isn't already 0, we can't safely create this file with the right permissions
         with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
 
-    pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
-    if not os.path.exists(pkpath):
-      with open(pkpath, "w+") as tf:
-        tf.write(zf.open(zip_pubkey_path).read())
+    if zip_pubkey_path:
+      pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
+      if not os.path.exists(pkpath):
+        with open(pkpath, "w+") as tf:
+          tf.write(zf.open(zip_pubkey_path).read())
+
+    # If we don't find a proper keypair, we'll make you one if you asked for it
+    # This preserves your old pubkey if it existed in case you want to use that later
+    if not found_private and pubkey_path == MAKE_KEYPAIR:
+      keygen = _find_ssh_keygen()
+      subprocess.call("%s -t rsa -b 2048 -f ~/.ssh/genilib_rsa -N ''" % (keygen), shell = True)
+      pkpath = os.path.expanduser("~/.ssh/genilib_rsa.pub")
   else:
     pkpath = os.path.expanduser(pubkey_path)
     if not os.path.exists(pkpath):
