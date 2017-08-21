@@ -465,7 +465,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
         zip_pubkey_path = fname
         break
 
-    if not zip_pubkey_path:
+    if not zip_pubkey_path and pubkey_path != MAKE_KEYPAIR:
       raise MissingPublicKeyError()
 
   # Get URN/Project/username from omni_config
