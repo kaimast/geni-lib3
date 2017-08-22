@@ -16,7 +16,7 @@ from .pg import Namespaces as PGNS
 from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
-         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name}
+         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name, 'u' : GNS.USER}
 
 class ManifestLink(Link):
   def __init__ (self):
@@ -69,6 +69,20 @@ class ManifestSvcLogin(object):
     return n
 
 
+class ManifestSvcUser(object):
+  def __init__ (self):
+    self.login = None
+    self.public_key = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = cls()
+    n.login = elem.get("login")
+    pkelem = elem.xpath('u:public_key', namespaces = _XPNS)
+    n.public_key = pkelem.text.strip()
+    return n
+
+
 class ManifestNode(object):
   class Interface(object):
     def __init__ (self):
@@ -81,6 +95,7 @@ class ManifestNode(object):
   def __init__ (self):
     super(ManifestNode, self).__init__()
     self.logins = []
+    self.users = []
     self.interfaces = []
     self.client_id = None
     self.component_id = None
@@ -123,6 +138,11 @@ class ManifestNode(object):
     for lelem in logins:
       l = ManifestSvcLogin._fromdom(lelem)
       n.logins.append(l)
+
+    users = elem.xpath('g:services/u:services_user', namespaces = _XPNS)
+    for uelem in users:
+      u = ManifestSvcUser._fromdom(uelem)
+      n.users.append(u)
 
     interfaces = elem.xpath('g:interface', namespaces = _XPNS)
     for ielem in interfaces:

@@ -11,7 +11,7 @@ import os
 from lxml import etree as ET
 
 import geni.namespaces as GNS
-from .pgmanifest import ManifestSvcLogin
+from .pgmanifest import ManifestSvcLogin, ManifestSvcUser
 
 XPNS = {'g' : GNS.REQUEST.name,
         'v' : "http://geni.bssoftworks.com/rspec/ext/vts/manifest/1",
@@ -202,6 +202,7 @@ class ManifestContainer(object):
     self.image = None
     self.sliver_id = None
     self.logins = []
+    self.users = []
     self.ports = []
     self.mounts = []
 
@@ -220,6 +221,11 @@ class ManifestContainer(object):
     for lelem in logins:
       l = ManifestSvcLogin._fromdom(lelem)
       c.logins.append(l)
+
+    users = elem.xpath('g:services/u:services_user', namespaces = _XPNS)
+    for uelem in users:
+      u = ManifestSvcUser._fromdom(uelem)
+      c.users.append(u)
 
     ports = elem.xpath('v:port', namespaces = XPNS)
     for cport in ports:
