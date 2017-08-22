@@ -78,8 +78,9 @@ class ManifestSvcUser(object):
   def _fromdom (cls, elem):
     n = cls()
     n.login = elem.get("login")
-    pkelem = elem.xpath('u:public_key', namespaces = _XPNS)
-    n.public_key = pkelem.text.strip()
+    pkelems = elem.xpath('u:public_key', namespaces = _XPNS)
+    if pkelems:
+      n.public_key = pkelems[0].text.strip()
     return n
 
 
