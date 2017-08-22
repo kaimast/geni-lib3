@@ -14,6 +14,7 @@ import geni.namespaces as GNS
 from .pgmanifest import ManifestSvcLogin, ManifestSvcUser
 
 XPNS = {'g' : GNS.REQUEST.name,
+        'u' : GNS.USER,
         'v' : "http://geni.bssoftworks.com/rspec/ext/vts/manifest/1",
         's' : "http://geni.bssoftworks.com/rspec/ext/sdn/manifest/1"}
 
@@ -222,7 +223,7 @@ class ManifestContainer(object):
       l = ManifestSvcLogin._fromdom(lelem)
       c.logins.append(l)
 
-    users = elem.xpath('g:services/u:services_user', namespaces = _XPNS)
+    users = elem.xpath('g:services/u:services_user', namespaces = XPNS)
     for uelem in users:
       u = ManifestSvcUser._fromdom(uelem)
       c.users.append(u)
