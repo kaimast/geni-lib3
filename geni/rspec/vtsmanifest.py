@@ -14,7 +14,7 @@ import geni.namespaces as GNS
 from .pgmanifest import ManifestSvcLogin, ManifestSvcUser
 
 XPNS = {'g' : GNS.REQUEST.name,
-        'u' : GNS.USER,
+        'u' : GNS.USER.name,
         'v' : "http://geni.bssoftworks.com/rspec/ext/vts/manifest/1",
         's' : "http://geni.bssoftworks.com/rspec/ext/sdn/manifest/1"}
 

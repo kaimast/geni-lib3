@@ -16,7 +16,7 @@ from .pg import Namespaces as PGNS
 from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
-         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name, 'u' : GNS.USER}
+         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name, 'u' : GNS.USER.name}
 
 class ManifestLink(Link):
   def __init__ (self):
