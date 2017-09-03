@@ -147,7 +147,7 @@ class STPProxy(wrapt.ObjectProxy):
 
 RSTP_PORT_ROW = """<tr>
 <td>%(client-id)s (%(num)d)</td><td>%(rstp_port_state)s</td><td>%(rstp_port_role)s</td><td>%(rstp_port_id)s</td>
-<td>%(rstp_sec_in_state)s</td><td>%(rstp_rx_count)d</td><td>%(rstp_tx_count)d</td><td>%(rstp_error_count)d</td>
+<td>%(rstp_uptime)s</td><td>%(rstp_rx_count)d</td><td>%(rstp_tx_count)d</td><td>%(rstp_error_count)d</td>
 </tr>"""
 
 class RSTPProxy(wrapt.ObjectProxy):
