@@ -344,6 +344,7 @@ def getPortInfo (self, context, sname, client_ids):
 
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
+replaceSymbol(VTS, "getRSTPInfo", getRSTPInfo)
 replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
 
