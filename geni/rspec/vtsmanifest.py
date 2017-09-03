@@ -267,7 +267,7 @@ class ManifestDatapath(object):
 
     stp = elem.xpath('v:stp', namespaces = XPNS)
     if stp:
-      dp.stp = stp[0].get("type")
+      dp.stp_mode = stp[0].get("type")
 
     ports = elem.xpath('v:port', namespaces = XPNS)
     for port in ports:
