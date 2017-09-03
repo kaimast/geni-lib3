@@ -167,7 +167,7 @@ class RSTPProxy(wrapt.ObjectProxy):
       pelist.append(pe)
     pt = """
   <table>
-    <tr><th>Port</th><th>State</th><th>Role</th><th>Port ID</th><th>In State (secs)</th><th>RX</th><th>TX</th><th>Errors</th></tr>
+    <tr><th>Port</th><th>State</th><th>Role</th><th>Port ID</th><th>Uptime (secs)</th><th>RX</th><th>TX</th><th>Errors</th></tr>
     %s
   </table>
   """ % ("\n".join(pelist))
