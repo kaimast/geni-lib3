@@ -149,6 +149,11 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:stp-info",
                            options={"datapaths" : datapaths})
 
+  def getRSTPInfo (self, context, sname, datapaths):
+    if not isinstance(datapaths, list): datapaths = [datapaths]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:rstp-info",
+                           options={"datapaths" : datapaths})
+
   def getPortInfo (self, context, sname, datapaths):
     if not isinstance(datapaths, list): datapaths = [datapaths]
     return self._apiv3.poa(context, self.urlv3, sname, "vts:raw:get-port-info",
