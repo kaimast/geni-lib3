@@ -156,7 +156,7 @@ class RSTPProxy(wrapt.ObjectProxy):
   <table>
     <tr><th colspan="3" scope="row">Bridge: <b>%(client-id)s</b></th></tr>
     <tr><th>Bridge ID</th><th>Designated Root</th><th>Root Path Cost</th></tr>
-    <tr><td>%(rstp_bridge_id)s</td><td>%(rstp_designated_root)s</td><td>%(rstp_root_path_cost)s</td></tr>
+    <tr><td>%(rstp_bridge_id)s</td><td>%(rstp_root_id)s</td><td>%(rstp_root_path_cost)s</td></tr>
   </table>""" % (self)
     pelist = []
     for port in self["ports"]:
