@@ -145,6 +145,35 @@ class STPProxy(wrapt.ObjectProxy):
     return "%s\n%s" % (brt,pt)
 
 
+RSTP_PORT_ROW = """<tr>
+<td>%(client-id)s (%(num)d)</td><td>%(rstp_port_state)s</td><td>%(rstp_port_role)s</td><td>%(rstp_port_id)s</td>
+<td>%(rstp_sec_in_state)s</td><td>%(rstp_rx_count)d</td><td>%(rstp_tx_count)d</td><td>%(rstp_error_count)d</td>
+</tr>"""
+
+class RSTPProxy(wrapt.ObjectProxy):
+  def _repr_html_ (self):
+    brt = """
+  <table>
+    <tr><th colspan="3" scope="row">Bridge: <b>%(client-id)s</b></th></tr>
+    <tr><th>Bridge ID</th><th>Designated Root</th><th>Root Path Cost</th></tr>
+    <tr><td>%(rstp_bridge_id)s</td><td>%(rstp_designated_root)s</td><td>%(rstp_root_path_cost)s</td></tr>
+  </table>""" % (self)
+    pelist = []
+    for port in self["ports"]:
+      d = {}
+      d.update(port)
+      d.update(port["info"])
+      pe = RSTP_PORT_ROW % (d)
+      pelist.append(pe)
+    pt = """
+  <table>
+    <tr><th>Port</th><th>State</th><th>Role</th><th>Port ID</th><th>In State (secs)</th><th>RX</th><th>TX</th><th>Errors</th></tr>
+    %s
+  </table>
+  """ % ("\n".join(pelist))
+    return "%s\n%s" % (brt,pt)
+
+
 def dictListBuilder (objlist, filter_cols, display_names):
   flist = []
   for obj in objlist:
@@ -273,6 +302,20 @@ def getSTPInfo (self, context, sname, datapaths):
   for br in res:
     retobj[br["client-id"]] = STPProxy(br)
   return retobj
+
+def getRSTPInfo (self, context, sname, datapaths):
+  if not isinstance(datapaths, list):
+    datapaths = [datapaths]
+
+  res = self._getRSTPInfo(context, sname, datapaths)
+  if len(res) == 1:
+    return RSTPProxy(res[0])
+
+  retobj = {}
+  for br in res:
+    retobj[br["client-id"]] = RSTPProxy(br)
+  return retobj
+
 
 def getLeaseInfo (self, context, sname, client_ids):
   if not isinstance(client_ids, list):
