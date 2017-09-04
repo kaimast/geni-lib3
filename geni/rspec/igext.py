@@ -83,16 +83,20 @@ pg.Request.EXTENSIONS.append(("XenVM", XenVM))
 class AddressPool(Resource):
   """A pool of public dynamic IP addresses belonging to a slice."""
 
-  def __init__(self, name, count=1, type="any"):
+  def __init__(self, name, count=1, type="any", site_id=None):
     super(AddressPool, self).__init__()
     self.client_id = name
     self.count = count
     self.type = type
+    self.site_id = site_id
     self.component_manager_id = None
 
   @property
   def name (self):
     return self.client_id
+
+  def Site(self,id):
+    self.site_id = id
 
   def _write (self, root):
     pl = ET.SubElement(root, "{%s}routable_pool" % (PGNS.EMULAB.name))
@@ -102,6 +106,9 @@ class AddressPool(Resource):
 
     pl.attrib["count"] = str(self.count)
     pl.attrib["type"] = self.type
+    if self.site_id:
+      site = ET.SubElement(pl, "{%s}site" % (PGNS.JACKS))
+      site.attrib["id"] = self.site_id
 
     return pl
 
