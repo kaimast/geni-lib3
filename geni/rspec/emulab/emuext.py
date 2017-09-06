@@ -379,3 +379,41 @@ class ShapedLink(BridgedLink):
     super(ShapedLink, self).__init__(name=name)
 
 Request.EXTENSIONS.append(("ShapedLink", ShapedLink))
+
+
+class installRootKeys(object):
+    """Added to a node this extension will tell Emulab based aggregates to
+    to install private and/or public ssh keys for root so that root can ssh
+    between nodes in your experiment without having to provide a password.
+    By default both the private and public key are installed on each node.
+    Use this extension to restrict where keys are installed in order to
+    customize which nodes are trusted to initiate a root ssh to another node.
+    For example:
+
+            # Install a private/public key on node1
+            node1.installRootKeys(True, True)
+            # Install just the public key on node2
+            node2.installRootKeys(False, True)
+    """
+    
+    def __init__(self, private = True, public = True):
+        self._include = True
+        self._private = private
+        self._public  = public
+    
+    def _write(self, root):
+        if self._include == False:
+            return root
+        el = ET.SubElement(root, "{%s}rootkey" % (Namespaces.EMULAB.name))
+        if self._private:
+            el.attrib["private"] = "true";
+        else:
+            el.attrib["private"] = "false";
+        if self._public:
+            el.attrib["public"] = "true";
+        else:
+            el.attrib["public"] = "false";
+        return root
+
+Node.EXTENSIONS.append(("installRootKeys", installRootKeys))
+
