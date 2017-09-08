@@ -495,6 +495,29 @@ class SSLVPNFunction(Resource):
 Request.EXTENSIONS.append(("SSLVPNFunction", SSLVPNFunction))
 Request.EXTENSIONS.append(("L2SSLVPNServer", SSLVPNFunction))
 
+class L2SSLVPNClient(Resource):
+  def __init__ (self, client_id):
+    super(L2SSLVPNClient, self).__init__()
+    self.client_id = client_id
+    self.protocol = "udp"
+    self.remote_ip = None
+    self.remote_port = None
+    self.note = None
+    self.key = None
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}function" % (Namespaces.VTS))
+    d.attrib["type"] = "sslvpn-client"
+    d.attrib["client_id"] = self.client_id
+    d.attrib["remote-ip"] = str(self.remote_ip)
+    d.attrib["remote-port"] = str(self.remote_port)
+    d.attrib["note"] = str(self.note)
+    d.text = str(self.key)
+    return d
+
+Request.EXTENSIONS.append(("L2SSLVPNClient", SSLVPNClientFunction))
+
+
 class Datapath(Resource):
   def __init__ (self, image, client_id):
     super(Datapath, self).__init__()
