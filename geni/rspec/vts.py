@@ -515,7 +515,7 @@ class L2SSLVPNClient(Resource):
     d.text = str(self.key)
     return d
 
-Request.EXTENSIONS.append(("L2SSLVPNClient", SSLVPNClientFunction))
+Request.EXTENSIONS.append(("L2SSLVPNClient", L2SSLVPNClient))
 
 
 class Datapath(Resource):
