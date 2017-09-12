@@ -417,3 +417,19 @@ class installRootKeys(object):
 
 Node.EXTENSIONS.append(("installRootKeys", installRootKeys))
 
+class disableRootKeys(object):
+    """Added to a request this extension will tell Emulab based aggregates to
+    to not install private and/or public ssh keys for root.
+    """
+    __ONCEONLY__ = True
+
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == True:
+            el = ET.SubElement(root,
+                               "{%s}disablerootkey" % (Namespaces.EMULAB.name))
+        return root
+
+Request.EXTENSIONS.append(("disableRootKeys", disableRootKeys))
