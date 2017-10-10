@@ -433,3 +433,19 @@ class disableRootKeys(object):
         return root
 
 Request.EXTENSIONS.append(("disableRootKeys", disableRootKeys))
+
+class Attribute(object):
+    """Added to a node, this Emulab extension becomes a node_attribute.
+    """
+    def __init__ (self, key, value):
+        self.key = key
+        self.value = value
+
+    def _write (self, node):
+        at = ET.SubElement(node,
+                           "{%s}node_attribute" % (Namespaces.EMULAB.name))
+        at.attrib["key"] = self.key
+        at.attrib["value"] = self.value
+        return node
+
+Node.EXTENSIONS.append(("Attribute", Attribute))
