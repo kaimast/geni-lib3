@@ -449,3 +449,34 @@ class Attribute(object):
         return node
 
 Node.EXTENSIONS.append(("Attribute", Attribute))
+
+class ExperimentFirewall(Node):
+    """Added to a request this extension will tell Emulab to add a firewall
+    to the control network. You may supply optional rules in iptables syntax.
+    """
+    __ONCEONLY__ = True
+
+    class Style(object):
+        OPEN     = "open"
+        CLOSED   = "closed"
+        BASIC    = "basic"
+    
+    def __init__ (self, name, style):
+        super(ExperimentFirewall, self).__init__(name, "firewall")
+        self.style = style
+        self.rules = []
+
+    def addRule(self, rule):
+        self.rules.append(rule)
+
+    def _write (self, root):
+        nd = super(ExperimentFirewall, self)._write(root)
+        st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+        fw = ET.SubElement(st, "{%s}firewall_config" % (Namespaces.EMULAB.name))
+        fw.attrib["style"] = self.style
+        for rule in self.rules:
+            el = ET.SubElement(fw, "{%s}rule" % (Namespaces.EMULAB.name))
+            el.text = rule
+        return nd
+
+Request.EXTENSIONS.append(("ExperimentFirewall", ExperimentFirewall))
