@@ -313,6 +313,7 @@ class Manifest(object):
     if ielems:
       self._info["host"] = ielems[0].get("host")
       self._info["slice"] = ielems[0].get("slice")
+      self._info["client-topo-name"] = ielems[0].get("client-topo-name")
 
   @property
   def root (self):
@@ -377,6 +378,12 @@ class Manifest(object):
     if not self._info:
       self._populate_info()
     return self._info["slice"]
+
+  @property
+  def toponame (self):
+    if not self._info:
+      self._populate_info()
+    return self._info["client-topo-name"]
 
   def findTarget (self, client_id):
     """Get the container or datapath representing the given `client_id` in the manifest.
