@@ -32,4 +32,4 @@ class Advertisement(object):
 
   @property
   def text (self):
-    return ET.tostring(self._root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")

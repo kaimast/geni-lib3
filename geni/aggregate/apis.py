@@ -99,12 +99,15 @@ class AMAPIv2(object):
     if sname:
       sinfo = context.getSliceInfo(sname)
       surn = sinfo.urn
-      creds.append(open(sinfo.path, "rb").read())
+      creds.append(open(sinfo.path, "r", encoding="latin-1").read())
 
-    creds.append(open(context.usercred_path, "rb").read())
+    creds.append(open(context.usercred_path, "r", encoding="latin-1").read())
 
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
+    import pprint
+    pprint.pprint(res)
     if res["code"]["geni_code"] == 0:
+      print("'value' type: %s" % (type(res["value"])))
       return res
     if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":

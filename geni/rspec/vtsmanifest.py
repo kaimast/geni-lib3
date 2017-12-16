@@ -325,7 +325,7 @@ class Manifest(object):
   @property
   def text (self):
     """String representation of original XML content, with added whitespace for easier reading"""
-    return ET.tostring(self.root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   @property
   def pg_circuits (self):
