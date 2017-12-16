@@ -284,7 +284,7 @@ class Context(object):
   def getSliceInfo (self, sname, project = None):
     if not project:
       project = self.project
-    if not self._slicecreds.has_key("%s-%s" % (project, sname)):
+    if not ("%s-%s" % (project, sname) in self._slicecreds):
       scinfo = SliceCredInfo(self, sname)
       self._slicecreds["%s-%s" % (project, sname)] = scinfo
     return self._slicecreds["%s-%s" % (project, sname)]

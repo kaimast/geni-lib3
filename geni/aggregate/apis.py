@@ -36,7 +36,7 @@ class AMAPIv3(object):
     if res["code"]["geni_code"] == 0:
       return res["value"]
 
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
 
@@ -62,7 +62,7 @@ class AMAPIv3(object):
     res = AM3.allocate(url, False, context.cf.cert, context.cf.key, [sinfo], sinfo.urn, rspec, options)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise AllocateError(res["output"], res)
@@ -82,7 +82,7 @@ class AMAPIv3(object):
     res = AM3.provision(url, False, context.cf.cert, context.cf.key, [sinfo], urns, options)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise ProvisionError(res["output"], res)
@@ -106,7 +106,7 @@ class AMAPIv2(object):
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
 
@@ -127,7 +127,7 @@ class AMAPIv2(object):
     res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise CreateSliverError(res["output"], res)
@@ -141,7 +141,7 @@ class AMAPIv2(object):
     res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
     if res["code"]["geni_code"] == 0:
       return res["value"]
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise SliverStatusError(res["output"], res)
