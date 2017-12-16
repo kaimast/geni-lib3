@@ -104,10 +104,7 @@ class AMAPIv2(object):
     creds.append(open(context.usercred_path, "r", encoding="latin-1").read())
 
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
-    import pprint
-    pprint.pprint(res)
     if res["code"]["geni_code"] == 0:
-      print("'value' type: %s" % (type(res["value"])))
       return res
     if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
