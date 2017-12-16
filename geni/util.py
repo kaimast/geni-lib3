@@ -372,7 +372,7 @@ def loadContext (path = None, key_passphrase = None):
     cf = FrameworkRegistry.get(obj["framework"])()
     cf.cert = obj["cert-path"]
     if key_passphrase:
-      cf.setKey(obj["key-path"], key_passphrase)
+      cf.setKey(obj["key-path"], bytes(key_passphrase))
     else:
       cf.key = obj["key-path"]
 
@@ -483,7 +483,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
 
   # Create .ssh if it doesn't exist
   try:
-    os.makedirs("%s/.ssh" % (HOME), 0775)
+    os.makedirs("%s/.ssh" % (HOME), 0o775)
   except OSError:
     pass
 
