@@ -12,6 +12,7 @@ import functools
 import importlib
 
 from lxml import etree as ET
+import six
 
 import geni.rspec
 import geni.namespaces as GNS
@@ -588,7 +589,7 @@ class Node(Resource):
 
     if self.disk_image:
       # TODO: Force disk images to be objects, and stop supporting old style strings
-      if isinstance(self.disk_image, (str, unicode)):
+      if isinstance(self.disk_image, (six.string_types)):
         di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
         di.attrib["name"] = self.disk_image
       elif isinstance(self.disk_image, geni.urn.Base):

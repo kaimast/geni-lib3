@@ -99,7 +99,7 @@ class SliceCredInfo(object):
   @property
   def cred_api3 (self):
     scd = {"geni_type" : "geni_sfa", "geni_version" : 3}
-    scd["geni_value"] = open(self.path, "r").read()
+    scd["geni_value"] = open(self.path, "r", encoding="latin-1").read()
     return scd
 
 

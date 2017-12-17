@@ -9,6 +9,8 @@ from __future__ import absolute_import
 import os
 import os.path
 
+import six
+
 class _Registry(object):
   def __init__ (self):
     self._data = {}
@@ -208,7 +210,7 @@ class AM(object):
       sname (str): Slice name
       rspec (geni.rspec.RSpec): Valid request RSpec
     """
-    if isinstance(rspec, (str, unicode)):
+    if isinstance(rspec, (six.string_types)):
       rspec = os.path.normpath(os.path.expanduser(rspec))
       if not os.path.exists(rspec):
         raise AM.InvalidRSpecPathError(rspec)

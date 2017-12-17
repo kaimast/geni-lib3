@@ -16,6 +16,8 @@ import json
 import argparse
 from argparse import Namespace
 
+import six
+
 from .rspec import igext
 from .rspec import pgmanifest
 from .rspec.pg import Request
@@ -253,7 +255,7 @@ class Context (object):
         return self._bindParametersDict(altParamSrc)
       elif isinstance(altParamSrc, pgmanifest.Manifest):
         return self._bindParametersManifest(altParamSrc)
-      elif isinstance(altParamSrc, (str, unicode)):
+      elif isinstance(altParamSrc, (six.string_types)):
         try:
           manifestObj = pgmanifest.Manifest(xml=altParamSrc)
           return self._bindParametersManifest(manifestObj)
