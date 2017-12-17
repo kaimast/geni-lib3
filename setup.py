@@ -10,7 +10,10 @@ import os
 import os.path
 import platform
 
-requires = ["wrapt"]
+requires = ["lxml",
+            "requests",
+            "six",
+            "wrapt"]
 
 # If you are on linux, and don't have ca-certs, we can do an awful thing and it will still work
 if os.name == "posix" and os.uname()[0] == "Linux":
@@ -18,7 +21,6 @@ if os.name == "posix" and os.uname()[0] == "Linux":
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
 
-  # On Xenial you installed cryptography from the dist
   (name, ver, dist_id) = platform.linux_distribution()
   if dist_id == "trusty":
     requires.append("setuptools==33.1.1")  # The last setuptools that works with OS pip on trusty
@@ -30,9 +32,11 @@ if os.name == "posix" and os.uname()[0] == "Linux":
     centos_major = centos_version.version[0]
     if centos_major == 7:
       requires.append("cryptography")
+  else:
+    requires.append("cryptography")
 
 setup(name = 'geni-lib',
-      version = '0.9.6.1',
+      version = '0.9.7.0',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
       packages = find_packages(),
@@ -42,6 +46,7 @@ setup(name = 'geni-lib',
       install_requires = requires,
       classifiers = [
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         ]
       )
