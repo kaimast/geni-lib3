@@ -95,7 +95,7 @@ class Request(geni.rspec.RSpec):
     if path is not None:
       f.close()
 
-  def toXMLString (self, pretty_print = False):
+  def toXMLString (self, pretty_print = False, ucode = False):
     """Return the current request contents as an XML string that represents an rspec
     in the GENIv3 format."""
 
@@ -113,7 +113,11 @@ class Request(geni.rspec.RSpec):
     for elem in self._raw_elements:
       rspec.append(elem)
 
-    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    if ucode:
+      buf = ET.tostring(rspec, pretty_print = pretty_print, encoding="unicode")
+    else:
+      buf = ET.tostring(rspec, pretty_print = pretty_print)
+
     return buf
 
 

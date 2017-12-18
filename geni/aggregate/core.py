@@ -214,9 +214,9 @@ class AM(object):
       rspec = os.path.normpath(os.path.expanduser(rspec))
       if not os.path.exists(rspec):
         raise AM.InvalidRSpecPathError(rspec)
-      rspec_data = open(rspec, "rb").read()
+      rspec_data = open(rspec, "r", encoding="latin-1").read()
     else:
-      rspec_data = rspec.toXMLString()
+      rspec_data = rspec.toXMLString(ucode=True)
     res = self.api.createsliver(context, self.url, sname, rspec_data)
     return self.amtype.parseManifest(res)
 
