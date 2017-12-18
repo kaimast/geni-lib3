@@ -66,7 +66,7 @@ class Request(geni.rspec.RSpec):
     f.write(self.toXMLString(True))
     f.close()
 
-  def toXMLString (self, pretty_print = False):
+  def toXMLString (self, pretty_print = False, ucode = False):
     rspec = self.getDOM()
 
     if self.topo_name:
@@ -79,7 +79,11 @@ class Request(geni.rspec.RSpec):
     for obj in self._ext_children:
       obj._write(rspec)
 
-    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    if ucode:
+      buf = ET.tostring(rspec, pretty_print = pretty_print, encoding="unicode")
+    else:
+      buf = ET.tostring(rspec, pretty_print = pretty_print)
+
     return buf
 
   @property
