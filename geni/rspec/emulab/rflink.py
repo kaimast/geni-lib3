@@ -14,7 +14,7 @@ from ..pg import Link, Request
 class RFLink(Link):
     def __init__(self, name):
         super(RFLink, self).__init__(name)
-        self.bandwidth = 500
+        self.bandwidth = 10000
   
     def _write(self, root):
         lnk = super(RFLink, self)._write(root)
