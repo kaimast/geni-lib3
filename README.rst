@@ -6,4 +6,4 @@ inspecting the resources available in a given federation.  There are also a numb
 of administrative API handlers available for interacting with software commonly used
 in experiments - particularly those exposing services to other experimenters.
 
-Documentation can be found at `https://geni-lib.readthedocs.io <https://geni-lib.readthedocs.io>`.
+Documentation can be found at `https://geni-lib.readthedocs.io <https://geni-lib.readthedocs.io>`_.
