@@ -1,2 +1,2 @@
 #!/bin/sh
-pylint --rcfile=pylint.rc $@ geni
+pylint --rcfile=pylint.rc $@ geni > lint.out

@@ -23,15 +23,21 @@ if os.name == "posix" and os.uname()[0] == "Linux":
     ssl._create_default_https_context = ssl._create_unverified_context
 
 setup(name = 'geni-lib',
-      version = '0.9.7.0',
+      version = '0.9.7.2',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
+      description = 'Library and tools for working with research testbed resources that support ' \
+                    'the GENI AM API, including the NSF GENI Testbed (www.geni.net) and Cloudlab (cloudlab.us).',
+      long_description = open("README.rst", "r").read(),
       packages = find_packages(),
       scripts = ['tools/buildcontext/context-from-bundle',
                  'tools/buildcontext/build-context',
                  'tools/shell/genish'],
+      url = 'https://geni-lib.readthedocs.io',
       install_requires = requires,
       classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
         "Programming Language :: Python :: 2.7",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         ]

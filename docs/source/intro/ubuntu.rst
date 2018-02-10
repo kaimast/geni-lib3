@@ -1,4 +1,4 @@
-.. Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+.. Copyright (c) 2015-2018  Barnstormer Softworks, Ltd.
 
 .. raw:: latex
 
@@ -7,45 +7,43 @@
 Ubuntu 14.04
 ============
 
-geni-lib is currently delivered only as a source repository via mercurial, although
-dependencies are installed as proper packages using apt.
+Release versions of geni-lib are delivered via `PyPI <pypi.org>_`, but some system dependencies
+must be supplied, typically through the use of `apt`.
 
 =======================
 High-Level Dependencies
 =======================
 
-* Mercurial (http://mercurial.selenic.com)
 * Python 2.7.x (http://www.python.org)
+* Pip
 * OpenSSL
 * LibXML
 
 The above packages of course have their own dependencies which will be satisfied along the way.
 
+.. warning::
+  The version of `pip` supplied via apt packages for Ubuntu 14.04 for Python 2.x is sufficiently broken
+  that it is unlikely to be able to install `geni-lib` (or many other packages).  The instructions
+  below install `pip` outside of the package management system, using the most up-to-date installer.  If
+  you are already using `virtualenv` or otherwise maintain a sane Python environment you likely do not
+  need to install a new `pip`.
+
 ====================
 Install Dependencies
 ====================
 
-These instructions install depedencies using apt - it is also possible to install the Python packages
-using pip if you prefer.
-
 ::
+  $ wget https://bootstrap.pypa.io/get-pip.py
+  $ sudo python get-pip.py
 
-  $ apt-get install --no-install-recommends mercurial build-essential python-setuptools \
-    libxml2-dev python-dev libxslt1-dev zlib1g-dev libffi-dev libssl-dev python-ipaddr \
-    python-requests python-lxml python-pip
-
-============
-Get geni-lib
-============
-::
-
-  $ hg clone http://bitbucket.org/barnstorm/geni-lib
+  $ sudo apt-get install --no-install-recommends libxml2 libssl
 
 =======
 Install
 =======
 ::
 
-  $ cd geni-lib
-  $ hg update -C 0.9-DEV
-  $ pip install .
+  $ pip install geni-lib
+
+.. note::
+  You may need to install with `sudo` if you are attempting to install system-wide.

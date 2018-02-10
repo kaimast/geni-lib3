@@ -7,3 +7,4 @@ build/
 dist/
 geni_lib.egg-info/
 \.orig
+lint.out
