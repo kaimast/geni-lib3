@@ -23,7 +23,7 @@ if os.name == "posix" and os.uname()[0] == "Linux":
     ssl._create_default_https_context = ssl._create_unverified_context
 
 setup(name = 'geni-lib',
-      version = '0.9.7.2',
+      version = '0.9.7.4',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
       description = 'Library and tools for working with research testbed resources that support ' \
@@ -33,7 +33,7 @@ setup(name = 'geni-lib',
       scripts = ['tools/buildcontext/context-from-bundle',
                  'tools/buildcontext/build-context',
                  'tools/shell/genish'],
-      url = 'https://geni-lib.readthedocs.io',
+      url = 'https://bitbucket.org/barnstorm/geni-lib',
       install_requires = requires,
       classifiers = [
         "Development Status :: 5 - Production/Stable",
