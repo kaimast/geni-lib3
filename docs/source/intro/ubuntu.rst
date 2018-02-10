@@ -7,7 +7,7 @@
 Ubuntu 14.04
 ============
 
-Release versions of geni-lib are delivered via `PyPI <pypi.org>_`, but some system dependencies
+Release versions of geni-lib are delivered via `PyPI <pypi.org>`_, but some system dependencies
 must be supplied, typically through the use of `apt`.
 
 =======================
@@ -33,10 +33,11 @@ Install Dependencies
 ====================
 
 ::
+  $ sudo apt-get update
+  $ sudo apt-get install --no-install-recommends python libxml2 libssl1.0.0
+
   $ wget https://bootstrap.pypa.io/get-pip.py
   $ sudo python get-pip.py
-
-  $ sudo apt-get install --no-install-recommends libxml2 libssl
 
 =======
 Install
