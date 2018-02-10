@@ -47,8 +47,8 @@ Vagrant.configure(2) do |config|
           sudo -u vagrant /usr/local/bin/context-from-bundle "${PARMS[@]}"
      fi
      mkdir -p ~/notebooks
-     wget https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/jupyter-upstart
-     sudo mv jupyter-upstart /etc/init/jupyter.conf
+     wget https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/jupyter-systemd
+     sudo mv jupyter-systemd /etc/init/jupyter.conf
      wget "https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/Getting Started.ipynb"
      mv "Getting Started.ipynb" ~/notebooks/
      sudo start jupyter
