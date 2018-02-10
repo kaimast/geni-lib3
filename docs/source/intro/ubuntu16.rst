@@ -7,7 +7,7 @@
 Ubuntu 16.04
 ============
 
-Release versions of geni-lib are delivered via `PyPI <pypi.org>_`, but some system dependencies
+Release versions of geni-lib are delivered via `PyPI <pypi.org>`_, but some system dependencies
 must be supplied, typically through the use of `apt`.
 
 =======================

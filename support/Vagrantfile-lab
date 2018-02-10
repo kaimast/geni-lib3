@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/trusty32"
+  config.vm.box = "ubuntu/xenial32"
   config.vm.boot_timeout = 600
   config.vm.network :forwarded_port, guest: 8888, host: 8900
   config.vm.box_check_update = false
@@ -15,11 +15,11 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
      sudo http_proxy=#{cache} apt-get update
-     sudo http_proxy=#{cache} apt-get install -y --no-install-recommends build-essential mercurial python-lxml python-setuptools libffi-dev python-dev libzmq3-dev graphviz libssl-dev python-zmq python-kerberos git libxml2-dev python-ipaddr python-requests libxslt1-dev zlib1g-dev
+     sudo http_proxy=#{cache} apt-get install -y --no-install-recommends wget build-essential python2.7 python-dev graphviz libssl1.0.0 python-zmq python-kerberos git
      wget -q https://bootstrap.pypa.io/get-pip.py
-     sudo python2 get-pip.py
+     sudo python2.7 get-pip.py
      sudo pip2 install --upgrade six
-     sudo pip2 install setuptools==33.1.1 graphviz functools32 "ipython<6.0.0"
+     sudo pip2 install graphviz functools32 "ipython<6.0.0"
      sudo pip2 install jupyter
 
      ## Jupyter nbextensions
@@ -29,10 +29,7 @@ Vagrant.configure(2) do |config|
      jupyter nbextension enable collapsible_headings/main
 
      ## geni-lib install
-     hg clone http://bitbucket.org/barnstorm/geni-lib
-     cd geni-lib
-     hg update -C 0.9-DEV
-     sudo pip2 install .
+     sudo pip2 install --index https://test.pypi.org/simple --extra-index https://pypi.org/simple geni-lib
 
      ## geni-lib setup
      if [ -f /vagrant/omni.bundle ]
@@ -50,11 +47,9 @@ Vagrant.configure(2) do |config|
           sudo -u vagrant /usr/local/bin/context-from-bundle "${PARMS[@]}"
      fi
      mkdir -p ~/notebooks
-     mkdir -p ~/.ipython/extensions
-     cp tools/ipython/genish.py ~/.ipython/extensions
-     sudo cp support/jupyter-upstart /etc/init/jupyter.conf
+     wget https://bitbucket.org/barnstorm/geni-lib/raw/tip/support/jupyter-upstart
+     sudo mv jupyter-upstart /etc/init/jupyter.conf
      cp "support/Getting Started.ipynb" ~/notebooks/
      sudo start jupyter
   SHELL
-
 end

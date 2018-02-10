@@ -37,7 +37,7 @@ Install Dependencies
   $ sudo apt-get install --no-install-recommends python libxml2 libssl1.0.0
 
   $ wget https://bootstrap.pypa.io/get-pip.py
-  $ sudo python get-pip.py
+  $ sudo python2 get-pip.py
 
 =======
 Install
