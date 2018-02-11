@@ -1,4 +1,4 @@
-.. Copyright (c) 2016-2017  Barnstormer Softworks, Ltd.
+.. Copyright (c) 2016-2018  Barnstormer Softworks, Ltd.
 
 .. raw:: latex
 
