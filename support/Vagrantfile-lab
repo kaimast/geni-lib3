@@ -8,13 +8,19 @@ Vagrant.configure(2) do |config|
     port = 8900
   end
 
+  if ENV['glv_ram']
+    memory = ENV['glv_ram']
+  else
+    memory = "1024"
+  end
+
   config.vm.box = "ubuntu/xenial32"
   config.vm.boot_timeout = 600
   config.vm.network :forwarded_port, guest: 8888, host: port
   config.vm.box_check_update = false
 
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = "1024"
+    vb.memory = memory
   end
 
   cache = ENV['apt_cache'] || ""
@@ -29,6 +35,11 @@ Vagrant.configure(2) do |config|
      sudo pip2 install graphviz functools32 "ipython<6.0.0"
      sudo pip2 install jupyter
 
+     ## Qgrid and ipywidgets
+     sudo pip2 install qgrid ipywidgets
+     jupyter nbextension enable --py qgrid
+     jupyter nbextension enable --py widgetsnbextension
+
      ## Jupyter nbextensions
      sudo pip2 install jupyter_contrib_nbextensions
      sudo jupyter contrib nbextension install
@@ -36,7 +47,7 @@ Vagrant.configure(2) do |config|
      jupyter nbextension enable collapsible_headings/main
 
      ## geni-lib install
-     if [ #{pypi_test} ]
+     if [ #{pypi_test} == "true" ]
      then
        sudo pip2 install --index https://test.pypi.org/simple --extra-index https://pypi.org/simple geni-lib
      else
