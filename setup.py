@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,9 +10,10 @@ import os
 import os.path
 import platform
 
-requires = ["lxml",
+requires = ["cryptography",
+            "ipaddress",
+            "lxml",
             "requests",
-            "six",
             "wrapt"]
 
 # If you are on linux, and don't have ca-certs, we can do an awful thing and it will still work
@@ -21,30 +22,28 @@ if os.name == "posix" and os.uname()[0] == "Linux":
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
 
-  (name, ver, dist_id) = platform.linux_distribution()
-  if dist_id == "trusty":
-    requires.append("setuptools==33.1.1")  # The last setuptools that works with OS pip on trusty
-    requires.append("cryptography==1.2.3")
-  elif name == "CentOS Linux":
-    # Determine major version
-    from distutils.version import StrictVersion
-    centos_version = StrictVersion(ver)
-    centos_major = centos_version.version[0]
-    if centos_major == 7:
-      requires.append("cryptography")
-  else:
-    requires.append("cryptography")
+pkgs = find_packages()
+pkgs.append('')
 
 setup(name = 'geni-lib',
-      version = '0.9.7.0',
+      version = '0.9.7.6',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
-      packages = find_packages(),
+      description = 'Library and tools for working with research testbed resources that support ' \
+                    'the GENI AM API, including the NSF GENI Testbed (www.geni.net) and Cloudlab (cloudlab.us).',
+      long_description = open("README.rst", "r").read(),
+      packages = pkgs,
+      package_dir = {'' : 'tools/ipython', 'geni' : 'geni', 'ccloud' : 'ccloud'},
+      pymodules = ['genish'],
       scripts = ['tools/buildcontext/context-from-bundle',
                  'tools/buildcontext/build-context',
                  'tools/shell/genish'],
+
+      url = 'https://bitbucket.org/barnstorm/geni-lib',
       install_requires = requires,
       classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
