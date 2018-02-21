@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,5 +60,17 @@ def provision (url, root_bundle, cert, key, creds, urns, options = None):
                       "geni_version" : cred.version})
 
   req_data = xmlrpclib.dumps((urns, cred_list, options), methodname="Provision")
+  return _rpcpost(url, req_data, (cert, key), root_bundle)
+
+def delete (url, root_bundle, cert, key, creds, urns, options = None):
+  if not options: options = {}
+  if not isinstance(urns, list): urns = [urns]
+
+  cred_list = []
+  for cred in creds:
+    cred_list.append({"geni_value" : open(cred.path, "rb").read(), "geni_type" : cred.type,
+                      "geni_version" : cred.version})
+
+  req_data = xmlrpclib.dumps((urns, cred_list, options), methodname="Delete")
   return _rpcpost(url, req_data, (cert, key), root_bundle)
 

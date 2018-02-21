@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 #  This Source Code Form is subject to the terms of the Mozilla Public
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,6 +86,24 @@ class AMAPIv3(object):
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise ProvisionError(res["output"], res)
+
+  @staticmethod
+  def delete (context, url, sname, urns, options = None):
+    from ..minigcf import amapi3 as AM3
+
+    if not options: options = {}
+    if not isinstance(urns, list): urns = [urns]
+
+    sinfo = context.getSliceInfo(sname)
+
+    res = AM3.delete(url, False, context.cf.cert, context.cf.key, [sinfo], urns, options)
+    if res["code"]["geni_code"] == 0:
+      return res
+    if res["code"].has_key("am_type"):
+      if res["code"]["am_type"] == "protogeni":
+        ProtoGENI.raiseError(res)
+    raise ProvisionError(res["output"], res)
+
 
 class AMAPIv2(object):
   @staticmethod
