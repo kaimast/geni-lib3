@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -332,7 +332,7 @@ def updateAggregates (context, ammap):
   from .aggregate.core import loadFromRegistry
 
   new_map = loadFromRegistry(context)
-  for k,v in new_map:
+  for k,v in new_map.items():
     if k not in ammap:
       ammap[k] = v
   saveAggregates(ammap)
