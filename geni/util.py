@@ -319,12 +319,15 @@ def loadAggregates (path = None):
     path = GCU.getDefaultAggregatePath()
 
   ammap = {}
-  obj = json.loads(open(path, "r").read())
-  for aminfo in obj["specs"]:
-    ams = AMSpec._jconstruct(aminfo)
-    am = ams.build()
-    if am:
-      ammap[am.name] = am
+  try:
+    obj = json.loads(open(path, "r").read())
+    for aminfo in obj["specs"]:
+      ams = AMSpec._jconstruct(aminfo)
+      am = ams.build()
+      if am:
+        ammap[am.name] = am
+  except IOError:
+    pass
 
   return ammap
 

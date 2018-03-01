@@ -26,7 +26,7 @@ pkgs = find_packages()
 pkgs.append('')
 
 setup(name = 'geni-lib',
-      version = '0.9.7.6',
+      version = '0.9.7.7',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
       description = 'Library and tools for working with research testbed resources that support ' \
