@@ -87,7 +87,7 @@ class SliceCredInfo(object):
 
   @property
   def path (self):
-    checktime = datetime.datetime.now() + datetime.timedelta(days=6)
+    checktime = datetime.datetime.now() + datetime.timedelta(days=3)
     if self.expires < checktime:
       # We expire in the next 6 days
       # TODO: Log something
