@@ -434,6 +434,22 @@ class disableRootKeys(object):
 
 Request.EXTENSIONS.append(("disableRootKeys", disableRootKeys))
 
+class skipVlans(object):
+    """Added to a request this extension will tell Emulab based aggregates to
+    to not setup or tear down vlans. You should not use this!
+    """
+    __ONCEONLY__ = True
+
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == True:
+            el = ET.SubElement(root, "{%s}skipvlans" % (Namespaces.EMULAB.name))
+        return root
+
+Request.EXTENSIONS.append(("skipVlans", skipVlans))
+
 class Attribute(object):
     """Added to a node, this Emulab extension becomes a node_attribute.
     """
