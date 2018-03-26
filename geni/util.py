@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -319,12 +319,15 @@ def loadAggregates (path = None):
     path = GCU.getDefaultAggregatePath()
 
   ammap = {}
-  obj = json.loads(open(path, "r").read())
-  for aminfo in obj["specs"]:
-    ams = AMSpec._jconstruct(aminfo)
-    am = ams.build()
-    if am:
-      ammap[am.name] = am
+  try:
+    obj = json.loads(open(path, "r").read())
+    for aminfo in obj["specs"]:
+      ams = AMSpec._jconstruct(aminfo)
+      am = ams.build()
+      if am:
+        ammap[am.name] = am
+  except IOError:
+    pass
 
   return ammap
 
@@ -332,7 +335,7 @@ def updateAggregates (context, ammap):
   from .aggregate.core import loadFromRegistry
 
   new_map = loadFromRegistry(context)
-  for k,v in new_map:
+  for k,v in new_map.items():
     if k not in ammap:
       ammap[k] = v
   saveAggregates(ammap)
