@@ -207,6 +207,11 @@ class ManifestContainer(object):
     self.ports = []
     self.mounts = []
 
+  def __getitem__ (self, key):
+    for port in self.ports:
+      if port.name == key:
+        return port
+
   @property
   def name (self):
     return self.client_id
@@ -259,6 +264,11 @@ class ManifestDatapath(object):
     self.sliver_id = None
     self.ports = []
     self.mirror = None
+
+  def __getitem__ (self, key):
+    for port in self.ports:
+      if port.name == key:
+        return port
 
   @classmethod
   def _fromdom (cls, elem):
@@ -314,6 +324,9 @@ class Manifest(object):
       self._info["host"] = ielems[0].get("host")
       self._info["slice"] = ielems[0].get("slice")
       self._info["client-topo-name"] = ielems[0].get("client-topo-name")
+
+  def __getitem__ (self, key):
+    return self.findTarget(key)
 
   @property
   def root (self):
