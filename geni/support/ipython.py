@@ -17,6 +17,7 @@ import wrapt
 from geni.aggregate.exceptions import AMError
 from geni.aggregate.frameworks import KeyDecryptionError
 from geni.aggregate.vts import VTS, HostPOAs, v4RouterPOAs
+import geni.rspec.vtsmanifest
 import geni.util
 import geni.types
 
@@ -299,10 +300,28 @@ def getPortInfo (self, context, sname, client_ids):
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
   return retobj
 
+def portDown (self, context, sname, port):
+  if isinstance(port, (str, unicode)):
+    continue
+  elif isinstance(port, geni.rspec.vtsmanifest.GenericPort):
+    port = port.client_id
+
+  return self._portDown(context, sname, port)
+
+def portUp (self, context, sname, port):                                                                                     
+  if isinstance(port, (str, unicode)):                                                                                         
+    continue
+  elif isinstance(port, geni.rspec.vtsmanifest.GenericPort):                                                                   
+    port = port.client_id                                                                                                      
+              
+  return self._portUp(context, sname, port)     
+
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
 replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
+replaceSymbol(VTS, "portDown", portDown)
+replaceSymbol(VTS, "portUp", portUp)
 
 
 def getL2Table (self, context, sname, client_ids):
