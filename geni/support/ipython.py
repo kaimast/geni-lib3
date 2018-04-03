@@ -302,7 +302,7 @@ def getPortInfo (self, context, sname, client_ids):
 
 def portDown (self, context, sname, port):
   if isinstance(port, (str, unicode)):
-    continue
+    pass
   elif isinstance(port, geni.rspec.vtsmanifest.GenericPort):
     port = port.client_id
 
@@ -310,7 +310,7 @@ def portDown (self, context, sname, port):
 
 def portUp (self, context, sname, port):                                                                                     
   if isinstance(port, (str, unicode)):                                                                                         
-    continue
+    pass
   elif isinstance(port, geni.rspec.vtsmanifest.GenericPort):                                                                   
     port = port.client_id                                                                                                      
               
