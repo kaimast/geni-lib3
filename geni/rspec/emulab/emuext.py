@@ -496,3 +496,18 @@ class ExperimentFirewall(Node):
         return nd
 
 Request.EXTENSIONS.append(("ExperimentFirewall", ExperimentFirewall))
+
+class L1Link(Link):
+  def __init__ (self, name = None):
+    super(L1Link, self).__init__(name, "layer1")
+
+Request.EXTENSIONS.append(("L1Link", L1Link))
+
+class Switch(Node):
+  def __init__ (self, name, component_id = None):
+    super(Switch, self).__init__(name, NodeType.RAW,
+                                 component_id = component_id, exclusive = True)
+    self.setUseTypeDefaultImage()
+
+Request.EXTENSIONS.append(("Switch", Switch))
+
