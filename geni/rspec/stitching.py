@@ -203,7 +203,7 @@ class AggPort(object):
     port = AggPort()
     port._root = elem
     port.id = elem.get("id")
-    port.capacity = int((elem.xpath("t:capacity", namespaces=_XPNS)[0].text).strip('kbps'))
+    port.capacity = int((elem.xpath("t:capacity", namespaces=_XPNS)[0].text).strip("kbps"))
     return port
 
 
