@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,13 +70,16 @@ class Policy(object):
 
   # Policy consent hooks for GDPR-style compliance
   def getText (self, context, pid = None):
-    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:get-text", {"policy-id" : pid})
+    opts = {}
+    if pid:
+      opts["policy-id"] = pid
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:get-text", options = opts)
 
   def giveConsent (self, context, pid):
-    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:consent", {"policy-id" : pid})
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:consent", options = {"policy-id" : pid})
 
   def revokeConsent (self, context, pid):
-    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:revoke", {"policy-id" : pid})
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:revoke", options = {"policy-id" : pid})
 
 
 class VTS(AM):
