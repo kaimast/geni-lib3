@@ -70,13 +70,13 @@ class Policy(object):
 
   # Policy consent hooks for GDPR-style compliance
   def getText (self, context, pid = None):
-    return self._apiv3.paa(context, self.urlv3, "vts:policy:get-text", {"policy-id" : pid})
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:get-text", {"policy-id" : pid})
 
   def giveConsent (self, context, pid):
-    return self._apiv3.paa(context, self.urlv3, "vts:policy:consent", {"policy-id" : pid})
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:consent", {"policy-id" : pid})
 
   def revokeConsent (self, context, pid):
-    return self._apiv3.paa(context, self.urlv3, "vts:policy:revoke", {"policy-id" : pid})
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:revoke", {"policy-id" : pid})
 
 
 class VTS(AM):
