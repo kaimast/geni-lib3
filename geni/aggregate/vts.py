@@ -70,15 +70,37 @@ class Policy(object):
 
   # Policy consent hooks for GDPR-style compliance
   def getText (self, context, pid = None):
+    """Get the text contents of the policy requested.  If no policy is specified and only one policy
+    exists at the aggregate, that policy text will be returned.
+
+    Args:
+      context: geni-lib context
+      pid: policy ID (typically from `getversion` output)
+
+    Returns:
+      str: Text contents of policy
+    """
     opts = {}
     if pid:
       opts["policy-id"] = pid
     return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:get-text", options = opts)
 
   def giveConsent (self, context, pid):
+    """Give consent to the policy indicated for the user URN in the credential used.
+
+    Args:
+      context: geni-lib context
+      pid: policy ID
+    """
     return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:consent", options = {"policy-id" : pid})
 
   def revokeConsent (self, context, pid):
+    """Revoke consent from this date forward to the policy indicated for the user URN in the credential used.
+
+    Args:
+      context: geni-lib context
+      pid: policy ID
+    """
     return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:revoke", options = {"policy-id" : pid})
 
 
