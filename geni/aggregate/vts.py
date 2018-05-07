@@ -64,6 +64,21 @@ class v4RouterPOAs(object):
                               options={"client-ids": client_ids})
 
 
+class Policy(object):
+  def __init__ (self, vtsam):
+    self.am = vtsam
+
+  # Policy consent hooks for GDPR-style compliance
+  def getText (self, context, pid = None):
+    return self._apiv3.paa(context, self.urlv3, "vts:policy:get-text", {"policy-id" : pid})
+
+  def giveConsent (self, context, pid):
+    return self._apiv3.paa(context, self.urlv3, "vts:policy:consent", {"policy-id" : pid})
+
+  def revokeConsent (self, context, pid):
+    return self._apiv3.paa(context, self.urlv3, "vts:policy:revoke", {"policy-id" : pid})
+
+
 class VTS(AM):
   """Wrapper for all VTS-supported AMAPI functions"""
 
@@ -76,6 +91,7 @@ class VTS(AM):
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
     self.Host = HostPOAs(self)
     self.IPv4Router = v4RouterPOAs(self)
+    self.Policy = Policy(self)
 
   def allocate (self, context, sname, rspec):
     rspec_data = rspec.toXMLString()
