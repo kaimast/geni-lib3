@@ -80,6 +80,80 @@ class XenVM(Node):
 pg.Request.EXTENSIONS.append(("XenVM", XenVM))
 
 
+class DockerContainer(Node):
+  """Docker-based container resource
+
+  Args:
+    client_id (str): Your name for this container.  This must be unique within a single `Request` object.
+    component_id (Optional[str]): The `component_id` of the site node you want to bind this container to
+    exclusive (Optional[bool]): Request this container on an isolated host used only by your sliver.
+
+  Attributes:
+    cores (int): Number of CPU cores
+    ram (int): Amount of memory in megabytes
+    disk (int): Amount of disk space in gigabytes
+    docker_ptype (str): Physical node type on which to instantiate the container. Types are AM-specific.
+    docker_extimage (str): An external Docker image (repo:tag) to load on the container.
+    docker_dockerfile (str): A URL that points to a Dockerfile from which an image for this node will be created.
+    docker_tbaugmentation (str): The requested testbed augmentation level; may be either 'full', 'buildenv', 'core', 'basic', 'none'.  To augment a Docker image is to take the image and install some or all of the Emulab clientside and dependencies, and other generally useful networking packages, so that it works seamlessly in testbeds based on Emulab.
+    docker_tbaugmentation_update (bool): If the image has already been augmented, should we update it or not.
+    docker_ssh_style (str): Specify what happens when you ssh to your node; may be 'direct' or 'exec'.  If your container is augmented > basic, and you don't specify this, it defaults to 'direct'.  If your container is not augmented to that level and you don't specify this, it defaults to 'exec'.  'direct' means that the container is running an sshd inside, and an incoming ssh connection will be handled by the container.  'exec' means that when you connection, sshd will exec a shell inside your container.  You can change that shell by specifying the 'docker_exec_shell' value.
+    docker_exec_shell (str): The shell to run if your 'docker_ssh_style' is 'direct'; otherwise ignored.
+    docker_cmd (str): the command you want the container to run at boot.  If your image is not augmented, this value is passed directly to Docker (and if the image the container is running has an entrypoint, this value will be appended to the entrypoint; else, it will be run as the first command in the container).  If your image is augmented, we emulate Docker entrypoint/cmd functionality, but your entrypoint/cmd will not be run as PID 1.
+    docker_env (str): a space-separated list of environment variables to be passed to your container.
+  """
+  def __init__ (self, client_id, component_id = None, exclusive = False):
+    super(DockerContainer, self).__init__(client_id, "emulab-docker", component_id = component_id, exclusive = exclusive)
+    self.cores = None
+    self.ram = None
+    self.docker_ptype = None
+    self.docker_extimage = None
+    self.docker_dockerfile = None
+    self.docker_tbaugmentation = None
+    self.docker_tbaugmentation_update = False
+    self.docker_ssh_style = None
+    self.docker_exec_shell = None
+    self.docker_cmd = None
+    self.docker_env = None
+
+  def _write (self, root):
+    nd = super(DockerContainer, self)._write(root)
+    st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
+    if self.cores or self.ram or self.docker_extimage \
+      or self.docker_tbaugmentation or self.docker_tbaugmentation_update \
+      or self.docker_ssh_style or self.docker_cmd or self.docker_env:
+      docker = ET.SubElement(st, "{%s}docker" % (PGNS.EMULAB.name))
+      if self.cores:
+        docker.attrib["cores"] = str(self.cores)
+      if self.ram:
+        docker.attrib["ram"] = str(self.ram)
+      if self.docker_extimage:
+        docker.attrib["extimage"] = str(self.docker_extimage)
+      if self.docker_dockerfile:
+        docker.attrib["dockerfile"] = str(self.docker_dockerfile)
+      if self.docker_tbaugmentation is not None:
+        docker.attrib["tbaugmentation"] = str(self.docker_tbaugmentation)
+      if self.docker_tbaugmentation_update is not None:
+        if  self.docker_tbaugmentation_update:
+          docker.attrib["tbaugmentation_update"] = str(1)
+        else:
+          docker.attrib["tbaugmentation_update"] = str(0)
+      if self.docker_ssh_style is not None:
+        docker.attrib["ssh_style"] = str(self.docker_ssh_style)
+      if self.docker_exec_shell is not None:
+        docker.attrib["exec_shell"] = str(self.docker_exec_shell)
+      if self.docker_cmd is not None:
+        docker.attrib["cmd"] = str(self.docker_cmd)
+      if self.docker_env is not None:
+        docker.attrib["env"] = str(self.docker_env)
+    if self.docker_ptype is not None:
+      pt = ET.SubElement(st, "{%s}docker_ptype" % (PGNS.EMULAB.name))
+      pt.attrib["name"] = self.docker_ptype
+    return nd
+
+pg.Request.EXTENSIONS.append(("DockerContainer", DockerContainer))
+
+
 class AddressPool(Resource):
   """A pool of public dynamic IP addresses belonging to a slice."""
 
@@ -299,6 +373,7 @@ class Firewall(object):
     return fw
 
 XenVM.EXTENSIONS.append(("Firewall", Firewall))
+DockerContainer.EXTENSIONS.append(("Firewall", Firewall))
 
 
 class Tour(object):

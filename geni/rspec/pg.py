@@ -144,6 +144,7 @@ class Resource(object):
 
 class NodeType(object):
   XEN = "emulab-xen"
+  DOCKER = "emulab-docker"
   RAW = "raw"
   VM = "emulab-xen"
 
