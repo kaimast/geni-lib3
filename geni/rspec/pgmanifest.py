@@ -158,6 +158,8 @@ class ManifestParameter(object):
 
 
 class Manifest(object):
+  REQUESTV2 = "http://www.protogeni.net/resources/rspec/2"
+
   def __init__ (self, path = None, xml = None):
     if path:
       self._xml = open(path, "r").read()
@@ -191,11 +193,15 @@ class Manifest(object):
 
   @property
   def links (self):
-    return XPathXRange(self.root.findall("{%s}link" % (GNS.REQUEST)), ManifestLink)
+    llist = self.root.findall("{%s}link" % (GNS.REQUEST))
+    llist.extend(self.root.findall("{%s}link" % (Manifest.REQUESTV2)))
+    return XPathXRange(llist, ManifestLink)
 
   @property
   def nodes (self):
-    return XPathXRange(self.root.findall("{%s}node" % (GNS.REQUEST)), ManifestNode)
+    nlist = self.root.findall("{%s}node" % (GNS.REQUEST))
+    nlist.extend(self.root.findall("{%s}node" % (Manifest.REQUESTV2)))
+    return XPathXRange(nlist, ManifestNode)
 
   @property
   def parameters (self):
