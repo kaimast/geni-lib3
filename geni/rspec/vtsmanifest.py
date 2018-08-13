@@ -282,6 +282,10 @@ class ManifestDatapath(object):
     if mirror:
       dp.mirror = mirror[0].get("target")
 
+    stp = elem.xpath('v:stp', namespaces = XPNS)
+    if stp:
+      dp.stp_mode = stp[0].get("type")
+
     ports = elem.xpath('v:port', namespaces = XPNS)
     for port in ports:
       p = Manifest._buildPort(port)
