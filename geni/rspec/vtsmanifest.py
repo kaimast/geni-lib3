@@ -124,7 +124,7 @@ class InternalPort(GenericPort):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
-    p.vlan_id = elem.get("vlan-id", 0)
+    p.vlan_id = int(elem.get("vlan-id", 0))
 
     return p
 
