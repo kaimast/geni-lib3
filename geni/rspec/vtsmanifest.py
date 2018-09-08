@@ -117,12 +117,14 @@ class InternalPort(GenericPort):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
     self._remote_dpname = None
+    self._vlan_id = None
 
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
+    p.vlan_id = elem.get("vlan-id", 0)
 
     return p
 
