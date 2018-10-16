@@ -526,6 +526,20 @@ class StitchedLink(Link):
 Request.EXTENSIONS.append(("StitchedLink", StitchedLink))
 
 class Node(Resource):
+  """A basic Node class.  Typically you want to instantiate one of its subclasses, such as `RawPC`, `XenVM`, or `DockerContainer`.
+
+  Args:
+    name (str): Your name for this node.  This must be unique within a single `Request` object.
+    ntype (str): The physical or virtual machine type to which this node should be mapped.
+    component_id (Optional[str]): The `component_id` of the site physical node to which you want to bind this node.
+    exclusive (Optional[bool]): Request this container on an isolated host used only by your sliver.  Defaults to unspecified, allowing the site processing the request rspec to assign resources as it prefers.
+
+  Attributes:
+    client_id (str): Your name for this node.  This must be unique within a single `Request` object.
+    component_id (Optional[str]): The `component_id` of the site physical node to which you want to bind this node.
+    exclusive (Optional[bool]): Request this container on an isolated host used only by your sliver.  Defaults to unspecified, allowing the site processing the request rspec to assign resources as it prefers.
+    disk_image (Optional[str]): The disk image that should be loaded and run on this node.  Should be an image URN.
+  """
   EXTENSIONS = []
 
   def __init__ (self, name, ntype, component_id = None, exclusive = None):

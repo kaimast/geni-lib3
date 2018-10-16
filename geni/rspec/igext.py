@@ -100,7 +100,8 @@ class DockerContainer(Node):
     docker_ssh_style (str): Specify what happens when you ssh to your node; may be 'direct' or 'exec'.  If your container is augmented > basic, and you don't specify this, it defaults to 'direct'.  If your container is not augmented to that level and you don't specify this, it defaults to 'exec'.  'direct' means that the container is running an sshd inside, and an incoming ssh connection will be handled by the container.  'exec' means that when you connection, sshd will exec a shell inside your container.  You can change that shell by specifying the 'docker_exec_shell' value.
     docker_exec_shell (str): The shell to run if your 'docker_ssh_style' is 'direct'; otherwise ignored.
     docker_cmd (str): the command you want the container to run at boot.  If your image is not augmented, this value is passed directly to Docker (and if the image the container is running has an entrypoint, this value will be appended to the entrypoint; else, it will be run as the first command in the container).  If your image is augmented, we emulate Docker entrypoint/cmd functionality, but your entrypoint/cmd will not be run as PID 1.
-    docker_env (str): a space-separated list of environment variables to be passed to your container.
+    docker_env (str): either a newline-separated list of variable assignments, or one or more variable assignments on a single line.  If the former, we do not support escaped newlines, unlike the Docker ENV instruction.
+    docker_privileged (bool): if True, this container should be privileged; defaults to False (unprivileged).
   """
   def __init__ (self, client_id, component_id = None, exclusive = False):
     super(DockerContainer, self).__init__(client_id, "emulab-docker", component_id = component_id, exclusive = exclusive)
@@ -115,6 +116,7 @@ class DockerContainer(Node):
     self.docker_exec_shell = None
     self.docker_cmd = None
     self.docker_env = None
+    self.docker_privileged = False
 
   def _write (self, root):
     nd = super(DockerContainer, self)._write(root)
