@@ -119,7 +119,7 @@ class VTS(AM):
     self.Policy = Policy(self)
 
   def allocate (self, context, sname, rspec):
-    rspec_data = rspec.toXMLString()
+    rspec_data = rspec.toXMLString(ucode=True)
     manifest = self._apiv3.allocate(context, self.urlv3, sname, rspec_data)
     return self.amtype.parseManifest(manifest)
 

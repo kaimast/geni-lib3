@@ -38,12 +38,14 @@ setup(name = 'geni-lib',
       scripts = ['tools/buildcontext/context-from-bundle',
                  'tools/buildcontext/build-context',
                  'tools/shell/genish'],
+
       url = 'https://bitbucket.org/barnstorm/geni-lib',
       install_requires = requires,
       classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         ]
       )

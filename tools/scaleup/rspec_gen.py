@@ -2,6 +2,7 @@
 
 #--------------------------------------------------------------------
 # Copyright (c) 2014 Raytheon BBN Technologies
+# Copyright (c) 2017  Barnstormer Softworks, Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -276,7 +277,7 @@ def add_node_to_rspec(config_info, site_dict, link_ifaces, vn, rspec):
                 vm.disk_image = node.disk_image
                 service_list = config_info[node.node_type]['install_script'].split('\n')
                 cmd_list = config_info[node.node_type]['execute_cmd'].split('\n')
-                if config_info[node.node_type].has_key('routable_control_ip'):
+                if "routable_control_ip" in config_info[node.node_type]:
                     vm.routable_control_ip = config_info[node.node_type]['routable_control_ip'] in YES
                 for service in service_list:
                     if service != '':
@@ -455,7 +456,7 @@ def main(argv=None):
         if config_info['am_nodes'][site_name] != 'all':
             print("INFO: 'single_am=yes' so ALL nodes " \
                       "belong to a single InstaGENI aggregate.")
-            if config_info['am_nodes'].has_key("any") and config_info['am_nodes']['any'].strip().lower() == "all":
+            if ("any" in config_info['am_nodes']) and config_info['am_nodes']['any'].strip().lower() == "all":
                 print("INFO: The RSpec will be unbound "\
                 "(because nodes are listed as %s)." % config_info['am_nodes'])
             else:

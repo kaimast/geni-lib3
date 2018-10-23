@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,10 +43,10 @@ class Project(object):
 
 class CHAPI2Project(Project):
   def __init__ (self, pinfo):
-    if not pinfo.has_key("PROJECT_UID"):
+    if not ("PROJECT_UID" in pinfo):
       pinfo["PROJECT_UID"] = None
 
-    if pinfo.has_key("EXPIRED"):
+    if "EXPIRED" in pinfo:
       super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
                                           pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
     else:
@@ -501,7 +501,7 @@ class Portal(CHAPI2):
 
   def projectInfo (self, context):
     purn = self.projecturn
-    if not self._project_info.has_key(purn):
+    if not (purn in self._project_info):
       from ..minigcf import chapi2
       projects = chapi2.lookup_projects(self._sa, self._root_bundle, self.cert, self.key,
                                         [context.ucred_api3], purn)

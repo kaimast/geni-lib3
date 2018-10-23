@@ -1,10 +1,12 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import binascii
+
+import six
 
 """Utility types used within geni-lib."""
 
@@ -45,7 +47,7 @@ class DPID(object):
   def __init__ (self, val):
     self._dpid = None
 
-    if isinstance(val, (unicode, str)):
+    if isinstance(val, (six.string_types)):
       val = int(val.translate(None, ":-."), 16)
 
     if isinstance(val, (int, long)):
@@ -121,7 +123,7 @@ class EthernetMAC (object):
   def __init__ (self, val):
     self._mac = None
 
-    if isinstance(val, (unicode, str)):
+    if isinstance(val, (six.string_types)):
       if len(val) == 6:
         val = binascii.hexlify(val)
       val = val.replace(":", "")

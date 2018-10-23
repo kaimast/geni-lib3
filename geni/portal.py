@@ -16,6 +16,8 @@ import json
 import argparse
 from argparse import Namespace
 
+import six
+
 from .rspec import igext
 from .rspec import pgmanifest
 from .rspec.pg import Request
@@ -57,7 +59,7 @@ class Parameter(object):
     self.is_set = False
 
   def __contains__ (self, key):
-    return self.__dict__.has_key(key)
+    return key in self.__dict__
 
   def __getitem__ (self, key):
     return self.__dict__[key]
@@ -253,7 +255,7 @@ class Context (object):
         return self._bindParametersDict(altParamSrc)
       elif isinstance(altParamSrc, pgmanifest.Manifest):
         return self._bindParametersManifest(altParamSrc)
-      elif isinstance(altParamSrc, (str, unicode)):
+      elif isinstance(altParamSrc, (six.string_types)):
         try:
           manifestObj = pgmanifest.Manifest(xml=altParamSrc)
           return self._bindParametersManifest(manifestObj)
@@ -469,8 +471,7 @@ class Context (object):
       else:
         didFirst = True
       opts = self._parameters[name]
-      if opts.has_key('groupId') \
-        and self._parameterGroups.has_key(opts['groupId']):
+      if "groupId" in opts and "groupId" in self._parameterGroups:
         opts['groupName'] = self._parameterGroups[opts['groupId']]
       json.dump(name,f)
       f.write(': ')

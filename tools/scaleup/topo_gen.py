@@ -1,5 +1,6 @@
 #--------------------------------------------------------------------
 # Copyright (c) 2014 Raytheon BBN Technologies
+# Copyright (c) 2017  Barnstormer Softworks, Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and/or hardware specification (the "Work") to
@@ -720,7 +721,7 @@ def create_topo(config_info):
         #print "There are no additional multi-point LANs."
 
     subnet_prefix = "192.168"
-    if config_info['general'].has_key('subnet'):
+    if "subnet" in config_info['general']:
         subnet_prefix = config_info['general']['subnet']
         if len(subnet_prefix.split(".")) != 2:
             raise ValueError("WARNING: the value of the 'subnet' field is '%s'.  It should be two octets long (e.g 192.168 or 10.0) but was not." % str(subnet))
@@ -758,7 +759,7 @@ def create_topo(config_info):
                 # if all nodes of the LANs are from this type
                 config_info[node_type]['node_list'] = str(vn.topo.nodes()[1:])[1:-1]
 
-        if config_info[topo_type].has_key('shared_vlan'):
+        if "shared_vlan" in config_info[topo_type]:
             sharedlan2 = config_info[topo_type]['shared_vlan']
             #shared_vlans[sharedlan2] = config_info[node_type]['node_list']
             # The value here doesn't matter. It's just important that the entry exist.
@@ -795,7 +796,7 @@ def add_lan_to_vn( vn, info, config_info):
             # if there are additional LANs, update the LAN information by adding the center switches transparently
             new_lan_list, node_list = update_lan_format(info, vn)
             # update the 'add-lan' information with add-on center switch node
-            if not config_info.has_key('add-lan'):
+            if not ("add-lan" in config_info):
                 config_info['add-lan'] = {}
             config_info['add-lan'] = dict(config_info['add-lan'].items() + new_lan_list.items())
             if len(config_info['general']['node_type'].split(',')) == 1:

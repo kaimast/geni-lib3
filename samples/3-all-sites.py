@@ -1,4 +1,4 @@
-# Copyright (c) 2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2016-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ for site in IG.aggregates():
 
   # VZNode
   # Sorry about the stupidity about how to find OpenVZ hosts.  I should fix this.
-  vznode = [node for node in ad.nodes if not node.exclusive and "emulab-xen" not in node.sliver_types and node.hardware_types.has_key("pcvm")][0]
+  vznode = [node for node in ad.nodes if not node.exclusive and "emulab-xen" not in node.sliver_types and "pcvm" in node.hardware_types][0]
   vzc = PG.VZContainer("host3")
   intf = vzc.addInterface("if0")
   intf.addAddress(PG.IPv4Address(IPS[2], NETMASK))

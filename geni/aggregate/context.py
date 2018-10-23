@@ -99,7 +99,7 @@ class SliceCredInfo(object):
   @property
   def cred_api3 (self):
     scd = {"geni_type" : "geni_sfa", "geni_version" : 3}
-    scd["geni_value"] = open(self.path, "r").read()
+    scd["geni_value"] = open(self.path, "r", encoding="latin-1").read()
     return scd
 
 
@@ -163,19 +163,19 @@ class Context(object):
   def _chargs (self):
     ucinfo = self._ucred_info
     ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
-    ucd["geni_value"] = open(ucinfo[0], "r").read()
+    ucd["geni_value"] = open(ucinfo[0], "r", encoding="latin-1").read()
     return (False, self.cf.cert, self.cf.key, [ucd])
 
   @property
   def ucred_api3 (self):
     ucinfo = self._ucred_info
     ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
-    ucd["geni_value"] = open(ucinfo[0], "r").read()
+    ucd["geni_value"] = open(ucinfo[0], "r", encoding="latin-1").read()
     return ucd
 
   @property
   def ucred_pg (self):
-    return open(self._ucred_info[0], "r").read()
+    return open(self._ucred_info[0], "r", encoding="latin-1").read()
 
   @property
   def project (self):
@@ -284,7 +284,7 @@ class Context(object):
   def getSliceInfo (self, sname, project = None):
     if not project:
       project = self.project
-    if not self._slicecreds.has_key("%s-%s" % (project, sname)):
+    if not ("%s-%s" % (project, sname) in self._slicecreds):
       scinfo = SliceCredInfo(self, sname)
       self._slicecreds["%s-%s" % (project, sname)] = scinfo
     return self._slicecreds["%s-%s" % (project, sname)]

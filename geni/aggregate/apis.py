@@ -4,7 +4,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 from .core import APIRegistry
 from .exceptions import AMError
@@ -36,7 +36,7 @@ class AMAPIv3(object):
     if res["code"]["geni_code"] == 0:
       return res["value"]
 
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
 
@@ -62,7 +62,7 @@ class AMAPIv3(object):
     res = AM3.allocate(url, False, context.cf.cert, context.cf.key, [sinfo], sinfo.urn, rspec, options)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise AllocateError(res["output"], res)
@@ -82,7 +82,7 @@ class AMAPIv3(object):
     res = AM3.provision(url, False, context.cf.cert, context.cf.key, [sinfo], urns, options)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise ProvisionError(res["output"], res)
@@ -117,14 +117,14 @@ class AMAPIv2(object):
     if sname:
       sinfo = context.getSliceInfo(sname)
       surn = sinfo.urn
-      creds.append(open(sinfo.path, "rb").read())
+      creds.append(open(sinfo.path, "r", encoding="latin-1").read())
 
-    creds.append(open(context.usercred_path, "rb").read())
+    creds.append(open(context.usercred_path, "r", encoding="latin-1").read())
 
     res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
 
@@ -135,17 +135,17 @@ class AMAPIv2(object):
     from ..minigcf import amapi2 as AM2
 
     sinfo = context.getSliceInfo(sname)
-    cred_data = open(sinfo.path, "rb").read()
+    cred_data = open(sinfo.path, "r", encoding="latin-1").read()
 
     udata = []
     for user in context._users:
-      data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
+      data = {"urn" : user.urn, "keys" : [open(x, "r", encoding="latin-1").read() for x in user._keys]}
       udata.append(data)
 
     res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
     if res["code"]["geni_code"] == 0:
       return res
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise CreateSliverError(res["output"], res)
@@ -155,11 +155,12 @@ class AMAPIv2(object):
     from ..minigcf import amapi2 as AM2
 
     sinfo = context.getSliceInfo(sname)
-    cred_data = open(sinfo.path, "rb").read()
+    cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+
     res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
     if res["code"]["geni_code"] == 0:
       return res["value"]
-    if res["code"].has_key("am_type"):
+    if "am_type" in res["code"]:
       if res["code"]["am_type"] == "protogeni":
         ProtoGENI.raiseError(res)
     raise SliverStatusError(res["output"], res)
@@ -169,7 +170,8 @@ class AMAPIv2(object):
     from ..minigcf import amapi2 as AM2
 
     sinfo = context.getSliceInfo(sname)
-    cred_data = open(sinfo.path, "rb").read()
+    cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+
     res = AM2.renewsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, date)
     if res["code"]["geni_code"] == 0:
       return res["value"]
@@ -180,7 +182,8 @@ class AMAPIv2(object):
     from ..minigcf import amapi2 as AM2
 
     sinfo = context.getSliceInfo(sname)
-    cred_data = open(sinfo.path, "rb").read()
+    cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+
     res = AM2.deletesliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
     if res["code"]["geni_code"] == 0:
       return res["value"]
