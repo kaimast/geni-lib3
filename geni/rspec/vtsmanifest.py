@@ -317,10 +317,11 @@ class Manifest(object):
 
   def __init__ (self, path = None, xml = None):
     if path:
-      self._xml = open(path, "r").read()
+      self._root = ET.parse(open(path, "rb"))
+      self._xml = ET.tostring(self._root)
     elif xml:
       self._xml = xml
-    self._root = ET.fromstring(self._xml)
+      self._root = ET.fromstring(bytes(self._xml, "utf-8"))
     self._pid = os.getpid()
     self._info = {}
 
