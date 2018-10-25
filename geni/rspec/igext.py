@@ -99,7 +99,8 @@ class DockerContainer(Node):
     docker_tbaugmentation_update (bool): If the image has already been augmented, should we update it or not.
     docker_ssh_style (str): Specify what happens when you ssh to your node; may be 'direct' or 'exec'.  If your container is augmented > basic, and you don't specify this, it defaults to 'direct'.  If your container is not augmented to that level and you don't specify this, it defaults to 'exec'.  'direct' means that the container is running an sshd inside, and an incoming ssh connection will be handled by the container.  'exec' means that when you connection, sshd will exec a shell inside your container.  You can change that shell by specifying the 'docker_exec_shell' value.
     docker_exec_shell (str): The shell to run if your 'docker_ssh_style' is 'direct'; otherwise ignored.
-    docker_cmd (str): the command you want the container to run at boot.  If your image is not augmented, this value is passed directly to Docker (and if the image the container is running has an entrypoint, this value will be appended to the entrypoint; else, it will be run as the first command in the container).  If your image is augmented, we emulate Docker entrypoint/cmd functionality, but your entrypoint/cmd will not be run as PID 1.
+    docker_entrypoint (str): the Docker entrypoint you want the container to run at boot (e.g., a replacement for the ENTRYPOINT specified in the image, if any).  If your image is not augmented, this value is passed directly to Docker, and replaces the image's ENTRYPOINT.  If your image is augmented, a combination of entrypoint/cmd will be run as a service in the container; we emulate Docker entrypoint/cmd functionality, but your entrypoint/cmd will not be run as PID 1, etc.
+    docker_cmd (str): the Docker command you want the container to run at boot (e.g., a replacement for the CMD specified in the image, if any).  If your image is not augmented, this value is passed directly to Docker (and if the image the container is running has an entrypoint, this value will be combined with the entrypoint; else, it will be run as a service in the container).  If your image is augmented, we emulate Docker entrypoint/cmd functionality, but your entrypoint/cmd will not be run as PID 1, etc.
     docker_env (str): either a newline-separated list of variable assignments, or one or more variable assignments on a single line.  If the former, we do not support escaped newlines, unlike the Docker ENV instruction.
     docker_privileged (bool): if True, this container should be privileged; defaults to False (unprivileged).
   """
@@ -114,6 +115,7 @@ class DockerContainer(Node):
     self.docker_tbaugmentation_update = False
     self.docker_ssh_style = None
     self.docker_exec_shell = None
+    self.docker_entrypoint = None
     self.docker_cmd = None
     self.docker_env = None
     self.docker_privileged = False
@@ -123,7 +125,8 @@ class DockerContainer(Node):
     st = nd.find("{%s}sliver_type" % (GNS.REQUEST.name))
     if self.cores or self.ram or self.docker_extimage \
       or self.docker_tbaugmentation or self.docker_tbaugmentation_update \
-      or self.docker_ssh_style or self.docker_cmd or self.docker_env:
+      or self.docker_ssh_style or self.docker_cmd or self.docker_env \
+      or self.docker_entrypoint or self.docker_privileged:
       docker = ET.SubElement(st, "{%s}docker" % (PGNS.EMULAB.name))
       if self.cores:
         docker.attrib["cores"] = str(self.cores)
@@ -144,10 +147,14 @@ class DockerContainer(Node):
         docker.attrib["ssh_style"] = str(self.docker_ssh_style)
       if self.docker_exec_shell is not None:
         docker.attrib["exec_shell"] = str(self.docker_exec_shell)
+      if self.docker_entrypoint is not None:
+        docker.attrib["entrypoint"] = str(self.docker_entrypoint)
       if self.docker_cmd is not None:
         docker.attrib["cmd"] = str(self.docker_cmd)
       if self.docker_env is not None:
         docker.attrib["env"] = str(self.docker_env)
+      if self.docker_privileged is not None:
+        docker.attrib["privileged"] = str(self.docker_privileged)
     if self.docker_ptype is not None:
       pt = ET.SubElement(st, "{%s}docker_ptype" % (PGNS.EMULAB.name))
       pt.attrib["name"] = self.docker_ptype
