@@ -80,9 +80,9 @@ class Image(object):
 class Advertisement(object):
   def __init__ (self, path = None, xml = None):
     if path:
-      self._root = ET.parse(open(path))
+      self._root = ET.parse(open(path, "rb"))
     elif xml:
-      self._root = ET.fromstring(xml)
+      self._root = ET.fromstring(bytes(xml, "utf-8"))
 
   @property
   def circuit_planes (self):
@@ -94,4 +94,4 @@ class Advertisement(object):
 
   @property
   def text (self):
-    return ET.tostring(self._root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")

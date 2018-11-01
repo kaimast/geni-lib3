@@ -12,6 +12,7 @@ import functools
 import importlib
 
 from lxml import etree as ET
+import six
 
 import geni.rspec
 import geni.namespaces as GNS
@@ -94,7 +95,7 @@ class Request(geni.rspec.RSpec):
     if path is not None:
       f.close()
 
-  def toXMLString (self, pretty_print = False):
+  def toXMLString (self, pretty_print = False, ucode = False):
     """Return the current request contents as an XML string that represents an rspec
     in the GENIv3 format."""
 
@@ -112,7 +113,11 @@ class Request(geni.rspec.RSpec):
     for elem in self._raw_elements:
       rspec.append(elem)
 
-    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    if ucode:
+      buf = ET.tostring(rspec, pretty_print = pretty_print, encoding="unicode")
+    else:
+      buf = ET.tostring(rspec, pretty_print = pretty_print)
+
     return buf
 
 
@@ -588,7 +593,7 @@ class Node(Resource):
 
     if self.disk_image:
       # TODO: Force disk images to be objects, and stop supporting old style strings
-      if isinstance(self.disk_image, (str, unicode)):
+      if isinstance(self.disk_image, (six.string_types)):
         di = ET.SubElement(st, "{%s}disk_image" % (GNS.REQUEST.name))
         di.attrib["name"] = self.disk_image
       elif isinstance(self.disk_image, geni.urn.Base):

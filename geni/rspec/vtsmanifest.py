@@ -317,10 +317,11 @@ class Manifest(object):
 
   def __init__ (self, path = None, xml = None):
     if path:
-      self._xml = open(path, "r").read()
+      self._root = ET.parse(open(path, "rb"))
+      self._xml = ET.tostring(self._root)
     elif xml:
       self._xml = xml
-    self._root = ET.fromstring(self._xml)
+      self._root = ET.fromstring(bytes(self._xml, "utf-8"))
     self._pid = os.getpid()
     self._info = {}
 
@@ -344,7 +345,7 @@ class Manifest(object):
   @property
   def text (self):
     """String representation of original XML content, with added whitespace for easier reading"""
-    return ET.tostring(self.root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   @property
   def pg_circuits (self):

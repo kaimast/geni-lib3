@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 
-import xmlrpclib
+from six.moves import xmlrpc_client as xmlrpclib
 
 from .util import _rpcpost
 

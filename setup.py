@@ -26,7 +26,7 @@ pkgs = find_packages()
 pkgs.append('')
 
 setup(name = 'geni-lib',
-      version = '0.9.7.9',
+      version = '0.9.9.0',
       author = 'Nick Bastin',
       author_email = 'nick@bssoftworks.com',
       description = 'Library and tools for working with research testbed resources that support ' \
@@ -38,12 +38,14 @@ setup(name = 'geni-lib',
       scripts = ['tools/buildcontext/context-from-bundle',
                  'tools/buildcontext/build-context',
                  'tools/shell/genish'],
+
       url = 'https://bitbucket.org/barnstorm/geni-lib',
       install_requires = requires,
       classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         ]
       )

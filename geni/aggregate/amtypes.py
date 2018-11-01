@@ -8,6 +8,8 @@ from __future__ import absolute_import
 
 import abc
 
+import six
+
 from .core import AMTypeRegistry
 
 class AMType(object):
@@ -52,7 +54,7 @@ class ProtoGENI(AMType):
 
   def parseManifest (self, data):
     from ..rspec import pgmanifest
-    if isinstance(data, (str, unicode)):
+    if isinstance(data, (six.string_types)):
       manifest = pgmanifest.Manifest(xml = data)
     else:
       manifest = pgmanifest.Manifest(xml = data["value"])
@@ -101,7 +103,7 @@ class VTS(AMType):
 
   def parseManifest (self, data):
     from ..rspec import vtsmanifest
-    if isinstance(data, (str, unicode)):
+    if isinstance(data, (six.string_types)):
       manifest = vtsmanifest.Manifest(xml = data)
     else:
       manifest = vtsmanifest.Manifest(xml = data["value"])
@@ -119,7 +121,7 @@ class OESS(AMType):
 
   def parseManifest (self, data):
     from ..rspec import oessmanifest
-    if isinstance(data, (str, unicode)):
+    if isinstance(data, (six.string_types)):
       manifest = oessmanifest.Manifest(xml = data)
     else:
       manifest = oessmanifest.Manifest(xml = data["value"])

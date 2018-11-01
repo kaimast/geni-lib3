@@ -186,7 +186,7 @@ class AdNode(object):
 
   @property
   def text (self):
-    return ET.tostring(self._elem, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
 
 class AdLink(object):
@@ -214,7 +214,7 @@ class AdLink(object):
 
   @property
   def text (self):
-    return ET.tostring(self._elem, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
 
 class AdSharedVLAN(object):
@@ -253,9 +253,9 @@ class Advertisement(object):
 
   def __init__ (self, path = None, xml = None):
     if path:
-      self._root = ET.parse(open(path))
+      self._root = ET.parse(open(path, "rb"))
     elif xml:
-      self._root = ET.fromstring(xml)
+      self._root = ET.fromstring(bytes(xml, "utf-8"))
     self._routable_addresses = None
     self._images = set()
 
@@ -314,7 +314,7 @@ class Advertisement(object):
   @property
   def text (self):
     """Advertisement XML contents as a string, formatted with whitespace for easier reading."""
-    return ET.tostring(self._root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   def writeXML (self, path):
     """Write the current advertisement as an XML file that contains an rspec in the format returned by the
