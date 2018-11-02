@@ -1,4 +1,4 @@
-# Copyright (c) 2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 from lxml import etree as ET
+import six
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
@@ -19,7 +20,10 @@ class Advertisement(object):
     if path:
       self._root = ET.parse(open(path))
     elif xml:
-      self._root = ET.fromstring(xml)
+      if six.PY3:
+        self._root = ET.fromstring(bytes(xml, "utf-8"))
+      else:
+        self._root = ET.fromstring(xml)
 
   @property
   def stitchinfo (self):

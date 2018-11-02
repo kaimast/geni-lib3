@@ -6,6 +6,8 @@
 
 from __future__ import absolute_import, unicode_literals
 
+from io import open
+
 from .core import APIRegistry
 from .exceptions import AMError
 from . import pgutil as ProtoGENI

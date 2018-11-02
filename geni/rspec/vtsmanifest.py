@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import os
 
 from lxml import etree as ET
+import six
 
 import geni.namespaces as GNS
 from .pgmanifest import ManifestSvcLogin, ManifestSvcUser
@@ -320,8 +321,11 @@ class Manifest(object):
       self._root = ET.parse(open(path, "rb"))
       self._xml = ET.tostring(self._root)
     elif xml:
-      self._xml = xml
-      self._root = ET.fromstring(bytes(self._xml, "utf-8"))
+      if six.PY3:
+        self._xml = bytes(xml, "utf-8")
+      else:
+        self._xml = xml
+      self._root = ET.fromstring(self._xml)
     self._pid = os.getpid()
     self._info = {}
 

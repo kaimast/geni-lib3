@@ -18,6 +18,8 @@ import time
 import traceback as tb
 import zipfile
 
+import six
+
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
 def _getdefault (obj, attr, default):
@@ -375,7 +377,9 @@ def loadContext (path = None, key_passphrase = None):
     cf = FrameworkRegistry.get(obj["framework"])()
     cf.cert = obj["cert-path"]
     if key_passphrase:
-      cf.setKey(obj["key-path"], bytes(key_passphrase, "utf-8"))
+      if six.PY3:
+        key_passphrase = bytes(key_passphrase, "utf-8")
+      cf.setKey(obj["key-path"], key_passphrase)
     else:
       cf.key = obj["key-path"]
 

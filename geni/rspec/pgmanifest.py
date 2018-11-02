@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import os
 
 from lxml import etree as ET
+import six
 
 from .pg import Link
 from .. import namespaces as GNS
@@ -183,7 +184,10 @@ class Manifest(object):
     if path:
       self._xml = open(path, "r").read()
     elif xml:
-      self._xml = xml
+      if six.PY3:
+        self._xml = bytes(xml, "utf-8")
+      else:
+        self._xml = xml
     self._root = ET.fromstring(self._xml)
     self._pid = os.getpid()
 

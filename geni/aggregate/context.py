@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,10 @@
 
 from __future__ import absolute_import
 
+import datetime
+from io import open
 import os
 import os.path
-import datetime
 
 import lxml.etree as ET
 
@@ -59,7 +60,7 @@ class SliceCredInfo(object):
   def _downloadCredential (self):
     cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
 
-    f = open(self._path, "w+")
+    f = open(self._path, "wb+")
     f.write(cred)
     f.close()
     self._parseInfo()
@@ -230,7 +231,7 @@ class Context(object):
       if not os.path.exists(ucpath):
         cred = self.cf.getUserCredentials(self.userurn)
 
-        f = open(ucpath, "w+")
+        f = open(ucpath, "wb+")
         f.write(cred)
         f.close()
 
@@ -239,7 +240,7 @@ class Context(object):
 
     if self._usercred_info[1] < datetime.datetime.now():
       cred = self.cf.getUserCredentials(self.userurn)
-      f = open(ucpath, "w+")
+      f = open(ucpath, "wb+")
       f.write(cred)
       f.close()
       (expires, urn, typ, version) = self._getCredInfo(ucpath)
