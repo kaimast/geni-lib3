@@ -212,6 +212,8 @@ class IPv4Address(Address):
 
 
 class Interface(object):
+  EXTENSIONS = []
+
   class InvalidAddressTypeError(Exception):
     def __init__ (self, addr):
       super(Interface.InvalidAddressTypeError, self).__init__()
@@ -227,8 +229,24 @@ class Interface(object):
     self.bandwidth = None
     self.latency = None
     self.plr = None
+    self._ext_children = []
     if address:
       self.addAddress(address)
+    for name,ext in Interface.EXTENSIONS:
+      self._wrapext(name,ext)
+
+  def _wrapext (self, name, klass):
+    @functools.wraps(klass.__init__)
+    def wrap(*args, **kw):
+      if getattr(klass, "__ONCEONLY__", False):
+        if any(map(lambda x: isinstance(x,klass),self._ext_children)):
+          raise DuplicateExtensionError(klass)
+      instance = klass(*args, **kw)
+      if getattr(klass, "__WANTPARENT__", False):
+        instance._parent = self
+      self._ext_children.append(instance)
+      return instance
+    setattr(self, name, wrap)
 
   @property
   def name (self):
@@ -250,6 +268,8 @@ class Interface(object):
         intf.attrib["component_id"] = self.component_id
     for addr in self.addresses:
       addr._write(intf)
+    for obj in self._ext_children:
+      obj._write(intf)
     return intf
 
 
