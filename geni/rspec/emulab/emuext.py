@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017 The University of Utah
+# Copyright (c) 2016-2019 The University of Utah
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@ Common set of RSpec extensions supported by many Emulab-based aggregates
 from __future__ import absolute_import
 
 from ..pg import Request, Namespaces, Link, Node, Service, Command, RawPC
+from ..pg import NodeType
 import geni.namespaces as GNS
 from lxml import etree as ET
 
@@ -148,6 +149,59 @@ class setNoInterSwitchLinks(object):
         return root
 
 Link.EXTENSIONS.append(("setNoInterSwitchLinks", setNoInterSwitchLinks))
+
+class createSharedVlan(object):
+    """Added to a Link or LAN object, turns the new vlan into a shared
+    vlan that can be shared between independent experiments. 
+    """
+    __ONCEONLY__ = True
+    
+    def __init__(self, name):
+        self._enabled = True
+        self._name = name
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root, "{%s}create_shared_vlan" % (GNS.SVLAN.name))
+        el.attrib["name"] = self._name
+        return root
+
+Link.EXTENSIONS.append(("createSharedVlan", createSharedVlan))
+
+class setProperties(object):
+    """Added to a Link or LAN object, this extension tells Emulab based
+    clusters to set the symmetrical properties of the entire link/lan to
+    the desired characteristics (bandwidth, latency, plr). This produces
+    more efficient XML then setting a property on every source/destination
+    pair, especially on a very large lan. Bandwidth is in Kbps, latency in
+    milliseconds, plr a floating point number between 0 and 1. Use keyword
+    based arguments, all arguments are optional:
+    
+        link.setProperties(bandwidth=100000, latency=10, plr=0.5)
+    
+    """
+    __ONCEONLY__ = True
+    
+    def __init__(self, bandwidth=None, latency=None, plr=None):
+        self._bandwidth = bandwidth
+        self._latency   = latency
+        self._plr       = plr
+    
+    def _write(self, root):
+        if (self._bandwidth == None and self._latency == None and
+            self._plr == None):
+            return root
+        el = ET.SubElement(root, "{%s}properties" % (Namespaces.EMULAB.name))
+        if self._bandwidth != None:
+            el.attrib["capacity"] = str(self._bandwidth)
+        if self._latency != None:
+            el.attrib["latency"] = str(self._latency)
+        if self._plr != None:
+            el.attrib["packet_loss"] = str(self._plr)
+        return root
+
+Link.EXTENSIONS.append(("setProperties", setProperties))
 
 class setUseTypeDefaultImage(object):
     """Added to a node that does not specify a disk image, this extension
