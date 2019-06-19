@@ -150,6 +150,24 @@ class setNoInterSwitchLinks(object):
 
 Link.EXTENSIONS.append(("setNoInterSwitchLinks", setNoInterSwitchLinks))
 
+class setJumboFrames(object):
+    """Added to a Link or LAN object, this extension enables jumbo frames
+    on the link (9000 byte MTU). Not all clusters support this option.
+    """
+    __ONCEONLY__ = True
+    
+    def __init__(self):
+        self._enabled = True
+    
+    def _write(self, root):
+        if self._enabled == False:
+            return root
+        el = ET.SubElement(root, "{%s}jumboframes" % (Namespaces.EMULAB.name))
+        el.attrib["enabled"] = "true"
+        return root
+
+Link.EXTENSIONS.append(("setJumboFrames", setJumboFrames))
+
 class createSharedVlan(object):
     """Added to a Link or LAN object, turns the new vlan into a shared
     vlan that can be shared between independent experiments. 
