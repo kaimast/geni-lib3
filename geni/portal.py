@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016 The University of Utah and Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2019 The University of Utah and Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,10 +15,58 @@ import warnings
 import json
 import argparse
 from argparse import Namespace
+import logging
+import os.path
 
 from .rspec import igext
 from .rspec import pgmanifest
 from .rspec.pg import Request
+
+# Default to something sane for our package
+LOG = logging.getLogger('geni.portal')
+
+dodebug = False
+debugLogHandler = None
+if 'GENILIB_PORTAL_DEBUG' in os.environ:
+    dodebug = True
+    debugLogHandler = logging.StreamHandler(stream=sys.stderr)
+    debugLogHandler.setFormatter(logging.Formatter(
+        fmt="%(levelname)s:%(name)s:%(lineno)s:%(funcName)s: %(message)s "))
+    LOG.addHandler(debugLogHandler)
+    LOG.setLevel(logging.DEBUG)
+else:
+    LOG.addHandler(logging.NullHandler())
+
+class DictNamespace(dict,Namespace):
+  """
+  A simple class that is similar to argparse.Namespace, but is also an
+  iterable dictionary, and allows key/value deletion.
+  """
+  def __setattr__(self,attr,value):
+    self.__setitem__(attr,value)
+
+  def __getattr__(self,attr):
+    if attr in self.keys():
+      return self.__getitem__(attr)
+    else:
+      return dict.__getattribute__(self,attr)
+
+  def __delattr__(self,attr):
+    if attr in self.keys():
+      return self.__delitem__(attr)
+    else:
+      return dict.__delattribute__(self,attr)
+
+def parseBool(b):
+  """
+  Extract a bool from `b` as a `basestring`, or by using `bool()`.
+  """
+  if isinstance(b,basestring):
+    if b == "False" or b == "false":
+      return False
+    elif b == "True" or b == "true":
+      return True
+  return bool(b)
 
 class ParameterType (object):
   """Parameter types understood by Context.defineParameter()."""
@@ -38,10 +86,437 @@ class ParameterType (object):
   FIXEDENDPOINT = "fixedendpoint" #: Fixed Endpoints
   BASESTATION   = "basestation"   #: Base Stations
   
-  argparsemap = { INTEGER: int, STRING: str, BOOLEAN: bool, IMAGE: str,
+  argparsemap = { INTEGER: int, STRING: str, BOOLEAN: parseBool, IMAGE: str,
                   AGGREGATE: str, NODETYPE: str, BANDWIDTH: float,
                   LATENCY: float, SIZE: int, PUBKEY: str, LOSSRATE: float,
                   FIXEDENDPOINT: str, BASESTATION: str}
+
+  # Other parameter types known to the system, but not exposed via the
+  # defineParameter API.
+  STRUCT      = "struct"        #: A StructParameter with member parameters; may be a JSON string that encodes a dict, or a raw dict.
+
+class Parameter(object):
+  """
+  A class containing the definition of a basic parameter where type is
+  specified as a ParameterType field (e.g., not multi-valued, not a
+  struct type).  Do not instantiate this class directly; use the method
+  wrappers in the Context class to declare parameters when possible.
+
+  Parameters must have a defaultValue.  They may have a list of
+  legalValues.  All values in the latter must be type-correct, and the
+  former must be both type-correct and a member of _legalValues.  A
+  legalValues list may be a flat list of type-correct values, or a list
+  of 2-tuples, where the first element of each tuple is a type-correct
+  value, and the second element is a display name for frontends.
+  """
+
+  def __init__(self,name,description,type,defaultValue,legalValues=None,
+               longDescription=None,inputFieldHint="",groupId=None,hide=False,
+               prefix="emulab.net.parameter.",inputConstraints=None,
+               _skipInitialChecks=False):
+    self.name = name
+    self.description = description
+    self.longDescription = longDescription
+    self.inputFieldHint = inputFieldHint
+    self.inputConstraints = inputConstraints
+    self.type = type
+    self.groupId = groupId
+    self.hide = hide
+    self.prefix = prefix
+    self._value = None
+    self._legalValues = legalValues
+    self._defaultValue = defaultValue
+    if not _skipInitialChecks:
+      if self.legalValues:
+        for x in self.legalValues:
+          self._parseValue(x)
+      self.setDefaultValue(defaultValue)
+    LOG.debug(str(self))
+
+  def __repr__(self):
+    return "%s(%s=%s,default=%s)" % (
+        self.__class__.__name__,self.name,self.value,self.defaultValue)
+
+  # NB: this is here for naughty profiles that used to reach into
+  # pc._parameters[paramName][field]; this is not intended to be a
+  # general dict-like interface.
+  def __getitem__(self,item):
+    return self.__getattribute__(item)
+
+  @property
+  def defaultValue(self):
+    """
+    Return the default value of this parameter.
+    """
+    return self._defaultValue
+
+  @property
+  def legalValues(self):
+    """
+    Returns None if there are no legal value restrictions.  Otherwise,
+    returns a list of legal values.  (NB: self._legalValues itself may
+    be either a list of `basestring`, or a list of 2-tuples, where the
+    actual value is the first element of the tuple, and the display hint
+    is the second element.)
+    """
+    if self._legalValues is None:
+      return None
+    return [x if not isinstance(x, tuple) else x[0] for x in self._legalValues]
+
+  @property
+  def value(self):
+    """
+    Returns this parameter's bound value, after values have been bound
+    to this parameter's portal Context object.
+    """
+    return self._value
+
+  def _parseValue(self,value):
+    """
+    Extracts/converts a parameter value of the correct type, if
+    possible, from the supplied `value`.  To support the variety of
+    input formats of parameters, we support conversion from strings to
+    the proper ParameterType; see ParameterType.argparsemap; see also
+    other Parameter subclasses (StructParameter) and mixins (Multi),
+    since those accept JSON strings.
+    """
+    LOG.debug("%s(%s)" % (str(self.name),str(value)))
+    if value == None:
+      raise IllegalParameterValueError(value,self)
+    nvalue = ParameterType.argparsemap[self.type](value)
+    LOG.debug("%s(%s) -> %s"
+              % (str(self.name),str(value),str(nvalue)))
+    return nvalue
+
+  def _checkValue(self,value):
+    """
+    Checks that a type-correct value (e.g. extracted by _parseValue) is
+    also a member of _legalValues.
+    """
+    LOG.debug("%s(%s)" % (self.name,str(value)))
+    if self.legalValues and value not in self.legalValues:
+      raise IllegalParameterValueError(value,self)
+    if value == None:
+      raise IllegalParameterValueError(value,self)
+
+  def setValue(self,value):
+    """
+    Invoked by `Context` to bind a value to this parameter.  This both
+    parses the value and checks it for legality.
+    """
+    v = self._parseValue(value)
+    self._checkValue(v)
+    self._value = v
+    return v
+
+  def setDefaultValue(self,defaultValue):
+    """
+    Sets this parameter's default value, after invoking its _parseValue
+    (type correctness) and _checkValue (constraint legality) methods.
+    """
+    LOG.debug("%s(%s)" % (self.name,str(defaultValue)))
+    v = self._parseValue(defaultValue)
+    self._checkValue(v)
+    self._defaultValue = v
+
+  def toParamdef(self):
+    """
+    Converts this Parameter's metadata to a JSON dict used by the portal
+    frontend.
+    """
+    fields = [ "name","description","longDescription","inputFieldHint","type",
+               "_legalValues","_defaultValue","groupId","hide",
+               "inputConstraints" ]
+    d = dict()
+    for f in fields:
+      fname = f
+      if fname.startswith('_'):
+        fname = fname[1:]
+      d[fname] = getattr(self,f)
+    return d
+
+  def validate(self):
+    """
+    A wrapper that checks both the defaultValue and legalValues for
+    type- and constraint-correctness.
+    """
+    LOG.debug(self.name)
+    self._parseValue(self.defaultValue)
+    self._checkValue(self.defaultValue)
+    if self.legalValues:
+      for v in self.legalValues:
+        self._parseValue(v)
+
+class Multi(object):
+  """
+  When this class is added to a subclass of Parameter as the *first*
+  multiply-inherited class, the subclass will accept lists as its
+  values.  The second multiply-inherited class specifies the member
+  parameter type.  We call this a multi-value parameter.  Multi-value
+  parameters have additional constraints (min/max member count).
+
+  Note that a defaultValue for a multi-value parameter is a list.  Thus,
+  multi-value parameters have a new field, the `itemDefaultValue` key,
+  which is the default value of a new list member when unspecified.
+  This allows the user to simply specify min/max/itemDefaultValue *in
+  lieu* of the defaultValue, and an appropriate defaultValue of length
+  min will be created by cloning the itemDefaultValue min times.
+
+  Given the "wrapping" nature of this class, it overrides every method
+  in the Parameter class except for validate, because it effectively
+  overrides all value parsing/checking and calls the second-level
+  multiply-inherited class's parse/check methods for member values.
+  """
+
+  def __init__(self,min=None,max=None,itemDefaultValue=None,
+               multiValueTitle=None):
+    self.multiValue = True
+    self.min = min
+    self.max = max
+    self.multiValueTitle = multiValueTitle
+    self._itemDefaultValue = itemDefaultValue
+    self.setItemDefaultValue(itemDefaultValue)
+    # Fill in self.defaultValue from itemDefaultValue iff
+    # len(self.defaultValue) == 0, and if there's an item default value.
+    if self.defaultValue is not None \
+      and not isinstance(self.defaultValue,list):
+      raise PortalError("invalid multivalue parameter '%s' defaultValue (%s):"
+                        " not a list" % (str(self.defaultValue),self.name))
+    if self.min is not None and self.min > 0 \
+      and (self.defaultValue is None or self.defaultValue == []): # or len(self.defaultValue) < self.min):
+      if self.itemDefaultValue is None:
+        raise PortalError(
+          "invalid multivalue parameter '%s' with min=%d:"
+          " 0-length defaultValue (%s) and no itemdefaultValue specified!"
+          % (self.name,self.min,str(self.defaultValue)))
+      else:
+        self._defaultValue = [ self.itemDefaultValue for x in range(0,self.min) ]
+
+  @property
+  def itemDefaultValue(self):
+    """
+    Returns the new item default value.  If a frontend can dynamically
+    add member values to this Multi value parameter, this should be the
+    value it autofills for the new member.
+    """
+    return self._itemDefaultValue
+
+  def setItemDefaultValue(self,value):
+    LOG.debug("%s(%s)" % (self.name,str(value)))
+    v = super(Multi,self)._parseValue(value)
+    super(Multi,self)._checkValue(v)
+    self._itemDefaultValue = v
+    LOG.debug("%s(%s) -> %s"
+              % (self.name,str(value),str(self._itemDefaultValue)))
+
+  def _checkValue(self,value):
+    if value is None and (self.min == None or self.min == 0):
+      return
+    if not isinstance(value,list):
+      raise IllegalParameterValueError(value,param=self)
+    for x in value:
+      LOG.debug("%s(%s)" % (str(super(Multi,self)._checkValue),str(x)))
+      super(Multi,self)._checkValue(x)
+
+  def _parseValue(self,value):
+    LOG.debug("%s(%s)" % (str(self.name),str(value)))
+    if value == None:
+      value = []
+    elif isinstance(value,str):
+      if value == "":
+        value = []
+      else:
+        try:
+          value = json.loads(value)
+        except:
+          raise PortalError(
+            "invalid multivalue parameter JSON string (%s=%s)"
+            % (self.name,str(value)))
+    if not isinstance(value,list):
+      raise PortalError("invalid multivalue parameter JSON value: not list")
+    for x in value:
+      LOG.debug("x = %s" % (str(x)))
+    nvalue = [ super(Multi,self)._parseValue(x) for x in value ]
+    LOG.debug("%s(%s) -> %s" % (str(self.name),str(value),str(nvalue)))
+    return nvalue
+
+  def setValue(self,value):
+    LOG.debug("%s(%s)" % (str(self.name),str(value)))
+    self._checkValue(value)
+    self._value = value
+    return self.value
+
+  def setDefaultValue(self,value):
+    LOG.debug("%s(%s)" % (self.name,str(value)))
+    if self.min is not None and self.min > 0 \
+      and (value is None or len(value) < self.min):
+      raise PortalError(
+        "invalid multivalue parameter '%s' with min=%d:"
+        " insufficient default value (%s) specified!"
+        % (self.name,self.min,str(value)))
+    if value == None:
+      self._defaultValue = []
+      return
+    newValue = []
+    for v in value:
+      LOG.debug("%s(%s)" % (self.name,str(v)))
+      v = super(Multi,self)._parseValue(v)
+      super(Multi,self)._checkValue(v)
+      newValue.append(v)
+    self._defaultValue = newValue
+    LOG.debug("%s -> %s" % (self.name,str(newValue)))
+
+  def toParamdef(self):
+    d = super(Multi,self).toParamdef()
+    fields = [ "multiValue","min","max","itemDefaultValue","multiValueTitle" ]
+    for f in fields:
+      d[f] = getattr(self,f)
+    return d
+
+class MultiParameter(Multi,Parameter):
+  def __init__(self,name,description,type,defaultValue,legalValues=None,
+               longDescription=None,groupId=None,hide=False,
+               prefix="emulab.net.parameter.",inputFieldHint=None,
+               inputConstraints=None,
+               min=None,max=None,itemDefaultValue=None,multiValueTitle=None):
+    Parameter.__init__(
+      self,name,description,type,defaultValue,legalValues=legalValues,
+      longDescription=longDescription,groupId=groupId,hide=hide,
+      prefix=prefix,inputFieldHint=inputFieldHint,
+      inputConstraints=inputConstraints,_skipInitialChecks=True)
+    Multi.__init__(
+      self,min=min,max=max,itemDefaultValue=itemDefaultValue,
+      multiValueTitle=multiValueTitle)
+    # NB: we _skipInitialChecks because of interactions between the
+    # Multi and Parameter methods, so both parent constructors must be
+    # called before we validate.  However, we need not wait to check
+    # default/legal/itemDefault values.
+    self.validate()
+
+  def validate(self):
+    Parameter.validate(self)
+    self.setItemDefaultValue(self.itemDefaultValue)
+    self.setDefaultValue(self.defaultValue)
+
+class StructParameter(Parameter):
+
+  def __init__(self,name,description,defaultValue=None,members=[],
+               longDescription=None,groupId=None,hide=False,
+               prefix="emulab.net.parameter.",
+               inputConstraints=None,_skipInitialChecks=False):
+    self.parameters = {}
+    self.parameterOrder = []
+    for m in members:
+       self.addParameter(m)
+    super(StructParameter,self).__init__(
+      name,description,ParameterType.STRUCT,defaultValue,
+      longDescription=longDescription,groupId=groupId,hide=hide,prefix=prefix,
+      inputConstraints=inputConstraints,_skipInitialChecks=_skipInitialChecks)
+
+  def addParameter(self,p):
+    self.parameterOrder.append(p.name)
+    self.parameters[p.name] = p
+
+  @property
+  def defaultValue(self):
+    if self._defaultValue is not None:
+      return self._defaultValue
+    v = {}
+    for x in self.parameterOrder:
+      v[x] = self.parameters[x].defaultValue
+    return v
+
+  @property
+  def legalValues(self):
+    """
+    Struct parameters do not have legal values; those must be set on
+    each member parameter.
+    """
+    return None
+
+  def _checkValue(self,value):
+    if not isinstance(value,dict):
+      raise PortalError("invalid struct parameter '%s' value '%s': not a dict"
+                        % (self.name,str(value)))
+    for x in sorted(value.keys()):
+      if not x in self.parameters:
+        raise MissingParameterMemberError(self,x)
+      self.parameters[x]._checkValue(value[x])
+
+  def _parseValue(self,value):
+    LOG.debug("%s(%s)" % (self.name,str(value)))
+    if value == None or value == "":
+      value = {}
+    elif isinstance(value,str):
+      try:
+        value = json.loads(value)
+      except:
+        raise PortalError("invalid struct parameter JSON string")
+    if not isinstance(value,dict):
+      raise PortalError("invalid struct parameter '%s' value: not dict (%s)"
+                        % (self.name,str(value)))
+    nvalue = {}
+    # Process supplied parameters (and error on anything extra).
+    for x in sorted(value.keys()):
+      if not x in self.parameters:
+        raise PortalError("unknown struct member '%s' in value" % (x))
+      nvalue[x] = self.parameters[x]._parseValue(value[x])
+    # Process default values for child params that were not supplied.
+    for x in sorted(self.parameters.keys()):
+      if x in nvalue:
+        continue
+      nvalue[x] = self.parameters[x]._parseValue(self.parameters[x].defaultValue)
+    for x in self.parameters:
+      if not x in value.keys():
+        nvalue[x] = self.parameters[x].defaultValue
+    LOG.debug("%s(%s) -> %s" % (self.name,str(value),str(nvalue)))
+    return DictNamespace(nvalue)
+
+  def setValue(self,value):
+    self._checkValue(value)
+    for x in sorted(value.keys()):
+      self.parameters[x].setValue(value[x])
+    self._value = value
+    return self.value
+
+  def toParamdef(self):
+    fields = [ "name","description","longDescription","type","_defaultValue",
+               "groupId","hide","parameterOrder","inputConstraints" ]
+    d = dict()
+    for f in fields:
+      fname = f
+      if fname.startswith('_'):
+        fname = fname[1:]
+      d[fname] = getattr(self,f)
+    d["parameters"] = {}
+    for name in self.parameters:
+      d["parameters"][name] = self.parameters[name].toParamdef()
+    return d
+
+  def validate(self):
+    for x in self.parameterOrder:
+      self.parameters[x].validate()
+
+class MultiStructParameter(Multi,StructParameter):
+  def __init__(self,name,description,defaultValue=None,members=[],
+               longDescription=None,groupId=None,hide=False,
+               min=None,max=None,itemDefaultValue=None,
+               multiValueTitle=None,
+               prefix="emulab.net.parameter.",inputConstraints=None):
+    StructParameter.__init__(
+      self,name,description,defaultValue,members=members,
+      longDescription=longDescription,groupId=groupId,hide=hide,prefix=prefix,
+      inputConstraints=inputConstraints,_skipInitialChecks=True)
+    Multi.__init__(
+      self,min=min,max=max,itemDefaultValue=itemDefaultValue,
+      multiValueTitle=multiValueTitle)
+    self.validate()
+
+  def validate(self):
+    for x in self.parameterOrder:
+      self.parameters[x].validate()
+    self._checkValue(self.defaultValue)
+    self._parseValue(self.defaultValue)
 
 class Context (object):
   """Handle context for scripts being run inside a portal.
@@ -76,12 +551,13 @@ class Context (object):
     self._request = None
     self._suppressAutoPrint = False
     self._parameters = {}
-    self._parameterGroups = {}
+    self._parameterGroups = { "advanced": "Advanced" }
     self._parameterOrder = []
     self._parameterErrors = []
     self._parameterWarnings = []
     self._parameterWarningsAreFatal = False
     self._bindingDone = False
+    self._envParams = {}
     if 'GENILIB_PORTAL_MODE' in os.environ:
       self._standalone = False
       self._portalRequestPath = os.environ.get('GENILIB_PORTAL_REQUEST_PATH',None)
@@ -143,7 +619,8 @@ class Context (object):
     rspec.writeXML(self._portalRequestPath)
 
   def defineParameter (self, name, description, typ, defaultValue, legalValues = None,
-                       longDescription = None, advanced = False, groupId = None, hide=False,
+                       longDescription = None, inputFieldHint = None, inputConstraints = None, advanced = False, groupId = None, hide=False,
+                       multiValue=False,min=None,max=None,itemDefaultValue=None,multiValueTitle=None,
                        prefix="emulab.net.parameter."):
     """Define a new paramter to the script.
 
@@ -170,16 +647,48 @@ class Context (object):
     if isinstance(defaultValue, tuple):
       defaultValue = defaultValue[0]
 
-    if legalValues and defaultValue not in Context._legalList(legalValues):
-      raise IllegalParameterDefaultError(defaultValue)
+    # Backwards compat for the advanced key.
+    if advanced and groupId == None:
+      groupId="advanced"
 
-    self._parameterOrder.append(name)
-    self._parameters[name] = {'description': description, 'type': typ,
-                              'defaultValue': defaultValue, 'legalValues': legalValues,
-                              'longDescription': longDescription, 'advanced': advanced,
-                              'hide': hide, 'prefix': prefix}
-    if groupId is not None:
-      self._parameters[name]['groupId'] = groupId
+    if multiValue:
+      p = MultiParameter(
+        name,description,typ,defaultValue,legalValues=legalValues,
+        longDescription=longDescription,groupId=groupId,hide=hide,
+        min=min,max=max,prefix=prefix,inputFieldHint=inputFieldHint,
+        itemDefaultValue=itemDefaultValue,multiValueTitle=multiValueTitle,
+        inputConstraints=inputConstraints)
+    else:
+      p = Parameter(
+        name,description,typ,defaultValue,legalValues=legalValues,
+        longDescription=longDescription,groupId=groupId,hide=hide,
+        prefix=prefix,inputFieldHint=inputFieldHint,
+        inputConstraints=inputConstraints)
+    self.addParameter(p)
+    return p
+
+  def defineStructParameter(self,name,description,defaultValue=None,
+                            longDescription=None,advanced=False,hide=False,
+                            members=[],multiValue=False,min=None,max=None,
+                            itemDefaultValue=None,multiValueTitle=None,
+                            inputConstraints=None,
+                            prefix="emulab.net.parameter."):
+    if multiValue:
+      p = MultiStructParameter(
+        name,description,defaultValue,longDescription=longDescription,
+        hide=hide,min=min,max=max,itemDefaultValue=itemDefaultValue,
+        multiValueTitle=multiValueTitle,prefix=prefix,members=members,
+        inputConstraints=inputConstraints)
+    else:
+      p = StructParameter(
+        name,description,defaultValue,longDescription=longDescription,
+        hide=hide,prefix=prefix,members=members)
+    self.addParameter(p)
+    return p
+
+  def addParameter(self,parameter):
+    self._parameterOrder.append(parameter.name)
+    self._parameters[parameter.name] = parameter
     if len(self._parameters) == 1:
       atexit.register(self._checkBind)
 
@@ -213,6 +722,8 @@ class Context (object):
     will extract the parameters and their values from the Manifest.  Finally,
     if altParamSrc is a string, we'll try to parse it as a PG manifest xml
     document.  No other forms of altParamSrc are currently specified."""
+    for paramName in self._parameterOrder:
+      self._parameters[paramName].validate()
     self._bindingDone = True
     if altParamSrc:
       if type(altParamSrc) == dict:
@@ -268,6 +779,46 @@ class Context (object):
     """
     self._parameterWarnings.append(parameterError)
 
+  def _splitParamPathIntoComponents(self,paramPath):
+    s1 = paramPath.split('.')
+    s2 = []
+    for c in s1:
+      sidx = c.find('[')
+      if sidx > -1:
+        try:
+          idx = int(c[sidx+1:-1])
+        except:
+          raise PortalError("invalid parameter path '%s': malformed index in component '%s'" % (paramPath,c))
+        s2.append(c[:sidx])
+        s2.append(idx)
+      else:
+        s2.append(c)
+    return s2
+
+  def _getEnvParamForPath(self,paramPath):
+    if self._standalone:
+      raise PortalError("not in portal mode; cannot call _getEnvParamForPath")
+    if isinstance(paramPath,str):
+      paramPath = self._splitParamPathIntoComponents(paramPath)
+    # Try to find the original value dict specified by the path,
+    # probably because we want to annotate it:
+    v = self._envParams["bindings"]
+    lv = None
+    for comp in paramPath:
+      try:
+        lv = v[comp]
+        LOG.debug("lv = %s" % (str(lv)))
+        v = lv["value"]
+        LOG.debug("v = %s" % (str(v)))
+      except:
+        if dodebug:
+          import traceback
+          traceback.print_exc()
+        raise PortalError(
+          "nonexistent parameter value at component '%s' in path '%s'"
+          % (str(comp),str(paramPath)))
+    return lv
+
   def verifyParameters (self):
     """
     If there have been calls to Context.parameterError, and/or to
@@ -280,13 +831,80 @@ class Context (object):
               or not self._parameterWarningsAreFatal):
       return 0
 
-    #
-    # Dump a JSON list of typed errors.
-    #
-    ea = []
-    ea.extend(self._parameterErrors)
-    ea.extend(self._parameterWarnings)
-    json.dump(ea,sys.stderr,cls=PortalJSONEncoder)
+    if not self._standalone and self._readParamsPath is not None:
+      #
+      # Return the same blob to the frontend that we received, but
+      # annotate it with errors/warnings and changed values:
+      #
+      erridx = 1
+      if len(self._parameterErrors):
+        self._envParams["errors"] = {}
+      for err in self._parameterErrors:
+        self._envParams["errors"][str(erridx)] = {}
+        for param in err.params:
+          try:
+            v = self._getEnvParamForPath(param)
+            LOG.debug("v = %s" % (str(v)))
+          except Exception as e:
+            newmsg = "Double fault: while trying to generate error (%s, %s), encountered malformed parameter path: %s" % (str(param),err.message,e.message)
+            self._envParams["errors"][str(erridx)] = dict(message=newmsg)
+            erridx += 1
+            continue
+          else:
+            if not "errors" in v:
+              v["errors"] = []
+            v["errors"].append(str(erridx))
+        for param in err.fixedValues.keys():
+          try:
+            v = self._getEnvParamForPath(param)
+            LOG.debug("v = %s" % (str(v)))
+          except Exception as e:
+            newmsg = "Double fault: while trying to update value (%s, %s), encountered malformed parameter path: %s" % (str(param),err.message,e.message)
+            self._envParams["errors"][str(erridx)] = dict(message=newmsg)
+            erridx += 1
+            continue
+          else:
+            v["fixedValue"] = err.fixedValues[param]
+        self._envParams["errors"][str(erridx)] = dict(message=err.message)
+        erridx += 1
+      if len(self._parameterWarnings):
+        self._envParams["warnings"] = {}
+      for err in self._parameterWarnings:
+        self._envParams["warnings"][str(erridx)] = {}
+        for param in err.params:
+          try:
+            v = self._getEnvParamForPath(param)
+          except Exception as e:
+            newmsg = "Double fault: while trying to generate warning (%s, %s), encountered malformed parameter path: %s" % (str(param),err.message,e.message)
+            self._envParams["warnings"][str(erridx)] = dict(message=newmsg)
+            erridx += 1
+            continue
+          else:
+            if not "warnings" in v:
+              v["warnings"] = []
+            v["warnings"].append(str(erridx))
+        for param in err.fixedValues.keys():
+          try:
+            v = self._getEnvParamForPath(param)
+            LOG.debug("v = %s" % (str(v)))
+          except Exception as e:
+            newmsg = "Double fault: while trying to update value (%s, %s), encountered malformed parameter path: %s" % (str(param),err.message,e.message)
+            self._envParams["errors"][str(erridx)] = dict(message=newmsg)
+            erridx += 1
+            continue
+          else:
+            v["fixedValue"] = err.fixedValues[param]
+        self._envParams["warnings"][str(erridx)] = dict(message=err.message)
+        erridx += 1
+      json.dump(self._envParams,sys.stderr,cls=PortalJSONEncoder)
+    else:
+      #
+      # Dump a JSON list of typed errors.
+      #
+      ea = []
+      ea.extend(self._parameterErrors)
+      ea.extend(self._parameterWarnings)
+      json.dump(ea,sys.stderr,cls=PortalJSONEncoder)
 
     #
     # Exit with a count of errors and (fatal) warnings, added to 100 ...
@@ -304,84 +922,130 @@ class Context (object):
     """
     self._suppressAutoPrint = True
 
-  @staticmethod
-  def _legalList(l):
-    return [x if not isinstance(x, tuple) else x[0] for x in l]
-
   def _bindParametersCmdline (self):
     parser = argparse.ArgumentParser()
     for name in self._parameterOrder:
-      opts = self._parameters[name]
-      if opts['legalValues']:
-        legal = Context._legalList(opts['legalValues'])
-      else:
-        legal = None
+      p = self._parameters[name]
+      LOG.debug("%s = %s" % (str(p.name),str(p.defaultValue)))
+      # Brutal hack to force p._parseValue to be called.  Argparse will
+      # only invoke the `type` function for the unsupplied default case
+      # if the value is a basestring.
+      default = p.defaultValue
+      if isinstance(default,dict) or isinstance(default,list):
+        default = ""
       parser.add_argument("--" + name,
-                          type    = ParameterType.argparsemap[opts['type']],
-                          default = opts['defaultValue'],
-                          choices = legal,
-                          help    = opts['description'])
+                          type    = p._parseValue,
+                          default = default,
+                          choices = p.legalValues,
+                          help    = p.description)
     args = parser.parse_args()
     for name in self._parameterOrder:
-      self._parameters[name]['value'] = getattr(args, name)
+      self._parameters[name].setValue(getattr(args, name))
+    return DictNamespace(args.__dict__)
 
-    return args
+  def _flattenEnvParams(self,p):
+    """
+    The parameter block we get back from the frontend may be a giant
+    dict with metadata and values specified as "value": <value> pairs
+    within each parameter descriptor.  So "flatten" the value pairs into
+    the right data structure.
+    """
+    if not isinstance(p,list) and not isinstance(p,dict):
+      return p
+    elif isinstance(p,dict):
+      if "value" in p:
+        return self._flattenEnvParams(p["value"])
+      ret = {}
+      for k in p.keys():
+        ret[k] = self._flattenEnvParams(p[k])
+      LOG.debug("ret -> %s" % (str(ret)))
+    elif isinstance(p,list):
+      ret = []
+      for x in p:
+        ret.append(self._flattenEnvParams(x))
+      LOG.debug("ret -> %s" % (str(ret)))
+    return ret
 
   def _bindParametersEnv (self):
-    namespace = Namespace()
-    paramValues = {}
+    """
+    Read parameter values from the environment (e.g., from the
+    frontend).  You should only use this path if you understand the
+    representation(s) the frontend uses to send parameter values.
+    """
     if self._readParamsPath:
       f = open(self._readParamsPath, "r")
-      paramValues = json.load(f)
+      self._envParams = json.load(f)
       f.close()
-    for name in self._parameterOrder:
-      opts = self._parameters[name]
-      val = paramValues.get(name, opts['defaultValue'])
-      try:
-        val = ParameterType.argparsemap[opts['type']](val)
-      except Exception:
-        self.reportError(ParameterError("Could not coerce '%s' to '%s'" %
-                                        (val, opts['type']), [name]))
-        continue
-      if opts['legalValues'] and val not in Context._legalList(opts['legalValues']):
-        self.reportError(ParameterError("Illegal value '%s'" % (val,), [name]))
-      else:
-        setattr(namespace, name, val)
-        self._parameters[name]['value'] = val
-    # This might not return.
-    self.verifyParameters()
-    return namespace
+    if len(self._envParams):
+      self._flattenedEnvParams = self._flattenEnvParams(self._envParams["bindings"])
+    else:
+      self._flattenedEnvParams = {}
+    LOG.debug("flattened: %s" % (str(self._flattenedEnvParams)))
+    return self._bindParametersDict(self._flattenedEnvParams)
     
   def _bindParametersDict(self,paramValues):
-    namespace = Namespace()
+    """
+    This is the generic parameter value parse/bind function.  For each
+    defined parameter (self._parameters.keys()), in definition order
+    (self._parameterOrder), extract a value from the supplied value.
+    Each Parameter subclass provides a _parseValue method to perform the
+    extraction, and can thus define the range of input values it
+    supports.  Once a value is extracted, we set that value (via the
+    setValue method) on the unbound parameter, so that
+    self._parameters[name].value contains the extracted value.  Note
+    that setValue may throw an error even if _parseValue did not, since
+    there may be additional constraints other than type correctness
+    (e.g., a range of allowed values.)
+    """
+    namespace = DictNamespace()
     for name in self._parameterOrder:
-      opts = self._parameters[name]
-      val = paramValues.get(name, opts['defaultValue'])
+      p = self._parameters[name]
+      val = paramValues.get(name, p.defaultValue)
+      LOG.debug("paramValue(%s): %s" % (str(p),str(val)))
       try:
-        if type(opts['defaultValue']) == bool:
-          if val == "False" or val == "false":
-            val = False
-          elif val == "True" or val == "true":
-            val = True
-          else:
-            val = ParameterType.argparsemap[opts['type']](val)
-        else:
-          val = ParameterType.argparsemap[opts['type']](val)
-      except:
-        print "ERROR: Could not coerce '%s' to '%s'" % (val, opts['type'])
+        val = p._parseValue(val)
+      except ParameterError as e:
+        if dodebug:
+          import traceback
+          traceback.print_exc()
+        self.reportError(e)
         continue
-      if opts['legalValues'] and \
-        val not in Context._legalList(opts['legalValues']):
-        print "ERROR: Illegal value '%s'" % (val,),[name]
-      else:
-        setattr(namespace, name, val)
-        self._parameters[name]['value'] = val
+      except Exception as e:
+        if dodebug:
+          import traceback
+          traceback.print_exc()
+        self.reportError(
+          ParameterError("Could not parse '%s' value '%s': %s"
+                         % (name,str(val),str(e)),[name]))
+        continue
+      try:
+        p.setValue(val)
+      except ParameterError as e:
+        if dodebug:
+          import traceback
+          traceback.print_exc()
+        self.reportError(e)
+        continue
+      except Exception as e:
+        if dodebug:
+          import traceback
+          traceback.print_exc()
+        self.reportError(
+          ParameterError("Illegal value '%s' for parameter '%s': %s"
+                         % (str(val),name,str(e)),[name]))
+        continue
+      setattr(namespace, name, val)
     # This might not return. 
     self.verifyParameters()
     self._bindingDone = True
     return namespace
     
   def _bindParametersManifest(self,manifest):
+    """
+    This method extracts parameter values from a
+    `geni.rspec.pgmanifest.Manifest` class, places them in a dict, and
+    invokes self._bindParametersDict.
+    """
     pdict = {}
     for manifestParameter in manifest.parameters:
       pdict[manifestParameter.name] = manifestParameter.value
@@ -401,13 +1065,14 @@ class Context (object):
         f.write(', ')
       else:
         didFirst = True
-      opts = self._parameters[name]
-      if opts.has_key('groupId') \
-        and self._parameterGroups.has_key(opts['groupId']):
-        opts['groupName'] = self._parameterGroups[opts['groupId']]
+      p = self._parameters[name]
+      pd = p.toParamdef()
+      # A little backwards-compat hack.
+      if p.groupId and p.groupId in self._parameterGroups:
+        pd['groupName'] = self._parameterGroups[p.groupId]
       json.dump(name,f)
       f.write(': ')
-      json.dump(opts,f)
+      json.dump(pd,f)
     f.write('}')
     f.close()
     return
@@ -482,7 +1147,7 @@ class ParameterError (PortalError):
   please create (don't throw) one of these error objects, and tell the
   Portal about it by calling Context.reportError.
   """
-  def __init__(self,message,paramList):
+  def __init__(self,message,paramList,fixedValues={}):
     """
     Create a ParameterError.  @message is the overall error message;
     in the Portal Web UI, it will be displayed near each involved
@@ -494,6 +1159,8 @@ class ParameterError (PortalError):
     """
     super(ParameterError, self).__init__(message)
     self.params = paramList
+    if not fixedValues: fixedValues = {}
+    self.fixedValues = fixedValues
 
 
 class ParameterWarning (PortalError):
@@ -509,7 +1176,7 @@ class ParameterWarning (PortalError):
   and/or suggest a set of modified values that will improve the
   situation.  .
   """
-  def __init__(self,message,paramList,fixedValues=None):
+  def __init__(self,message,paramList,fixedValues={}):
     """
     Create a ParameterWarning.  @message is the overall error
     message; in the Portal Web UI, it will be displayed near each
@@ -532,23 +1199,49 @@ class ParameterWarning (PortalError):
     if not fixedValues: fixedValues = {}
     self.fixedValues = fixedValues
 
+class MissingParameterMemberError(PortalError):
+  def __init__(self,param,memberName):
+    super(MissingParameterMemberError, self).__init__(
+      memberName + " not in " + param.name)
+    self._param = param
 
 class IllegalParameterDefaultError (PortalError):
-  def __init__ (self,val):
+  def __init__ (self,val,param=None):
     super(IllegalParameterDefaultError, self).__init__("no message?")
     self._val = val
+    self._param = param
 
   def __str__ (self):
-    return "% given as a default value, but is not listed as a legal value" % self._val
+    namestr = ""
+    if self._param:
+      namestr = " for parameter '%s'" % (str(self._param.name))
+    return "%s given as a default value%s, but is not listed as a legal value" % (str(self._val),namestr)
+
+
+class IllegalParameterValueError (PortalError):
+  def __init__ (self,val,param=None):
+    super(IllegalParameterValueError, self).__init__("no message?")
+    self._val = val
+    self._param = param
+
+  def __str__ (self):
+    namestr = ""
+    if self._param:
+      namestr = " for parameter '%s'" % (str(self._param.name))
+    return "value '%s'%s is not a legal value" % (str(self._val),namestr)
 
 
 class ParameterBindError (PortalError):
-  def __init__ (self,val):
+  def __init__ (self,val,param=None):
     super(ParameterBindError, self).__init__("no message?")
     self._val = val
+    self._param = param
 
   def __str__ (self):
-    return "bad parameter binding: %s" % str(self._val,)
+    namestr = ""
+    if self._param:
+      namestr = " for parameter '%s'" % (str(self._param.name))
+    return "bad parameter binding: %s%s" % (str(self._val),namestr)
 
 
 class NoRSpecError (PortalError):

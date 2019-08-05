@@ -484,19 +484,44 @@ class ParameterData(object):
   def __init__ (self, parameters):
     self.parameters = parameters
 
+  def _write_parameter(self,root,k,v,prefix="emulab.net.parameter.",
+                       ismember=False):
+    pgns={None : PGNS.PARAMS.name}
+    if prefix is None:
+      prefix = ""
+    if isinstance(v,list):
+      elm = ET.SubElement(root, "data_list", nsmap=pgns)
+      if k:
+        elm.attrib["name"] = prefix + k
+      for lp in v:
+        self._write_parameter(elm,None,lp,prefix="",ismember=True)
+    elif isinstance(v,dict):
+      elm = ET.SubElement(root, "data_struct", nsmap=pgns)
+      if k:
+        elm.attrib["name"] = prefix + k
+      for dk in v.keys():
+        self._write_parameter(elm,dk,v[dk],prefix="",ismember=True)
+    else:
+      if ismember:
+        elm = ET.SubElement(root, "data_member_item", nsmap=pgns)
+      else:
+        elm = ET.SubElement(root, "data_item", nsmap=pgns)
+      if k:
+        elm.attrib["name"] = prefix + k
+      if isinstance(v, ET._Element):
+        elm.append(v)
+      else:
+        elm.text = str(v)
+    return
+
   def _write (self, root):
     td = ET.SubElement(root, "data_set",
                        nsmap={None : PGNS.PARAMS.name})
-    for param in self.parameters:
-      that = self.parameters[param]
-      if 'hide' in that and that['hide'] is False:
-        desc = ET.SubElement(td, "data_item")
-        desc.attrib["name"] = that['prefix'] + param
-
-        if isinstance(that['value'], ET._Element):
-          desc.append(that['value'])
-        else:
-          desc.text = str(that['value'])
+    for paramName in self.parameters:
+      param = self.parameters[paramName]
+      if param.hide is False:
+        self._write_parameter(td,paramName,param.value,prefix=param.prefix)
+    return
 
 pg.Request.EXTENSIONS.append(("ParameterData", ParameterData))
 

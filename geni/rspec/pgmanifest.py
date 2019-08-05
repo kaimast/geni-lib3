@@ -151,11 +151,30 @@ class ManifestParameter(object):
     self.name = name
     self.value = value
 
+  @staticmethod
+  def _process_element(elem):
+    retval = None
+    if elem.tag == "{%s}data_item" % (PGNS.PARAMS.name,):
+      retval = elem.text
+    elif elem.tag == "{%s}data_list" % (PGNS.PARAMS.name,):
+      retval = []
+      for e in elem:
+        retval.append(ManifestParameter._process_element(e))
+    elif elem.tag == "{%s}data_struct" % (PGNS.PARAMS.name,):
+      retval = {}
+      for e in elem:
+        name = e.get("name").split(".")[-1]
+        retval[name] = ManifestParameter._process_element(e)
+    elif elem.tag == "{%s}data_member_item" % (PGNS.PARAMS.name,):
+      retval = elem.text
+    else:
+      raise Exception("unknown parameter tag %s" % (elem.tag,))
+    return retval
+
   @classmethod
   def _fromdom (cls, elem):
-    n = ManifestParameter(elem.get('name'), elem.get('value'))
-    return n
-
+    name = elem.get("name").split(".")[-1]
+    return ManifestParameter(name,ManifestParameter._process_element(elem))
 
 class Manifest(object):
   REQUESTV2 = "http://www.protogeni.net/resources/rspec/2"
@@ -205,9 +224,14 @@ class Manifest(object):
 
   @property
   def parameters (self):
-    for param in self.root.findall("{%s}data_set/{%s}data_item"
-                                   % (PGNS.PARAMS.name,PGNS.PARAMS.name)):
-      yield ManifestParameter._fromdom(param)
+    for setElem in self.root.findall("{%s}data_set" % (PGNS.PARAMS.name)):
+      for paramElem in list(setElem):
+        if not paramElem.tag in ["{%s}data_item" % (PGNS.PARAMS.name),
+                                 "{%s}data_list" % (PGNS.PARAMS.name),
+                                 "{%s}data_struct" % (PGNS.PARAMS.name) ]:
+          continue
+        elm = ManifestParameter._fromdom(paramElem)
+        yield elm
 
   @property
   def text (self):
