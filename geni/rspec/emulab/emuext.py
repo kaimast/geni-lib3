@@ -538,6 +538,24 @@ class Attribute(object):
 
 Node.EXTENSIONS.append(("Attribute", Attribute))
 
+class wirelessSite(object):
+    """A simple extension to mark a node as being part of a given wireless aggregate.
+    """
+    def __init__(self, id, type, urn):
+        self.id = id
+        self.type = type
+        self.urn = urn
+
+    def _write(self, node):
+        el = ET.SubElement(
+            node,"{%s}wireless-site" % (Namespaces.EMULAB.name))
+        el.attrib['id'] = self.id
+        el.attrib['type'] = self.type
+        el.attrib['urn'] = self.urn
+        return node
+
+Node.EXTENSIONS.append(("wirelessSite", wirelessSite))
+
 class ExperimentFirewall(Node):
     """Added to a request this extension will tell Emulab to add a firewall
     to the control network. You may supply optional rules in iptables syntax.
@@ -582,4 +600,3 @@ class Switch(Node):
     self.setUseTypeDefaultImage()
 
 Request.EXTENSIONS.append(("Switch", Switch))
-
