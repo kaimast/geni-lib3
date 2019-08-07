@@ -215,6 +215,10 @@ class Parameter(object):
     (type correctness) and _checkValue (constraint legality) methods.
     """
     LOG.debug("%s(%s)" % (self.name,str(defaultValue)))
+    # NB: the defaultValue may be a tuple present in self._legalValues; it
+    # need not be the first value of a tuple.
+    if type(defaultValue) == tuple and defaultValue in self._legalValues:
+      defaultValue = defaultValue[0]
     v = self._parseValue(defaultValue)
     self._checkValue(v)
     self._defaultValue = v
