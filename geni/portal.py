@@ -932,7 +932,7 @@ class Context (object):
       # if the value is a basestring.
       default = p.defaultValue
       if isinstance(default,dict) or isinstance(default,list):
-        default = ""
+        default = json.dumps(default,sort_keys=True, separators=(',',':'))
       parser.add_argument("--" + name,
                           type    = p._parseValue,
                           default = default,
