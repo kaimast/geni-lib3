@@ -34,7 +34,7 @@ class UserData(object):
   def _write (self, element):
     if self.userdata is not None:
       ud = ET.SubElement(element, "data_set",
-                         nsmap={None : Namespaces.PARAMS.name})
+                         nsmap={None : Namespaces.DATA.name})
       for key, value in self.userdata.data.iteritems():
         udi = ET.SubElement(ud, "data_item")
         udi.attrib["name"] = self.userdata.prefix + key
