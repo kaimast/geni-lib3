@@ -326,7 +326,7 @@ class Multi(object):
     LOG.debug("%s(%s)" % (str(self.name),str(value)))
     if value == None:
       value = []
-    elif isinstance(value,str):
+    elif isinstance(value,basestring):
       if value == "":
         value = []
       else:
@@ -451,7 +451,7 @@ class StructParameter(Parameter):
     LOG.debug("%s(%s)" % (self.name,str(value)))
     if value == None or value == "":
       value = {}
-    elif isinstance(value,str):
+    elif isinstance(value,basestring):
       try:
         value = json.loads(value)
       except:
@@ -802,7 +802,7 @@ class Context (object):
   def _getEnvParamForPath(self,paramPath):
     if self._standalone:
       raise PortalError("not in portal mode; cannot call _getEnvParamForPath")
-    if isinstance(paramPath,str):
+    if isinstance(paramPath,basestring):
       paramPath = self._splitParamPathIntoComponents(paramPath)
     # Try to find the original value dict specified by the path,
     # probably because we want to annotate it:
