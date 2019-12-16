@@ -124,7 +124,7 @@ class Parameter(object):
     self.hide = hide
     self.prefix = prefix
     self._value = None
-    self._legalValues = legalValues
+    self._legalValues = legalValues or None
     self._defaultValue = defaultValue
     if not _skipInitialChecks:
       if self.legalValues:
@@ -159,7 +159,7 @@ class Parameter(object):
     actual value is the first element of the tuple, and the display hint
     is the second element.)
     """
-    if self._legalValues is None:
+    if not self._legalValues:
       return None
     return [x if not isinstance(x, tuple) else x[0] for x in self._legalValues]
 
