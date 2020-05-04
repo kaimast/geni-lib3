@@ -337,7 +337,7 @@ class Multi(object):
             "invalid multivalue parameter JSON string (%s=%s)"
             % (self.name,str(value)))
     if not isinstance(value,list):
-      raise PortalError("invalid multivalue parameter JSON value: not list")
+      raise PortalError("invalid multivalue parameter JSON value ('%s'): not list" % (str(value),))
     for x in value:
       LOG.debug("x = %s" % (str(x)))
     nvalue = [ super(Multi,self)._parseValue(x) for x in value ]
@@ -370,6 +370,16 @@ class Multi(object):
     self._defaultValue = newValue
     LOG.debug("%s -> %s" % (self.name,str(newValue)))
 
+  def validate(self):
+    LOG.debug(self.name)
+    self.setItemDefaultValue(self.itemDefaultValue)
+    self.setDefaultValue(self.defaultValue)
+    #self._parseValue(self.defaultValue)
+    #self._checkValue(self.defaultValue)
+    if self.legalValues:
+      for v in self.legalValues:
+        super(Multi,self)._parseValue(v)
+
   def toParamdef(self):
     d = super(Multi,self).toParamdef()
     fields = [ "multiValue","min","max","itemDefaultValue","multiValueTitle" ]
@@ -397,10 +407,10 @@ class MultiParameter(Multi,Parameter):
     # default/legal/itemDefault values.
     self.validate()
 
-  def validate(self):
-    Parameter.validate(self)
-    self.setItemDefaultValue(self.itemDefaultValue)
-    self.setDefaultValue(self.defaultValue)
+#  def validate(self):
+#    Parameter.validate(self)
+#    self.setItemDefaultValue(self.itemDefaultValue)
+#    self.setDefaultValue(self.defaultValue)
 
 class StructParameter(Parameter):
 
