@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 from lxml import etree as ET
+import six
 
 import geni.namespaces as GNS
 from .pgad import Location
@@ -82,11 +83,14 @@ class Advertisement(object):
     if path:
       self._root = ET.parse(open(path))
     elif xml:
-      self._root = ET.fromstring(xml)
+      if six.PY3:
+        self._root = ET.fromstring(bytes(xml, "utf-8"))
+      else:
+        self._root = ET.fromstring(xml)
 
   @property
   def text (self):
-    return ET.tostring(self._root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   @property
   def datapaths (self):

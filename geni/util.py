@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,18 +12,20 @@ import multiprocessing as MP
 import os
 import os.path
 import shutil
+import subprocess
 import tempfile
 import time
 import traceback as tb
 import zipfile
+
+import six
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
 def _getdefault (obj, attr, default):
   if hasattr(obj, attr):
     return obj[attr]
-  else:
-    return default
+  return default
 
 def checkavailrawpc (context, am):
   """Returns a list of node objects representing available raw PCs at the
@@ -167,6 +169,46 @@ def deleteSliverExists(am, context, slice):
   except DeleteSliverError:
     pass
 
+def _buildaddot(ad, drop_nodes = None):
+  """Constructs a dotfile of a topology described by an advertisement rspec.  Only works on very basic GENIv3 advertisements,
+  and probably has lots of broken edge cases."""
+  # pylint: disable=too-many-branches
+
+  if not drop_nodes:
+    drop_nodes = []
+
+  dot_data = []
+  dda = dot_data.append # Save a lot of typing
+
+  dda("graph {")
+
+  for node in ad.nodes:
+    if node.name in drop_nodes:
+      continue
+
+    if node.available:
+      dda("\"%s\"" % (node.name))
+    else:
+      dda("\"%s\" [style=dashed]" % (node.name))
+
+  for link in ad.links:
+    if not len(link.interface_refs) == 2:
+      print("Link with more than 2 interfaces:")
+      print(link.text)
+
+    name_1 = link.interface_refs[0].split(":")[-2].split("+")[-1]
+    name_2 = link.interface_refs[1].split(":")[-2].split("+")[-1]
+
+    if name_1 in drop_nodes or name_2 in drop_nodes:
+      continue
+
+    dda("\"%s\" -- \"%s\"" % (name_1, name_2))
+
+  dda("}")
+
+  return "\n".join(dot_data)
+
+
 def builddot (manifests):
   """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
   # pylint: disable=too-many-branches
@@ -205,6 +247,20 @@ def builddot (manifests):
 
 
     elif isinstance(manifest, VTSM.Manifest):
+      for dp in manifest.datapaths:
+        dda("\"%s\" [shape=rectangle];" % (dp.client_id))
+
+      for ctr in manifest.containers:
+        dda("\"%s\" [shape=oval];" % (ctr.client_id))
+
+      dda("subgraph cluster_vf {")
+      dda("label = \"SSL VPNs\";")
+      dda("rank = same;")
+      for vf in manifest.functions:
+        if isinstance(vf, VTSM.SSLVPNFunction):
+          dda("\"%s\" [label=\"%s\",shape=hexagon];" % (vf.client_id, vf.note))
+      dda("}")
+
       # TODO: We need to actually go through datapaths and such, but we can approximate for now
       for port in manifest.ports:
         if isinstance(port, VTSM.GREPort):
@@ -227,24 +283,76 @@ def builddot (manifests):
             if port.remote_client_id == dp.mirror:
               remote_port_name = port.remote_client_id.split(":")[-1]
               dda("\"%s\" -> \"%s\" [headlabel=\"%s\",taillabel=\"%s\",style=dashed]" % (
-                            port.remote_dpname, port.dpname, port.name, remote_port_name))
+                  port.remote_dpname, port.dpname, port.name, remote_port_name))
               continue
 
           # No mirror, draw as normal
           dda("\"%s\" -> \"%s\" [taillabel=\"%s\"]" % (port.dpname, port.remote_dpname,
                                                        port.name))
+        elif isinstance(port, VTSM.VFPort):
+          dda("\"%s\" -> \"%s\"" % (port.dpname, port.remote_client_id))
+          dda("\"%s\" -> \"%s\"" % (port.remote_client_id, port.dpname))
+
         elif isinstance(port, VTSM.GenericPort):
           pass
         else:
           continue ### TODO: Unsupported Port Type
 
-      for dp in manifest.datapaths:
-        dda("\"%s\" [shape=rectangle]" % (dp.client_id))
-
 
   dda("}")
 
   return "\n".join(dot_data)
+
+
+class APIEncoder(json.JSONEncoder):
+  def default (self, obj): # pylint: disable=E0202
+    if hasattr(obj, "__json__"):
+      return obj.__json__()
+    elif isinstance(obj, set):
+      return list(obj)
+    return json.JSONEncoder.default(self, obj)
+
+
+def loadAggregates (path = None):
+  from .aggregate.spec import AMSpec
+  from . import _coreutil as GCU
+
+  if not path:
+    path = GCU.getDefaultAggregatePath()
+
+  ammap = {}
+  try:
+    obj = json.loads(open(path, "r").read())
+    for aminfo in obj["specs"]:
+      ams = AMSpec._jconstruct(aminfo)
+      am = ams.build()
+      if am:
+        ammap[am.name] = am
+  except IOError:
+    pass
+
+  return ammap
+
+def updateAggregates (context, ammap):
+  from .aggregate.core import loadFromRegistry
+
+  new_map = loadFromRegistry(context)
+  for k,v in new_map.items():
+    if k not in ammap:
+      ammap[k] = v
+  saveAggregates(ammap)
+
+def saveAggregates (ammap, path = None):
+  from . import _coreutil as GCU
+
+  if not path:
+    path = GCU.getDefaultAggregatePath()
+
+  obj = {"specs" : [x._amspec for x in ammap.values() if x._amspec]}
+  with open(path, "w+") as f:
+    data = json.dumps(obj, cls=APIEncoder)
+    f.write(data)
+
 
 def loadContext (path = None, key_passphrase = None):
   import geni._coreutil as GCU
@@ -269,6 +377,8 @@ def loadContext (path = None, key_passphrase = None):
     cf = FrameworkRegistry.get(obj["framework"])()
     cf.cert = obj["cert-path"]
     if key_passphrase:
+      if six.PY3:
+        key_passphrase = bytes(key_passphrase, "utf-8")
       cf.setKey(obj["key-path"], key_passphrase)
     else:
       cf.key = obj["key-path"]
@@ -282,6 +392,7 @@ def loadContext (path = None, key_passphrase = None):
     context.addUser(user)
     context.cf = cf
     context.project = obj["project"]
+    context.path = path
 
   elif version == 2:
     context = Context()
@@ -295,6 +406,7 @@ def loadContext (path = None, key_passphrase = None):
       cf.key = fobj["key-path"]
     context.cf = cf
     context.project = fobj["project"]
+    context.path = path
 
     ulist = obj["users"]
     for uobj in ulist:
@@ -328,11 +440,19 @@ class MissingPublicKeyError(Exception):
 
 class PathNotFoundError(Exception):
   def __init__ (self, path):
+    super(PathNotFoundError, self).__init__()
     self._path = path
 
   def __str__ (self):
     return "The path %s does not exist." % (self._path)
 
+def _find_ssh_keygen ():
+  PATHS = ["/usr/bin/ssh-keygen", "/bin/ssh-keygen", "/usr/sbin/ssh-keygen", "/sbin/ssh-keygen"]
+  for path in PATHS:
+    if os.path.exists(path):
+      return path
+
+MAKE_KEYPAIR = (-1, 1)
 
 def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
   import geni._coreutil as GCU
@@ -345,14 +465,14 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   zf = zipfile.ZipFile(os.path.expanduser(bundle_path))
 
   zip_pubkey_path = None
-  if pubkey_path is None:
+  if pubkey_path is None or pubkey_path == MAKE_KEYPAIR:
     # search for pubkey-like file in zip
     for fname in zf.namelist():
       if fname.startswith("ssh/public/") and fname.endswith(".pub"):
         zip_pubkey_path = fname
         break
 
-    if not zip_pubkey_path:
+    if not zip_pubkey_path and pubkey_path != MAKE_KEYPAIR:
       raise MissingPublicKeyError()
 
   # Get URN/Project/username from omni_config
@@ -365,28 +485,40 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
       urn = l.split("=")[1].strip()
     elif l.startswith("default_project"):
       project = l.split("=")[1].strip()
-  
+
   uname = urn.rsplit("+")[-1]
 
   # Create .ssh if it doesn't exist
   try:
-    os.makedirs("%s/.ssh" % (HOME), 0775)
-  except OSError, e:
+    os.makedirs("%s/.ssh" % (HOME), 0o775)
+  except OSError:
     pass
 
   # If a pubkey wasn't supplied on the command line, we may need to install both keys from the bundle
+  # This will catch if creation was requested but failed
   pkpath = pubkey_path
-  if not pkpath:
+  if not pkpath or pkpath == MAKE_KEYPAIR:
+    found_private = False
+
     if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
+      found_private = True
       if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
         # If your umask isn't already 0, we can't safely create this file with the right permissions
         with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
           tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
-    
-    pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
-    if not os.path.exists(pkpath):
+
+    if zip_pubkey_path:
+      pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
+      if not os.path.exists(pkpath):
         with open(pkpath, "w+") as tf:
           tf.write(zf.open(zip_pubkey_path).read())
+
+    # If we don't find a proper keypair, we'll make you one if you asked for it
+    # This preserves your old pubkey if it existed in case you want to use that later
+    if not found_private and pubkey_path == MAKE_KEYPAIR:
+      keygen = _find_ssh_keygen()
+      subprocess.call("%s -t rsa -b 2048 -f ~/.ssh/genilib_rsa -N ''" % (keygen), shell = True)
+      pkpath = os.path.expanduser("~/.ssh/genilib_rsa.pub")
   else:
     pkpath = os.path.expanduser(pubkey_path)
     if not os.path.exists(pkpath):
@@ -414,7 +546,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
   json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
 
 
-def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project):
+def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
   import geni._coreutil as GCU
 
   # Create the .bssw directories if they don't exist
@@ -429,13 +561,15 @@ def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_pa
   else:
     new_key_path = new_cert_path
 
+  if not path:
+    path = "%s/context.json" % (DEF_DIR)
+
   cdata = {}
   cdata["framework"] = framework
   cdata["cert-path"] = new_cert_path
   cdata["key-path"] = new_key_path
   cdata["user-name"] = username
   cdata["user-urn"] = user_urn
-  cdata["user-pubkeypath"] = pubkey_path 
+  cdata["user-pubkeypath"] = pubkey_path
   cdata["project"] = project
-  json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
-
+  json.dump(cdata, open(path, "w+"))

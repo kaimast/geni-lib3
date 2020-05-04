@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import os
 
 from lxml import etree as ET
+import six
 
 from .pg import Link
 from .. import namespaces as GNS
@@ -16,7 +17,7 @@ from .pg import Namespaces as PGNS
 from ..model.util import XPathXRange
 
 _XPNS = {'g' : GNS.REQUEST.name, 's' : GNS.SVLAN.name, 'e' : PGNS.EMULAB.name,
-         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name}
+         'i' : PGNS.INFO.name, 'p' : PGNS.PARAMS.name, 'u' : GNS.USER.name}
 
 class ManifestLink(Link):
   def __init__ (self):
@@ -48,7 +49,7 @@ class ManifestLink(Link):
 
   @property
   def text (self):
-    return ET.tostring(self._elem, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
 
 class ManifestSvcLogin(object):
@@ -69,6 +70,21 @@ class ManifestSvcLogin(object):
     return n
 
 
+class ManifestSvcUser(object):
+  def __init__ (self):
+    self.login = None
+    self.public_key = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    n = cls()
+    n.login = elem.get("login")
+    pkelems = elem.xpath('u:public_key', namespaces = _XPNS)
+    if pkelems:
+      n.public_key = pkelems[0].text.strip()
+    return n
+
+
 class ManifestNode(object):
   class Interface(object):
     def __init__ (self):
@@ -81,6 +97,7 @@ class ManifestNode(object):
   def __init__ (self):
     super(ManifestNode, self).__init__()
     self.logins = []
+    self.users = []
     self.interfaces = []
     self.client_id = None
     self.component_id = None
@@ -124,6 +141,11 @@ class ManifestNode(object):
       l = ManifestSvcLogin._fromdom(lelem)
       n.logins.append(l)
 
+    users = elem.xpath('g:services/u:services_user', namespaces = _XPNS)
+    for uelem in users:
+      u = ManifestSvcUser._fromdom(uelem)
+      n.users.append(u)
+
     interfaces = elem.xpath('g:interface', namespaces = _XPNS)
     for ielem in interfaces:
       i = ManifestNode.Interface()
@@ -142,7 +164,7 @@ class ManifestNode(object):
 
   @property
   def text (self):
-    return ET.tostring(self._elem, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
 
 class ManifestParameter(object):
@@ -183,7 +205,10 @@ class Manifest(object):
     if path:
       self._xml = open(path, "r").read()
     elif xml:
-      self._xml = xml
+      if six.PY3:
+        self._xml = bytes(xml, "utf-8")
+      else:
+        self._xml = xml
     self._root = ET.fromstring(self._xml)
     self._pid = os.getpid()
 
@@ -235,7 +260,7 @@ class Manifest(object):
 
   @property
   def text (self):
-    return ET.tostring(self.root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   def _repr_html_ (self):
     return """

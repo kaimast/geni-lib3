@@ -28,4 +28,3 @@ class Connection(object):
     s = self.xmlconn.api.ping("foo")
     ver = s.split("=")[1].split(":")[0].split("-")[1]
     return ver
-

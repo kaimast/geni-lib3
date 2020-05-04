@@ -1,4 +1,4 @@
-# Copyright (c) 2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2016-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@ from .exceptions import AMError
 # pylint: disable=multiple-statements
 class ProtoGENIError(AMError): pass
 
+class ResourceBusyError(ProtoGENIError): pass
 class VLANUnavailableError(ProtoGENIError): pass
 class InsufficientBandwidthError(ProtoGENIError): pass
 class InsufficientNodesError(ProtoGENIError): pass
@@ -19,7 +20,9 @@ class NoMappingError(ProtoGENIError): pass
 def raiseError(res):
   amcode = res["code"]["am_code"]
   output = res["output"]
-  if amcode == 24:
+  if amcode == 14:
+    e = ResourceBusyError(output, res)
+  elif amcode == 24:
     e = VLANUnavailableError(output, res)
   elif amcode == 25:
     e = InsufficientBandwidthError(output, res)

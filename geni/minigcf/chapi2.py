@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import
 
-import xmlrpclib
+from six.moves import xmlrpc_client as xmlrpclib
 
 from ..constants import SLICE_ROLE, PROJECT_ROLE, REQCTX, REQSTATUS
 from .util import _rpcpost
@@ -26,6 +26,10 @@ def get_version (url, root_bundle, cert, key, options = None):
 def lookup_key_info (url, root_bundle, cert, key, cred_strings, user_urn):
   options = {"match" : {"KEY_MEMBER" : user_urn} }
   return _lookup(url, root_bundle, cert, key, "KEY", cred_strings, options)
+
+def lookup_service_info (url, root_bundle, cert, key, cred_strings, service_type):
+  options = {"match" : {"SERVICE_TYPE" : service_type} }
+  return _lookup(url, root_bundle, cert, key, "SERVICE", cred_strings, options)
 
 def lookup_member_info (url, root_bundle, cert, key, cred_strings, urn = None, uid = None,
                         email = None, lastname = None):

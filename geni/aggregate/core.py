@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,11 @@
 
 from __future__ import absolute_import
 
+from io import open
 import os
 import os.path
+
+import six
 
 class _Registry(object):
   def __init__ (self):
@@ -19,6 +22,78 @@ class _Registry(object):
   def get (self, name):
     return self._data[name]
 
+def convertCH2AggregateSpecs(ch2info, path = None):
+  from .spec import AMSpec, AMTYPE
+
+  typemap = {
+    "ui_instageni_am" : AMTYPE.IG,
+    "ui_exogeni_am" : AMTYPE.EG,
+    "ui_vts_am" : AMTYPE.VTS,
+    "ui_foam_am" : AMTYPE.FOAM,
+    "ui_other_am" : AMTYPE.OTHER
+  }
+
+  speclist = []
+  for info in ch2info:
+    ams = AMSpec()
+    ams.cmid = info["SERVICE_URN"]
+    ams.desc = info["SERVICE_DESCRIPTION"]
+    ams.longname = info["SERVICE_NAME"]
+    ams.shortname = info["_GENI_SERVICE_SHORT_NAME"]
+    ams.url = info["SERVICE_URL"]
+    ams.type = typemap[info["_GENI_SERVICE_ATTRIBUTES"]["UI_AM_TYPE"]]
+    speclist.append(ams)
+
+  return speclist
+
+def loadFromRegistry (context):
+  from . import frameworks
+  from . import spec
+  from .. import urn
+  from .spec import AMSpec, AMTYPE, fixCert
+
+  ammap = {}
+  cf = context.cf
+  if isinstance(cf, frameworks.CHAPI2):
+    if cf.name == "emulab-ch2":
+      from .frameworks import ProtoGENI
+      # Make a synthetic PG CF to get the aggregates
+      cf = ProtoGENI()
+      cf.key = context.cf.key
+      cf.cert = context.cf.cert
+    else:
+      svclist = convertCH2AggregateSpecs(cf.loadAggregates())
+      for ams in svclist:
+        am = ams.build()
+        if am:
+          ammap[am.name] = am
+  if isinstance(cf, frameworks.ProtoGENI):
+    components = cf.loadComponents(context)
+    for info in components:
+      u = urn.GENI(info["urn"])
+      if u.name not in ["cm", "am"]:
+        continue
+      ams = AMSpec()
+      ams.cmid = info["urn"]
+      if info["hrn"][-3:] == ".cm":
+        ams.shortname = info["hrn"][:-3]
+        ams.url = "%s/am/2.0" % (info["url"][:-3])
+      else:
+        ams.shortname = info["hrn"]
+        ams.url = info["url"]
+
+      ams.cert = fixCert(info["gid"])
+      if info["url"].count("instageni"):
+        ams.type = AMTYPE.IG
+      elif info["url"].count("protogeni"):
+        ams.type = AMTYPE.PG
+      elif info["url"].count("orca"):
+        ams.type = AMTYPE.EG
+      am = ams.build()
+      if am:
+        ammap[am.name] = am
+
+  return ammap
 
 class AM(object):
   """Base class wrapping GENI AM APIv2 and AM APIv3 functionality."""
@@ -40,11 +115,13 @@ class AM(object):
   def __init__ (self, name, url, api, amtype, cmid=None):
     self.url = url
     self.name = name
+    self.cert_data = None
     self._cmid = cmid
     self._apistr = api
     self._api = None
     self._typestr = amtype
     self._type = None
+    self._amspec = None
 
   @property
   def component_manager_id (self):
@@ -134,13 +211,13 @@ class AM(object):
       sname (str): Slice name
       rspec (geni.rspec.RSpec): Valid request RSpec
     """
-    if isinstance(rspec, (str, unicode)):
+    if isinstance(rspec, (six.string_types)):
       rspec = os.path.normpath(os.path.expanduser(rspec))
       if not os.path.exists(rspec):
         raise AM.InvalidRSpecPathError(rspec)
-      rspec_data = open(rspec, "rb").read()
+      rspec_data = open(rspec, "r", encoding="latin-1").read()
     else:
-      rspec_data = rspec.toXMLString()
+      rspec_data = rspec.toXMLString(ucode=True)
     res = self.api.createsliver(context, self.url, sname, rspec_data)
     return self.amtype.parseManifest(res)
 

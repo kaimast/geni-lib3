@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,11 +9,13 @@ from __future__ import absolute_import
 import os
 
 from lxml import etree as ET
+import six
 
 import geni.namespaces as GNS
-from .pgmanifest import ManifestSvcLogin
+from .pgmanifest import ManifestSvcLogin, ManifestSvcUser
 
 XPNS = {'g' : GNS.REQUEST.name,
+        'u' : GNS.USER.name,
         'v' : "http://geni.bssoftworks.com/rspec/ext/vts/manifest/1",
         's' : "http://geni.bssoftworks.com/rspec/ext/sdn/manifest/1"}
 
@@ -29,6 +31,9 @@ class GenericPort(object):
   def __init__ (self, typ):
     self.client_id = None
     self.type = typ
+    self.cross_sliver = False
+    self._name = None
+    self._dpname = None
 
   @classmethod
   def _fromdom (cls, elem):
@@ -36,20 +41,26 @@ class GenericPort(object):
     p.client_id = elem.get("client_id")
     return p
 
-  @property
-  def name (self):
+  def _decomposeClientID (self):
     # Assumes that the client_id is in the format "dp_name:port_name"
     if self.client_id.count(":") == 1:
-      return self.client_id[self.client_id.index(":")+1:]
-    return None
-    ### TODO: Raise an exception here
+      (self._dpname, self._name) = self.client_id.split(":")
+    # Assumes that the client_id is in the format "dp_name:_x_:port_name"
+    elif self.client_id.count(":") == 2: 
+      (self._dpname, _, self._name) = self.client_id.split(":")
+      self.cross_sliver = True
+
+  @property
+  def name (self):
+    if not self._name:
+      self._decomposeClientID()
+    return self._name
 
   @property
   def dpname (self):
-    if self.client_id.count(":") == 1:
-      return self.client_id.split(":")[0]
-    return None
-    ### TODO: Raise an exception here
+    if not self._dpname:
+      self._decomposeClientID()
+    return self._dpname
 
 
 class InternalContainerPort(GenericPort):
@@ -65,6 +76,7 @@ class InternalContainerPort(GenericPort):
     self.remote_client_id = None
     self._macaddress = None
     self._alias = None
+    self._remote_dpname = None
 
   @property
   def macaddress (self):
@@ -93,31 +105,38 @@ class InternalContainerPort(GenericPort):
 
   @property
   def remote_dpname (self):
-    if self.remote_client_id.count(":") == 1:
-      return self.remote_client_id.split(":")[0]
-    return None
-    ### TODO: Raise an exception here
+    if not self._remote_dpname:
+      if self.remote_client_id.count(":") == 1:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+      elif self.remote_client_id.count(":") == 2:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+    return self._remote_dpname
 
 
 class InternalPort(GenericPort):
   def __init__ (self):
     super(InternalPort, self).__init__("internal")
     self.remote_client_id = None
+    self._remote_dpname = None
+    self._vlan_id = None
 
   @classmethod
   def _fromdom (cls, elem):
     p = InternalPort()
     p.client_id = elem.get("client_id")
     p.remote_client_id = elem.get("remote-clientid")
+    p.vlan_id = int(elem.get("vlan-id", 0))
 
     return p
 
   @property
   def remote_dpname (self):
-    if self.remote_client_id.count(":") == 1:
-      return self.remote_client_id.split(":")[0]
-    return None
-    ### TODO: Raise an exception here
+    if not self._remote_dpname:
+      if self.remote_client_id.count(":") == 1:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+      elif self.remote_client_id.count(":") == 2:
+        self._remote_dpname = self.remote_client_id.split(":")[0]
+    return self._remote_dpname
 
 
 class GREPort(GenericPort):
@@ -151,6 +170,19 @@ class PGLocalPort(GenericPort):
     return p
 
 
+class VFPort(GenericPort):
+  def __init__ (self):
+    super(VFPort, self).__init__("vf")
+    self.remote_client_id = None
+
+  @classmethod
+  def _fromdom (cls, elem):
+    p = cls()
+    p.client_id = elem.get("client_id")
+    p.remote_client_id = elem.get("remote-clientid")
+    return p
+
+
 class ManifestMount(object):
   def __init__ (self):
     self.type = None
@@ -174,8 +206,14 @@ class ManifestContainer(object):
     self.image = None
     self.sliver_id = None
     self.logins = []
+    self.users = []
     self.ports = []
     self.mounts = []
+
+  def __getitem__ (self, key):
+    for port in self.ports:
+      if port.name == key:
+        return port
 
   @property
   def name (self):
@@ -192,6 +230,11 @@ class ManifestContainer(object):
     for lelem in logins:
       l = ManifestSvcLogin._fromdom(lelem)
       c.logins.append(l)
+
+    users = elem.xpath('g:services/u:services_user', namespaces = XPNS)
+    for uelem in users:
+      u = ManifestSvcUser._fromdom(uelem)
+      c.users.append(u)
 
     ports = elem.xpath('v:port', namespaces = XPNS)
     for cport in ports:
@@ -225,6 +268,11 @@ class ManifestDatapath(object):
     self.ports = []
     self.mirror = None
 
+  def __getitem__ (self, key):
+    for port in self.ports:
+      if port.name == key:
+        return port
+
   @classmethod
   def _fromdom (cls, elem):
     # TODO: Add ports later
@@ -236,6 +284,10 @@ class ManifestDatapath(object):
     mirror = elem.xpath('v:mirror', namespaces = XPNS)
     if mirror:
       dp.mirror = mirror[0].get("target")
+
+    stp = elem.xpath('v:stp', namespaces = XPNS)
+    if stp:
+      dp.stp_mode = stp[0].get("type")
 
     ports = elem.xpath('v:port', namespaces = XPNS)
     for port in ports:
@@ -250,6 +302,7 @@ class SSLVPNFunction(ManifestFunction):
     self.tp_port = None
     self.local_ip = None
     self.key = None
+    self.note = None
 
   @classmethod
   def _fromdom (cls,elem):
@@ -257,6 +310,7 @@ class SSLVPNFunction(ManifestFunction):
     vpn.tp_port = elem.get('tp-port')
     vpn.local_ip = elem.get('local-ip')
     vpn.key = elem.text
+    vpn.note = elem.get('note')
     return vpn
 
 class Manifest(object):
@@ -264,10 +318,14 @@ class Manifest(object):
 
   def __init__ (self, path = None, xml = None):
     if path:
-      self._xml = open(path, "r").read()
+      self._root = ET.parse(open(path, "rb"))
+      self._xml = ET.tostring(self._root)
     elif xml:
-      self._xml = xml
-    self._root = ET.fromstring(self._xml)
+      if six.PY3:
+        self._xml = bytes(xml, "utf-8")
+      else:
+        self._xml = xml
+      self._root = ET.fromstring(self._xml)
     self._pid = os.getpid()
     self._info = {}
 
@@ -276,6 +334,10 @@ class Manifest(object):
     if ielems:
       self._info["host"] = ielems[0].get("host")
       self._info["slice"] = ielems[0].get("slice")
+      self._info["client-topo-name"] = ielems[0].get("client-topo-name")
+
+  def __getitem__ (self, key):
+    return self.findTarget(key)
 
   @property
   def root (self):
@@ -287,7 +349,7 @@ class Manifest(object):
   @property
   def text (self):
     """String representation of original XML content, with added whitespace for easier reading"""
-    return ET.tostring(self.root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   @property
   def pg_circuits (self):
@@ -341,6 +403,12 @@ class Manifest(object):
       self._populate_info()
     return self._info["slice"]
 
+  @property
+  def toponame (self):
+    if not self._info:
+      self._populate_info()
+    return self._info["client-topo-name"]
+
   def findTarget (self, client_id):
     """Get the container or datapath representing the given `client_id` in the manifest.
 
@@ -380,7 +448,7 @@ class Manifest(object):
     elif t == "pg-local":
       return PGLocalPort._fromdom(elem)
     elif t == "vf-port":
-      return GenericPort._fromdom(elem)
+      return VFPort._fromdom(elem)
     elif t == "internal":
       if container:
         return InternalContainerPort._fromdom(elem)

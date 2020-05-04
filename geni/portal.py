@@ -18,6 +18,8 @@ from argparse import Namespace
 import logging
 import os.path
 
+import six
+
 from .rspec import igext
 from .rspec import pgmanifest
 from .rspec.pg import Request
@@ -526,7 +528,7 @@ class Context (object):
   """Handle context for scripts being run inside a portal.
 
   This class handles context for the portal, including where to put output
-  RSpecs and handling parameterized scripts. 
+  RSpecs and handling parameterized scripts.
 
   Scripts using this class can also be run "standalone" (ie. not by the
   portal), in which case they take parameters on the command line and put
@@ -730,11 +732,11 @@ class Context (object):
       self._parameters[paramName].validate()
     self._bindingDone = True
     if altParamSrc:
-      if type(altParamSrc) == dict:
+      if isinstance(altParamSrc, dict):
         return self._bindParametersDict(altParamSrc)
-      elif type(altParamSrc) == pgmanifest.Manifest:
-        return self._bindParametersManifest(manifestObj)
-      elif type(altParamSrc) == str:
+      elif isinstance(altParamSrc, pgmanifest.Manifest):
+        return self._bindParametersManifest(altParamSrc)
+      elif isinstance(altParamSrc, (six.string_types)):
         try:
           manifestObj = pgmanifest.Manifest(xml=altParamSrc)
           return self._bindParametersManifest(manifestObj)
@@ -831,8 +833,8 @@ class Context (object):
     nice JSON-formatted exception info on stderr
     """
     if len(self._parameterErrors) == 0 \
-         and (len(self._parameterWarnings) == 0 \
-              or not self._parameterWarningsAreFatal):
+      and (len(self._parameterWarnings) == 0 \
+        or not self._parameterWarningsAreFatal):
       return 0
 
     if not self._standalone and self._readParamsPath is not None:
@@ -1043,7 +1045,7 @@ class Context (object):
     self.verifyParameters()
     self._bindingDone = True
     return namespace
-    
+
   def _bindParametersManifest(self,manifest):
     """
     This method extracts parameter values from a
@@ -1104,7 +1106,7 @@ this rather than trying to create a new Context object
 """
 
 def get_context():
-    return context
+  return context
 
 class PortalJSONEncoder(json.JSONEncoder):
   def default(self, o):

@@ -22,4 +22,4 @@ SVLAN = Namespace("sharedvlan", "http://www.geni.net/resources/rspec/ext/shared-
                   "http://www.geni.net/resources/rspec/ext/shared-vlan/1/request.xsd")
 OPSTATE = Namespace("opstate", "http://www.geni.net/resources/rspec/ext/opstate/1",
                     "http://http://www.geni.net/resources/rspec/ext/opstate/1/ad.xsd")
-
+USER = Namespace("user", "http://www.geni.net/resources/rspec/ext/user/1")

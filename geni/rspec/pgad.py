@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 from lxml import etree as ET
+import six
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
@@ -186,7 +187,7 @@ class AdNode(object):
 
   @property
   def text (self):
-    return ET.tostring(self._elem, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
 
 class AdLink(object):
@@ -194,6 +195,7 @@ class AdLink(object):
     self.component_id = None
     self.link_types = set()
     self._elem = None
+    self.interface_refs = []
 
   @classmethod
   def _fromdom (cls, elem):
@@ -205,11 +207,15 @@ class AdLink(object):
     for ltype in ltypes:
       link.link_types.add(ltype.get("name"))
 
+    irefs = elem.xpath('g:interface_ref', namespaces = _XPNS)
+    for iref in irefs:
+      link.interface_refs.append(iref.get("component_id"))
+
     return link
 
   @property
   def text (self):
-    return ET.tostring(self._elem, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
 
 class AdSharedVLAN(object):
@@ -248,9 +254,12 @@ class Advertisement(object):
 
   def __init__ (self, path = None, xml = None):
     if path:
-      self._root = ET.parse(open(path))
+      self._root = ET.parse(open(path, "rb"))
     elif xml:
-      self._root = ET.fromstring(xml)
+      if six.PY3:
+        self._root = ET.fromstring(bytes(xml, "utf-8"))
+      else:
+        self._root = ET.fromstring(xml)
     self._routable_addresses = None
     self._images = set()
 
@@ -309,7 +318,7 @@ class Advertisement(object):
   @property
   def text (self):
     """Advertisement XML contents as a string, formatted with whitespace for easier reading."""
-    return ET.tostring(self._root, pretty_print=True)
+    return ET.tostring(self._root, pretty_print=True, encoding="unicode")
 
   def writeXML (self, path):
     """Write the current advertisement as an XML file that contains an rspec in the format returned by the

@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@ import wrapt
 from geni.aggregate.exceptions import AMError
 from geni.aggregate.frameworks import KeyDecryptionError
 from geni.aggregate.vts import VTS, HostPOAs, v4RouterPOAs
+import geni.rspec.vtsmanifest
 import geni.util
 import geni.types
 
@@ -45,13 +46,13 @@ def am_exc_handler (self, etype, value, tb, tb_offset = None):
   print "\n".join(out)
 
 
-def topo (manifests):
+def topo (manifests, engine = "circo"):
   if not isinstance(manifests, list):
     manifests = [manifests]
 
   dotstr = geni.util.builddot(manifests)
   g = graphviz.Source(dotstr)
-  g.engine = "circo"
+  g.engine = engine
   return g
 
 LOGINROW = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td></tr>"
@@ -63,7 +64,7 @@ def loginInfo (manifests):
   return RetListProxy(linfo, LOGINCOLS, LOGINROW, tupl = True)
 
 def showErrorURL (show = False):
-  global SHOW_ERROR_URL
+  global SHOW_ERROR_URL # pylint disable=global-statement
   SHOW_ERROR_URL = show
 
 
@@ -145,6 +146,35 @@ class STPProxy(wrapt.ObjectProxy):
     return "%s\n%s" % (brt,pt)
 
 
+RSTP_PORT_ROW = """<tr>
+<td>%(client-id)s (%(num)d)</td><td>%(rstp_port_state)s</td><td>%(rstp_port_role)s</td><td>%(rstp_port_id)s</td>
+<td>%(rstp_uptime)s</td><td>%(rstp_rx_count)d</td><td>%(rstp_tx_count)d</td><td>%(rstp_error_count)d</td>
+</tr>"""
+
+class RSTPProxy(wrapt.ObjectProxy):
+  def _repr_html_ (self):
+    brt = """
+  <table>
+    <tr><th colspan="3" scope="row">Bridge: <b>%(client-id)s</b></th></tr>
+    <tr><th>Bridge ID</th><th>Designated Root</th><th>Root Path Cost</th></tr>
+    <tr><td>%(rstp_bridge_id)s</td><td>%(rstp_root_id)s</td><td>%(rstp_root_path_cost)s</td></tr>
+  </table>""" % (self)
+    pelist = []
+    for port in self["ports"]:
+      d = {}
+      d.update(port)
+      d.update(port["info"])
+      pe = RSTP_PORT_ROW % (d)
+      pelist.append(pe)
+    pt = """
+  <table>
+    <tr><th>Port</th><th>State</th><th>Role</th><th>Port ID</th><th>Uptime (secs)</th><th>RX</th><th>TX</th><th>Errors</th></tr>
+    %s
+  </table>
+  """ % ("\n".join(pelist))
+    return "%s\n%s" % (brt,pt)
+
+
 def dictListBuilder (objlist, filter_cols, display_names):
   flist = []
   for obj in objlist:
@@ -173,7 +203,8 @@ class RetListProxy(object):
     return self._obj[i]
 
   def __getslice__ (self, i, j):
-    i = max(i, 0); j = max(j, 0)
+    i = max(i, 0)
+    j = max(j, 0)
     return self._obj[i:j]
 
   def __contains__ (self, item):
@@ -219,45 +250,45 @@ def replaceSymbol (module, name, func):
   setattr(module, "_%s" % (name), getattr(module, name))
   setattr(module, name, func)
 
-
-def dumpMACs (self, context, sname, datapaths):
-  if not isinstance(datapaths, list):
-    datapaths = [datapaths]
-
-  res = self._dumpMACs(context, sname, datapaths)
-  retd = {}
-  for br,table in res.items():
-    rowobjs = []
-    for row in table[1:]:
-      d = {}
-      d["port"] = int(row[0])
-      d["vlan"] = int(row[1])
-      d["mac"] = geni.types.EthernetMAC(row[2])
+def macTableDecomp (table):
+  rowobjs = []
+  for row in table[1:]:
+    d = {}
+    d["port"] = row[0]
+    d["vlan"] = row[1]
+    d["mac"] = geni.types.EthernetMAC(row[2])
+    if row[3] is None:
+      d["age"] = "-"
+    else:
       d["age"] = int(row[3])
-      rowobjs.append(d)
-    retd[br] = RetListProxy(rowobjs, MACCOLS, MACROW)
-  return retd
+    rowobjs.append(d)
+  return rowobjs
 
+def flowTableDecomp (table):
+  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
+  rows = [[y.strip(",") for y in x.split(" ")] for x in table]
+  rmaps = []
+  for row in rows:
+    rmap = copy.copy(TEMPLATE)
+    for item in row[:-1]:
+      (key,val) = item.split("=")
+      rmap[key] = val
+    rmap["rule"] = row[-1]
+    rmaps.append(rmap)
+  return rmaps
 
 def dumpFlows (self, context, sname, datapaths, **kwargs):
   if not isinstance(datapaths, list):
     datapaths = [datapaths]
 
   res = self._dumpFlows(context, sname, datapaths, **kwargs)
+
+  if len(res) == 1:
+    return RetListProxy(flowTableDecomp(res.values()[0]), FLOWCOLS, FLOWROW)
+
   retd = {}
-  TEMPLATE = {"table_id" : 0, "duration" : None, "n_packets" : 0, "n_bytes" : None}
   for brname,table in res.items():
-    rows = [[y.strip(",") for y in x.split(" ")] for x in table]
-    rmaps = []
-    for row in rows:
-      rmap = copy.copy(TEMPLATE)
-      for item in row[:-1]:
-        (key,val) = item.split("=")
-        rmap[key] = val
-      rmap["rule"] = row[-1]
-      rmaps.append(rmap)
-        
-    retd[brname] = RetListProxy(rmaps, FLOWCOLS, FLOWROW)
+    retd[brname] = RetListProxy(flowTableDecomp(table), FLOWCOLS, FLOWROW)
   return retd
 
 def getSTPInfo (self, context, sname, datapaths):
@@ -265,38 +296,105 @@ def getSTPInfo (self, context, sname, datapaths):
     datapaths = [datapaths]
 
   res = self._getSTPInfo(context, sname, datapaths)
+  if len(res) == 1:
+    return STPProxy(res[0])
+
   retobj = {}
   for br in res:
     retobj[br["client-id"]] = STPProxy(br)
   return retobj
+
+def getRSTPInfo (self, context, sname, datapaths):
+  if not isinstance(datapaths, list):
+    datapaths = [datapaths]
+
+  res = self._getRSTPInfo(context, sname, datapaths)
+  if len(res) == 1:
+    return RSTPProxy(res[0])
+
+  retobj = {}
+  for br in res:
+    retobj[br["client-id"]] = RSTPProxy(br)
+  return retobj
+
 
 def getLeaseInfo (self, context, sname, client_ids):
   if not isinstance(client_ids, list):
     client_ids = [client_ids]
 
   res = self._getLeaseInfo(context, sname, client_ids)
+  
+  if len(res) == 1:
+    return RetListProxy(res.values()[0], LEASECOLS, LEASEROW)
+  
   retobj = {}
-  if isinstance(res, list):
-    for entry in res:
-      for k,v in entry.items():
-        retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
-  else:
-    for k,v in res.items():
-      retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
+  for k,v in res.items():
+    retobj[k] = RetListProxy(v, LEASECOLS, LEASEROW)
   return retobj
 
 def getPortInfo (self, context, sname, client_ids):
   res = self._getPortInfo(context, sname, client_ids)
+
+  if len(res) == 1:
+    return RetListProxy(res.values()[0], PINFOCOLS, PINFOROW)
+
   retobj = {}
   for k,v in res.items():
     retobj[k] = RetListProxy(v, PINFOCOLS, PINFOROW)
   return retobj
 
-replaceSymbol(VTS, "dumpMACs", dumpMACs)
+def portDown (self, context, sname, port):
+  if isinstance(port, (str, unicode)):
+    pass
+  elif isinstance(port, geni.rspec.vtsmanifest.GenericPort):
+    port = port.client_id
+
+  return self._portDown(context, sname, port)
+
+def portUp (self, context, sname, port):                                                                                     
+  if isinstance(port, (str, unicode)):                                                                                         
+    pass
+  elif isinstance(port, geni.rspec.vtsmanifest.GenericPort):                                                                   
+    port = port.client_id                                                                                                      
+              
+  return self._portUp(context, sname, port)     
+
 replaceSymbol(VTS, "dumpFlows", dumpFlows)
 replaceSymbol(VTS, "getSTPInfo", getSTPInfo)
+replaceSymbol(VTS, "getRSTPInfo", getRSTPInfo)
 replaceSymbol(VTS, "getLeaseInfo", getLeaseInfo)
 replaceSymbol(VTS, "getPortInfo", getPortInfo)
+replaceSymbol(VTS, "portDown", portDown)
+replaceSymbol(VTS, "portUp", portUp)
+
+
+def getL2Table (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
+  res = self._getL2Table(context, sname, client_ids)
+
+  if len(res) == 1:
+    return RetListProxy(macTableDecomp(res.values()[0]), MACCOLS, MACROW)
+
+  retd = {}
+  for l2d in res:
+    for bridge, table in l2d.items():
+      rowobjs = macTableDecomp(table)
+      retd[bridge] = RetListProxy(rowobjs, MACCOLS, MACROW)
+
+  return retd
+
+def clearL2Table (self, context, sname, client_ids):
+  if not isinstance(client_ids, list):
+    client_ids = [client_ids]
+
+  res = self._clearL2Table(context, sname, client_ids)
+
+  return res
+
+replaceSymbol(VTS, "getL2Table", getL2Table)
+replaceSymbol(VTS, "clearL2Table", clearL2Table)
 
 
 ARP_FILTER = ["hw-address", "ip-address", "status", "device"]
@@ -392,7 +490,7 @@ def load_ipython_extension (ipy):
   if not geni.util.hasDataContext():
     path = os.path.expanduser("~/omni.bundle")
     if os.path.exists(path):
-      geni.util.buildContextFromBundle(path)
+      geni.util.buildContextFromBundle(path, pubkey_path = geni.util.MAKE_KEYPAIR)
 
   if not geni.util.hasDataContext():
     raise NoContextError()
@@ -431,4 +529,3 @@ def load_ipython_extension (ipy):
 
   ipy.push(imports)
   ipy.set_custom_exc((AMError,), am_exc_handler)
-

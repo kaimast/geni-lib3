@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@ import sys
 import inspect
 
 from lxml import etree as ET
+import six
 
 from .. import namespaces as GNS
 from .pg import Namespaces as PGNS
@@ -236,7 +237,7 @@ class Blockstore(object):
     if self.rwclone:
       bse.attrib["rwclone"] = "true"
     if self.dataset:
-      if isinstance(self.dataset, (str, unicode)):
+      if isinstance(self.dataset, (six.string_types)):
         bse.attrib["dataset"] = self.dataset
       elif isinstance(self.dataset, urn.Base):
         bse.attrib["dataset"] = str(self.dataset)

@@ -4,10 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import os
 import os.path
-import pkg_resources
 import ssl
+
+import pkg_resources
 
 WIN32_ATTR_HIDDEN = 0x02
 VERSION = pkg_resources.require("geni-lib")[0].version
@@ -30,14 +33,18 @@ def getDefaultDir ():
 
   return DEF_DIR
 
+def getDefaultAggregatePath():
+  ddir = getDefaultDir()
+  return "%s/aggregates.json" % (ddir)
+
 def getOSName ():
   if os.name == "posix":
     return "%s-%s" % (os.uname()[0], os.uname()[4])
   elif os.name == "nt":
     import platform
     return "%s-%s" % (platform.platform(), platform.architecture()[0])
-  else:
-    return "unknown"
+  return "unknown"
+
 
 def defaultHeaders ():
   d = {"User-Agent" : "GENI-LIB %s (%s)" % (VERSION, getOSName())}
@@ -111,13 +118,13 @@ def shellImports ():
   return imports
 
 
+# pylint: disable=wrong-import-position
 from requests.adapters import HTTPAdapter
 try:
   from requests.packages.urllib3.poolmanager import PoolManager
   class TLSHttpAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
+    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
       self.poolmanager = PoolManager(num_pools = connections, maxsize = maxsize,
                                      block = block, ssl_version = ssl.PROTOCOL_TLSv1)
 except ImportError:
   TLSHttpAdapter = HTTPAdapter
-

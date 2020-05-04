@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2017  Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,8 +64,48 @@ class v4RouterPOAs(object):
                               options={"client-ids": client_ids})
 
 
+class Policy(object):
+  def __init__ (self, vtsam):
+    self.am = vtsam
+
+  # Policy consent hooks for GDPR-style compliance
+  def getText (self, context, pid = None):
+    """Get the text contents of the policy requested.  If no policy is specified and only one policy
+    exists at the aggregate, that policy text will be returned.
+
+    Args:
+      context: geni-lib context
+      pid: policy ID (typically from `getversion` output)
+
+    Returns:
+      str: Text contents of policy
+    """
+    opts = {}
+    if pid:
+      opts["policy-id"] = pid
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:get-text", options = opts)
+
+  def giveConsent (self, context, pid):
+    """Give consent to the policy indicated for the user URN in the credential used.
+
+    Args:
+      context: geni-lib context
+      pid: policy ID
+    """
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:consent", options = {"policy-id" : pid})
+
+  def revokeConsent (self, context, pid):
+    """Revoke consent from this date forward to the policy indicated for the user URN in the credential used.
+
+    Args:
+      context: geni-lib context
+      pid: policy ID
+    """
+    return self.am._apiv3.paa(context, self.am.urlv3, "vts:policy:revoke", options = {"policy-id" : pid})
+
+
 class VTS(AM):
-  """Wrapper for all VTS-supposed AMAPI functions"""
+  """Wrapper for all VTS-supported AMAPI functions"""
 
   def __init__ (self, name, host, url = None):
     self._host = host
@@ -76,6 +116,22 @@ class VTS(AM):
     super(VTS, self).__init__(name, url, "amapiv2", "vts")
     self.Host = HostPOAs(self)
     self.IPv4Router = v4RouterPOAs(self)
+    self.Policy = Policy(self)
+
+  def allocate (self, context, sname, rspec):
+    rspec_data = rspec.toXMLString(ucode=True)
+    manifest = self._apiv3.allocate(context, self.urlv3, sname, rspec_data)
+    return self.amtype.parseManifest(manifest)
+
+  def provision (self, context, sname):
+    udata = []
+    for user in context._users:
+      data = {"urn" : user.urn, "keys" : [open(x, "rb").read() for x in user._keys]}
+      udata.append(data)
+
+    res = self._apiv3.provision(context, self.urlv3, sname, options = {"geni_users" : udata})
+    if res["code"]["geni_code"] == 0:
+      return self.amtype.parseManifest(res["value"])
 
   def changeController (self, context, sname, url, datapaths, ofver=None):
     options={"controller-url" : url, "datapaths" : datapaths}
@@ -98,9 +154,15 @@ class VTS(AM):
     return self._apiv3.poa(context, self.urlv3, sname, "vts:of:dump-flows",
                            options={"datapaths" : datapaths, "show-hidden" : show_hidden})
 
-  def dumpMACs (self, context, sname, datapaths):
-    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:dump-macs",
-                           options={"datapaths" : datapaths})
+  def getL2Table (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "api:l2-switch:get-l2-table",
+                           options={"client-ids" : client_ids})
+
+  def clearL2Table (self, context, sname, client_ids):
+    if not isinstance(client_ids, list): client_ids = [client_ids]
+    return self._apiv3.poa(context, self.urlv3, sname, "api:uh.vswitch:clear-l2-table",
+                           options={"client-ids" : client_ids})
 
   def clearFlows (self, context, sname, datapaths):
     """Clear all installed flows from the requested datapaths.
@@ -126,6 +188,11 @@ class VTS(AM):
   def getSTPInfo (self, context, sname, datapaths):
     if not isinstance(datapaths, list): datapaths = [datapaths]
     return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:stp-info",
+                           options={"datapaths" : datapaths})
+
+  def getRSTPInfo (self, context, sname, datapaths):
+    if not isinstance(datapaths, list): datapaths = [datapaths]
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:l2:rstp-info",
                            options={"datapaths" : datapaths})
 
   def getPortInfo (self, context, sname, datapaths):
@@ -246,21 +313,27 @@ class VTS(AM):
       data.setdefault(cid, []).append(volid)
     return self._apiv3.poa(context, self.urlv3, sname, "vts:dropbox:upload", options = {"vols" : [data]})
 
+  def hgPull (self, context, sname, cvols):
+    """Update an HgMount volume with the latest data from the source repository.
+
+    Args:
+      context: geni-lib context
+      sname (str): Slice name
+      cvols (list): List of `(container client-id, volume-id)` tuples
+    """
+
+    data = {}
+    for (cid,volid) in cvols:
+      data.setdefault(cid, []).append((volid, True))
+    return self._apiv3.poa(context, self.urlv3, sname, "vts:hg:pull", options = {"vols" : [data]})
 
 
-
-
-DDC = VTS("vts-ddc", "ddc.vts.bsswks.net")
 Clemson = VTS("vts-clemson", "clemson.vts.bsswks.net")
 GPO = VTS("vts-gpo", "gpo.vts.bsswks.net")
 Illinois = VTS("vts-illinois", "uiuc.vts.bsswks.net")
-MAX = VTS("vts-max", "max.vts.bsswks.net")
 NPS = VTS("vts-nps", "nps.vts.bsswks.net")
 UKYPKS2 = VTS("vts-ukypks2", "ukypks2.vts.bsswks.net")
-UtahDDC = DDC
 StarLight = VTS("vts-starlight", "starlight.vts.bsswks.net")
-UH = VTS("vts-uh", "uh.vts.bsswks.net")
-UWashington = VTS("vts-uwashington", "uwash.vts.bsswks.net")
 
 
 def aggregates ():

@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Barnstormer Softworks, Ltd.
+# Copyright (c) 2015-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ class TempfileManager(object):
        .. note:
          You may delete this file at any time, otherwise it will be deleted when the process exits."""
     (handle, path) = tempfile.mkstemp(dir = self.path)
-    return (os.fdopen(handle, "w"), path)
+    return (os.fdopen(handle, "wb"), path)
 
 TFM = TempfileManager()
 

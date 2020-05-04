@@ -1,4 +1,4 @@
-.. Copyright (c) 2016-2017  Barnstormer Softworks, Ltd.
+.. Copyright (c) 2016-2018  Barnstormer Softworks, Ltd.
 
 .. raw:: latex
 
@@ -20,6 +20,10 @@ The documentation here currently only covers the *lab* version.
 The Vagrant VM created by this process automatically sets up your geni-lib context and
 provides a web interface for creating `Jupyter <http://jupyter.org>`_ notebooks using GENI resources,
 as well as a web-based interface for accessing the VM shell.
+
+.. note::
+  See the Configurable Options section below for environment variables which can tweak the settings of the
+  VM environment that is created.
 
 =========================
 Installation Dependencies
@@ -78,3 +82,23 @@ provides a web-based mechanism for accessing the VM shell directly.
 * In the upper right-hand corner of the UI, choose ``New->Terminal`` from the dropdown menu
 
 This will automatically log you into the VM and provide you a shell interface for using the VM OS directly.
+
+====================
+Configurable Options
+====================
+
+The following environment variables can be set to change the parameters under which the VM is created when
+`vagrant up` is first executed:
+
++---------------+-------------+------------------------------------------------------------+
+| **Name**      | **Default** | **Description**                                            |
++---------------+-------------+------------------------------------------------------------+
+| ``glv_port``  | 8900        | Local port the Jupyter web interface will be exposed on    |
++---------------+-------------+------------------------------------------------------------+
+| ``glv_ram``   | 1024        | Amount of memory available to the VM                       |
++---------------+-------------+------------------------------------------------------------+
+| ``apt_cache`` | *unset*     | URL of proxy used for apt downloads                        |
++---------------+-------------+------------------------------------------------------------+
+| ``pypi_test`` | *unset*     | If set, use the test PyPI repository instead of production |
++---------------+-------------+------------------------------------------------------------+
+

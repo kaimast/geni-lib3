@@ -32,9 +32,12 @@ class RSpec (object):
       self._loclist.append(ns.name)
       self._loclist.append(ns.location)
 
-  def toXMLString (self, pretty_print = False):
+  def toXMLString (self, pretty_print = False, ucode=False):
     rspec = self.getDOM()
-    return ET.tostring(rspec, pretty_print = pretty_print)
+    if ucode:
+      return ET.tostring(rspec, pretty_print = pretty_print, encoding="unicode")
+    else:
+      return ET.tostring(rspec, pretty_print = pretty_print)
 
   def getDOM (self):
     rspec = ET.Element("rspec", nsmap = self.NSMAP)

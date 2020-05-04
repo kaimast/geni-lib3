@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import base64
 import functools
 import decimal
 
@@ -21,6 +22,12 @@ class Namespaces(object):
   VTS = GNS.Namespace("vts", "http://geni.bssoftworks.com/rspec/ext/vts/request/1")
   SDN = GNS.Namespace("sdn", "http://geni.bssoftworks.com/rspec/ext/sdn/request/1")
 
+class BadImageTypeError(Exception):
+  def __init__ (self, rtype):
+    self.rtype = rtype
+  def __str__ (self):
+    return "Supplied image must be of type %s" % (self.rtype)
+
 ################################################
 # Base Request - Must be at top for EXTENSIONS #
 ################################################
@@ -31,6 +38,7 @@ class Request(geni.rspec.RSpec):
   def __init__ (self):
     super(Request, self).__init__("request")
     self._resources = []
+    self.topo_name = None
 
     self.addNamespace(GNS.REQUEST, None)
     self.addNamespace(Namespaces.VTS)
@@ -58,8 +66,12 @@ class Request(geni.rspec.RSpec):
     f.write(self.toXMLString(True))
     f.close()
 
-  def toXMLString (self, pretty_print = False):
+  def toXMLString (self, pretty_print = False, ucode = False):
     rspec = self.getDOM()
+
+    if self.topo_name:
+      ci = ET.SubElement(rspec, "{%s}client-info" % (Namespaces.VTS))
+      ci.attrib["topo-name"] = str(self.topo_name)
 
     for resource in self._resources:
       resource._write(rspec)
@@ -67,12 +79,40 @@ class Request(geni.rspec.RSpec):
     for obj in self._ext_children:
       obj._write(rspec)
 
-    buf = ET.tostring(rspec, pretty_print = pretty_print)
+    if ucode:
+      buf = ET.tostring(rspec, pretty_print = pretty_print, encoding="unicode")
+    else:
+      buf = ET.tostring(rspec, pretty_print = pretty_print)
+
     return buf
 
   @property
   def resources(self):
       return self._resources + self._ext_children
+
+######################
+# Internal Functions #
+######################
+
+def _am_encrypt (gv, plaintext):
+  # This should be turned into an Encryptor object that you can init once and carry around
+  from cryptography.hazmat.backends import default_backend
+  from cryptography.hazmat.primitives import hashes, serialization
+  from cryptography.hazmat.primitives.asymmetric import padding
+
+  pubkey = serialization.load_pem_public_key(gv["request.pubkey"], backend=default_backend())
+
+  if gv["request.hash"] == "sha1":
+    hfunc = hashes.SHA1
+  elif gv["request.hash"] == "sha256":
+    hfunc = hashes.SHA256
+  elif gv["request.hash"] == "sha384":
+    hfunc = hashes.SHA384
+  elif gv["request.hash"] == "sha512":
+    hfunc = hashes.SHA512
+
+  return base64.b64encode(pubkey.encrypt(plaintext, padding.OAEP(padding.MGF1(hfunc()), hfunc(), None)))
+
 
 ###################
 # Utility Objects #
@@ -104,23 +144,29 @@ class DelayInfo(object):
 
 class LossInfo(object):
   def __init__ (self, percent):
-    self._percent = None
     self.percent = percent
 
-  @property
-  def percent (self):
-    return self._percent
-
-  @percent.setter
-  def percent (self, val):
-    self._percent = decimal.Decimal(val)
-
   def __json__ (self):
-    return {"type" : "egress-loss", "percent" : "%s" % (self.percent)}
+    return {"type" : "egress-loss", "percent" : "%d" % (self.percent)}
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}egress-loss" % (Namespaces.VTS))
-    d.attrib["percent"] = "%s" % (self.percent)
+    d.attrib["percent"] = "%d" % (self.percent)
+    return d
+
+
+class ReorderInfo(object):
+  def __init__ (self, percent, correlation, gap = None):
+    self.percent = percent
+    self.correlation = correlation
+    self.gap = gap
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}egress-reorder" % (Namespaces.VTS))
+    d.attrib["percent"] = str(self.percent)
+    d.attrib["correlation"] = str(self.correlation)
+    if self.gap:
+      d.attrib["gap"] = str(self.gap)
     return d
 
 
@@ -379,10 +425,21 @@ class OVSL2Image(OVSImage):
   def __init__ (self):
     super(OVSL2Image, self).__init__("bss:ovs-201")
     self.stp = OVSL2STP()
+    self.mac_table_size = None
+    self.mac_age = None
 
   def _write (self, element):
     i = super(OVSL2Image, self)._write(element)
     self.stp._write(i)
+    mpe = ET.SubElement(i, "{%s}mac-table-params" % (Namespaces.VTS))
+    if self.mac_table_size:
+      mse = ET.SubElement(mpe, "{%s}max-size" % (Namespaces.VTS))
+      mse.attrib["value"] = str(self.mac_table_size)
+    if self.mac_age:
+      mae = ET.SubElement(mpe, "{%s}max-age" % (Namespaces.VTS))
+      mae.attrib["value"] = str(self.mac_age)
+      
+    return i
 
 
 
@@ -445,10 +502,36 @@ class SSLVPNFunction(Resource):
     return d
 
 Request.EXTENSIONS.append(("SSLVPNFunction", SSLVPNFunction))
+Request.EXTENSIONS.append(("L2SSLVPNServer", SSLVPNFunction))
+
+class L2SSLVPNClient(Resource):
+  def __init__ (self, client_id):
+    super(L2SSLVPNClient, self).__init__()
+    self.client_id = client_id
+    self.protocol = "udp"
+    self.remote_ip = None
+    self.remote_port = None
+    self.note = None
+    self.key = None
+
+  def _write (self, element):
+    d = ET.SubElement(element, "{%s}function" % (Namespaces.VTS))
+    d.attrib["type"] = "sslvpn-client"
+    d.attrib["client_id"] = self.client_id
+    d.attrib["remote-ip"] = str(self.remote_ip)
+    d.attrib["remote-port"] = str(self.remote_port)
+    d.attrib["note"] = str(self.note)
+    d.text = str(self.key)
+    return d
+
+Request.EXTENSIONS.append(("L2SSLVPNClient", L2SSLVPNClient))
+
 
 class Datapath(Resource):
   def __init__ (self, image, client_id):
     super(Datapath, self).__init__()
+    if not isinstance(image, DatapathImage):
+      raise BadImageTypeError(str(DatapathImage))
     self.image = image
     self.ports = []
     self.client_id = client_id
@@ -468,6 +551,12 @@ class Datapath(Resource):
       else:
         port.client_id = "%s:%s" % (self.name, port.name)
     self.ports.append(port)
+    return port
+
+  def connectCrossSliver (self, other_dp):
+    port = InternalCircuit(None, None, None, None)
+    self.attachPort(port)
+    port.target = other_dp.client_id
     return port
 
   def _write (self, element):
@@ -505,6 +594,12 @@ class Container(Resource):
 
   def addIPRoute (self, network, gateway):
     self.routes.append((ipaddress.IPv4Network(unicode(network)), ipaddress.IPv4Address(unicode(gateway))))
+
+  def connectCrossSliver (self, other_dp):
+    port = InternalCircuit(None, None, None, None)
+    self.attachPort(port)
+    port.target = other_dp.client_id
+    return port
 
   def _write (self, element):
     d = ET.SubElement(element, "{%s}container" % (Namespaces.VTS.name))
@@ -568,6 +663,7 @@ class InternalCircuit(Port):
     self.target = target
     self.delay_info = delay_info
     self.loss_info = loss_info
+    self.reorder_info = None
 
   def _write (self, element):
     p = super(InternalCircuit, self)._write(element)
@@ -576,6 +672,7 @@ class InternalCircuit(Port):
       p.attrib["vlan-id"] = str(self.vlan)
     if self.delay_info: self.delay_info._write(p)
     if self.loss_info: self.loss_info._write(p)
+    if self.reorder_info: self.reorder_info._write(p)
     t = ET.SubElement(p, "{%s}target" % (Namespaces.VTS.name))
     t.attrib["remote-clientid"] = self.target
     return p
@@ -635,12 +732,33 @@ Container.EXTENSIONS.append(("Mount", Mount))
 
 
 class HgMount(Mount):
+  """ Clone a public mercurial repo on a host
+
+  Args:
+    name (str): a reference name given on the mounting AM, must be unique within a sliver
+    source (str): the URL to the source of repository
+    mount_path (str): the path where the repository would be mounted in the host filesystem
+    branch (str): the branch of the repository to be cloned on host (if any)
+  """
   def __init__ (self, name, source, mount_path, branch = "default"):
     super(HgMount, self).__init__("hg", name, mount_path)
     self.attrs["source"] = source
     self.attrs["branch"] = branch
 
 Container.EXTENSIONS.append(("HgMount", HgMount))
+
+
+class SecureHgMount(Mount):
+  def __init__ (self, getversion_output, name, source, mount_path, branch = "default"):
+    super(SecureHgMount, self).__init__("hg-secure", name, mount_path)
+    self._source = source
+    self.attrs["source"] = _am_encrypt(getversion_output, source)
+    self.attrs["branch"] = branch
+
+  def rebind (self, getversion_output):
+    self.attrs["source"] = _am_encrypt(getversion_output, self._source)
+
+Container.EXTENSIONS.append(("SecureHgMount", SecureHgMount))
 
 
 class DropboxMount(Mount):
