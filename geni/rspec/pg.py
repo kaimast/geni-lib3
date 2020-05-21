@@ -89,7 +89,7 @@ class Request(geni.rspec.RSpec):
     else:
       f = open(path, "w+")
 
-    buf = self.toXMLString(True)
+    buf = self.toXMLString(True,True)
     f.write(buf)
 
     if path is not None:

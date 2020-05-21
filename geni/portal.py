@@ -61,9 +61,9 @@ class DictNamespace(dict,Namespace):
 
 def parseBool(b):
   """
-  Extract a bool from `b` as a `basestring`, or by using `bool()`.
+  Extract a bool from `b` as a string (any type), or by using `bool()`.
   """
-  if isinstance(b,basestring):
+  if isinstance(b,six.string_types):
     if b == "False" or b == "false":
       return False
     elif b == "True" or b == "true":
@@ -157,7 +157,7 @@ class Parameter(object):
     """
     Returns None if there are no legal value restrictions.  Otherwise,
     returns a list of legal values.  (NB: self._legalValues itself may
-    be either a list of `basestring`, or a list of 2-tuples, where the
+    be either a list of strings, or a list of 2-tuples, where the
     actual value is the first element of the tuple, and the display hint
     is the second element.)
     """
@@ -328,7 +328,7 @@ class Multi(object):
     LOG.debug("%s(%s)" % (str(self.name),str(value)))
     if value == None:
       value = []
-    elif isinstance(value,basestring):
+    elif isinstance(value,six.string_types):
       if value == "":
         value = []
       else:
@@ -463,7 +463,7 @@ class StructParameter(Parameter):
     LOG.debug("%s(%s)" % (self.name,str(value)))
     if value == None or value == "":
       value = {}
-    elif isinstance(value,basestring):
+    elif isinstance(value,six.string_types):
       try:
         value = json.loads(value)
       except:
@@ -814,7 +814,7 @@ class Context (object):
   def _getEnvParamForPath(self,paramPath):
     if self._standalone:
       raise PortalError("not in portal mode; cannot call _getEnvParamForPath")
-    if isinstance(paramPath,basestring):
+    if isinstance(paramPath,six.string_types):
       paramPath = self._splitParamPathIntoComponents(paramPath)
     # Try to find the original value dict specified by the path,
     # probably because we want to annotate it:
@@ -945,7 +945,7 @@ class Context (object):
       LOG.debug("%s = %s" % (str(p.name),str(p.defaultValue)))
       # Brutal hack to force p._parseValue to be called.  Argparse will
       # only invoke the `type` function for the unsupplied default case
-      # if the value is a basestring.
+      # if the value is any type of string.
       default = p.defaultValue
       if isinstance(default,dict) or isinstance(default,list):
         default = json.dumps(default,sort_keys=True, separators=(',',':'))
