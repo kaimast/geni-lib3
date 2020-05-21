@@ -26,8 +26,8 @@ pkgs = find_packages()
 pkgs.append('')
 
 setup(name = 'geni-lib',
-      version = '0.9.9.2',
-      author = 'Nick Bastin',
+      version = '0.9.9.5',
+      author = 'Nick Bastin and the University of Utah',
       author_email = 'nick@bssoftworks.com',
       description = 'Library and tools for working with research testbed resources that support ' \
                     'the GENI AM API, including the NSF GENI Testbed (www.geni.net) and Cloudlab (cloudlab.us).',
@@ -39,7 +39,7 @@ setup(name = 'geni-lib',
                  'tools/buildcontext/build-context',
                  'tools/shell/genish'],
 
-      url = 'https://bitbucket.org/barnstorm/geni-lib',
+      url = 'https://gitlab.flux.utah.edu/emulab/geni-lib',
       install_requires = requires,
       classifiers = [
         "Development Status :: 5 - Production/Stable",
