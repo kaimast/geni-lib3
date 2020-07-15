@@ -1174,9 +1174,8 @@ class ParameterError (PortalError):
     parameter to increase user understanding of the error.
     """
     super(ParameterError, self).__init__(message)
-    self.params = paramList
-    if not fixedValues: fixedValues = {}
-    self.fixedValues = fixedValues
+    self.params = paramList or []
+    self.fixedValues = fixedValues or {}
 
 
 class ParameterWarning (PortalError):
@@ -1211,9 +1210,8 @@ class ParameterWarning (PortalError):
     autocorrect!
     """
     super(ParameterWarning, self).__init__(message)
-    self.params = paramList
-    if not fixedValues: fixedValues = {}
-    self.fixedValues = fixedValues
+    self.params = paramList or []
+    self.fixedValues = fixedValues or {}
 
 class MissingParameterMemberError(PortalError):
   def __init__(self,param,memberName):
