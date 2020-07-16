@@ -616,6 +616,8 @@ class Context (object):
 
     If the given rspec does not have a Tour object, this will attempt to
     build one from the file's docstring"""
+    self.verifyParameters()
+
     if rspec is None:
       if self._request is not None:
         rspec = self._request
