@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2019 The University of Utah
+# Copyright (c) 2016-2020 The University of Utah
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,3 +27,14 @@ Node.EXTENSIONS.append(("requestSpectrum", requestSpectrum))
 Interface.EXTENSIONS.append(("requestSpectrum", requestSpectrum))
 Request.EXTENSIONS.append(("requestSpectrum", requestSpectrum))
 
+class selectFrontend(object):
+    def __init__(self, frontend):
+        self._frontend  = frontend
+
+    def _write(self, root):
+        el = ET.SubElement(root, "{%s}frontend" % (Namespaces.EMULAB.name))
+        el.attrib["name"] = self._frontend
+        return root
+
+Interface.EXTENSIONS.append(("selectFrontend", selectFrontend))
+    
