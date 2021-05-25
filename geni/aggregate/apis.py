@@ -4,9 +4,7 @@
 #    License, v. 2.0. If a copy of the MPL was not distributed with this
 #    file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
-
-from io import open
+import logging
 
 from .core import APIRegistry
 from .exceptions import AMError
@@ -26,7 +24,7 @@ class SliverStatusError(AMError): pass
 class POAError(AMError): pass
 # pylint: enable=multiple-statements
 
-class AMAPIv3(object):
+class AMAPIv3:
     @staticmethod
     def poa(context, url, sname, action, urns = None, options = None):
         sinfo = context.getSliceInfo(sname)
@@ -98,7 +96,7 @@ class AMAPIv3(object):
         raise ProvisionError(res["output"], res)
 
 
-class AMAPIv2(object):
+class AMAPIv2:
     @staticmethod
     def listresources(context, url, sname, options = None):
         if not options: options = {}
@@ -109,9 +107,9 @@ class AMAPIv2(object):
         if sname:
             sinfo = context.getSliceInfo(sname)
             surn = sinfo.urn
-            creds.append(open(sinfo.path, "r", encoding="latin-1").read())
+            creds.append(open(sinfo.path, "r", encoding="utf-8").read())
 
-        creds.append(open(context.usercred_path, "r", encoding="latin-1").read())
+        creds.append(open(context.usercred_path, "r", encoding="utf-8").read())
 
         res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
         if res["code"]["geni_code"] == 0:
@@ -124,12 +122,15 @@ class AMAPIv2(object):
 
     @staticmethod
     def createsliver(context, url, sname, rspec):
-        sinfo = context.getSliceInfo(sname)
-        cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+        sinfo = context.getSliceInfo(sname, create=True)
+        cred_data = open(sinfo.path, "r", encoding="utf-8").read()
+
+        logger = logging.getLogger()
+        logger.debug("Creating slice with info %s", str(sinfo))
 
         udata = []
         for user in context._users:
-            data = {"urn" : user.urn, "keys" : [open(x, "r", encoding="latin-1").read() for x in user._keys]}
+            data = {"urn" : user.urn, "keys" : [open(x, "r", encoding="utf-8").read() for x in user._keys]}
             udata.append(data)
 
         res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
@@ -143,7 +144,7 @@ class AMAPIv2(object):
     @staticmethod
     def sliverstatus(context, url, sname):
         sinfo = context.getSliceInfo(sname)
-        cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+        cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
         res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
         if res["code"]["geni_code"] == 0:
@@ -156,7 +157,7 @@ class AMAPIv2(object):
     @staticmethod
     def renewsliver(context, url, sname, date):
         sinfo = context.getSliceInfo(sname)
-        cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+        cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
         res = AM2.renewsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, date)
         if res["code"]["geni_code"] == 0:
@@ -166,7 +167,7 @@ class AMAPIv2(object):
     @staticmethod
     def deletesliver (context, url, sname):
         sinfo = context.getSliceInfo(sname)
-        cred_data = open(sinfo.path, "r", encoding="latin-1").read()
+        cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
         res = AM2.deletesliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
         if res["code"]["geni_code"] == 0:
@@ -182,4 +183,3 @@ class AMAPIv2(object):
 
 APIRegistry.register("amapiv2", AMAPIv2())
 APIRegistry.register("amapiv3", AMAPIv3())
-

@@ -5,13 +5,14 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import datetime
-from io import open
 import os
 import os.path
 import logging
 import lxml.etree as ET
 
-class SlicecredProxy(object):
+from ..aggregate.frameworks import ClearinghouseError
+
+class SlicecredProxy:
     def __init__ (self, context):
         self._context = context
 
@@ -25,19 +26,19 @@ class SlicecredProxy(object):
         return iter(self._context._slicecred_paths.keys())
 
     def __iter__ (self):
-        for x in self._context._slicecred_paths:
-            yield x
+        for path in self._context._slicecred_paths:
+            yield path
 
-class SliceCredInfo(object):
+class SliceCredInfo:
     class CredentialExpiredError(Exception):
-        def __init__ (self, name, expires):
+        def __init__(self, name, expires):
             super(SliceCredInfo.CredentialExpiredError, self).__init__()
             self.expires = expires
             self.sname = name
         def __str__ (self):
             return "Credential for slice %s expired on %s" % (self.sname, self.expires)
 
-    def __init__ (self, context, slicename):
+    def __init__(self, context, slicename, create=False):
         self.slicename = slicename
         self.context = context
         self._path = None
@@ -45,25 +46,41 @@ class SliceCredInfo(object):
         self.urn = None
         self.type = None
         self.version = None
-        self._build()
+        self._build(create)
 
-    def _build (self):
+    def __str__(self):
+        return "SliceInfo{ urn=%s, expires=%s, type=%s, version=%s }" % (str(self.urn), str(self.expires), str(self.type), str(self.version))
+
+    def _build(self, create):
         self._path = "%s/%s-%s-%s-scred.xml" % (self.context.datadir, self.context.cf.name,
                                                                                         self.context.project, self.slicename)
         if not os.path.exists(self._path):
-            self._downloadCredential()
+            self._download_credentials(create)
         else:
-            self._parseInfo()
+            self._parse_info()
 
-    def _downloadCredential (self):
-        cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
+    def _download_credentials(self, create):
+        cred = None
 
-        f = open(self._path, "wb+")
-        f.write(cred)
-        f.close()
-        self._parseInfo()
+        # Lazily create (in case it already exists)
+        if create:
+            try:
+                cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
+            except ClearinghouseError as _:
+                self.context.cf.createSlice(self.context, self.slicename)[0]["geni_value"]
 
-    def _parseInfo (self):
+        if not cred:
+            cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
+
+        logger = logging.getLogger()
+        logger.debug("Slice credentials are: %s", cred)
+
+        with open(self._path, "wb+") as outfile:
+            outfile.write(bytes(cred, 'utf-8'))
+
+        self._parse_info()
+
+    def _parse_info(self):
         r = ET.parse(self._path)
 
         # Expiration
@@ -89,8 +106,10 @@ class SliceCredInfo(object):
         checktime = datetime.datetime.now() + datetime.timedelta(days=3)
         if self.expires < checktime:
             # We expire in the next 6 days
-            # TODO: Log something
-            self._downloadCredential()
+            logger = logging.getLogger()
+            logger.info("Re-downloading credentials (expired)")
+            self._download_credentials(False)
+
             if self.expires < datetime.datetime.now():
                 raise SliceCredInfo.CredentialExpiredError(self.slicename, self.expires)
         return self._path
@@ -102,7 +121,7 @@ class SliceCredInfo(object):
         return scd
 
 
-class Context(object):
+class Context:
     DEFAULT_DIR = os.path.expanduser("~/.bssw/geni")
 
     class UserCredExpiredError(Exception):
@@ -132,14 +151,14 @@ class Context(object):
 #        obj["key-path"] = context._key
 
     @property
-    def userurn (self):
+    def userurn(self):
         return self._cf.userurn
 
-    def _getSliceCred (self, sname):
+    def _getSliceCred(self, sname):
         info = self.getSliceInfo(sname)
         return info.path
 
-    def _getCredInfo (self, path):
+    def _getCredInfo(self, path):
         r = ET.parse(path)
         expstr = r.find("credential/expires").text
         if expstr[-1] == 'Z':
@@ -280,8 +299,7 @@ class Context(object):
     def slicecreds (self):
         return SlicecredProxy(self)
 
-    def getSliceInfo (self, sname, project = None):
-
+    def getSliceInfo (self, sname, project = None, create = False):
         if not project:
             project = self.project
 
@@ -289,6 +307,7 @@ class Context(object):
         logger.debug("Getting info for slice '%s' in project '%s'" % (sname, project))
 
         if not ("%s-%s" % (project, sname) in self._slicecreds):
-            scinfo = SliceCredInfo(self, sname)
+            scinfo = SliceCredInfo(self, sname, create=create)
             self._slicecreds["%s-%s" % (project, sname)] = scinfo
+
         return self._slicecreds["%s-%s" % (project, sname)]

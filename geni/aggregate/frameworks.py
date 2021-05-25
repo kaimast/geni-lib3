@@ -4,8 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import os.path
 import logging
 
@@ -14,6 +12,7 @@ import logging
 
 from .core import FrameworkRegistry
 from .. import tempfile
+from ..minigcf import chapi2, pgch1
 
 class KeyDecryptionError(Exception): pass
 
@@ -44,15 +43,15 @@ class Project:
 
 class CHAPI2Project(Project):
     def __init__ (self, pinfo):
-        if not ("PROJECT_UID" in pinfo):
+        if not "PROJECT_UID" in pinfo:
             pinfo["PROJECT_UID"] = None
 
         if "EXPIRED" in pinfo:
             super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
-                                                                                    pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
+                                                    pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
         else:
             super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
-                                                                                    pinfo["PROJECT_EXPIRED"])
+                                                    pinfo["PROJECT_EXPIRED"])
 
 class Member:
     def __init__ (self):
@@ -236,7 +235,6 @@ class ProtoGENI(Framework):
         self._ma = ProtoGENI.MA % (val)
 
     def loadComponents (self, context):
-        from ..minigcf import pgch1
 
         res = pgch1.ListComponents(self._ch, False, self.cert, self.key, context.ucred_pg)
         if res["code"] == 0:
@@ -273,8 +271,6 @@ class CHAPI2(Framework):
         return None
 
     def loadAggregates (self):
-        from ..minigcf import chapi2
-
         res = chapi2.lookup_service_info(self._ch, False, self.cert, self.key, [], "AGGREGATE_MANAGER")
         if res["code"] == 0:
             return res["value"]
@@ -282,7 +278,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def createProject (self, context, name, exp, desc):
-        from ..minigcf import chapi2
 
         res = chapi2.create_project(self._sa, False, self.cert, self.key, [context.ucred_api3], name, exp, desc)
         if res["code"] == 0:
@@ -320,9 +315,9 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def removeProjectMembers (self, context, members, project = None):
-        from ..minigcf import chapi2
+        if not project:
+            project = context.project
 
-        if not project: project = context.project
         project_urn = self.projectNameToURN(project)
 
         res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
@@ -355,8 +350,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def listAggregates (self, context):
-        from ..minigcf import chapi2
-
         res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key)
 
         if res["code"] == 0:
@@ -365,7 +358,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def listSlices (self, context):
-        from ..minigcf import chapi2
         res = chapi2.lookup_slices_for_project(self._sa, False, self.cert, self.key,
                                                                                      [context.ucred_api3], context.project_urn)
         if res["code"] == 0:
@@ -374,8 +366,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def listSliceMembers (self, context, slicename):
-        from ..minigcf import chapi2
-
         slice_urn = self.sliceNameToURN(slicename)
 
         res = chapi2.lookup_slice_members(self._sa, False, self.cert, self.key,
@@ -386,8 +376,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def addSliceMembers (self, context, slicename, members, role = None):
-        from ..minigcf import chapi2
-
         if not role:
             role = chapi2.SLICE_ROLE.MEMBER
 
@@ -421,7 +409,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def getUserCredentials (self, owner_urn):
-        from ..minigcf import chapi2
         res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], owner_urn)
         if res["code"] == 0:
             return res["value"][0]["geni_value"]
@@ -429,8 +416,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def getSliceCredentials (self, context, slicename):
-        from ..minigcf import chapi2
-
         slice_urn = self.sliceNameToURN(slicename)
 
         logger = logging.getLogger()
@@ -443,10 +428,11 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def createSlice (self, context, slicename, project_urn = None, exp = None, desc = None):
-        from ..minigcf import chapi2
-
         if project_urn is None:
             project_urn = self.projectNameToURN(context.project)
+
+        logger = logging.getLogger()
+        logger.debug("Calling createSlice")
 
         res = chapi2.create_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slicename, project_urn, exp, desc)
         if res["code"] == 0:
@@ -455,8 +441,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def renewSlice (self, context, slicename, exp):
-        from ..minigcf import chapi2
-
         fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
         slice_urn = self.sliceNameToURN(slicename)
         slice_info = context.getSliceInfo(slicename)
@@ -470,8 +454,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def lookupSSHKeys (self, context, user_urn):
-        from ..minigcf import chapi2
-
         res = chapi2.lookup_key_info(self._ma, False, self.cert, self.key, [context.ucred_api3], user_urn)
         if res["code"] == 0:
             key_list = [x["KEY_PUBLIC"] for x in res["value"].values()]
@@ -480,8 +462,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def lookupMemberInfo (self, context, urn = None, uid = None):
-        from ..minigcf import chapi2
-
         res = chapi2.lookup_member_info(self._ma, False, self.cert, self.key, [context.ucred_api3],
                                                                         urn = urn, uid = uid)
         return MemberRegistry.addMemberInfo(res["value"].values()[0])

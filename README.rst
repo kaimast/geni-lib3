@@ -1,3 +1,7 @@
+*Experimental* port of Geni libraries to python3
+
+## Old Readme
+
 geni-lib is a Python library for interacting with the `NSF GENI Federation <http://www.geni.net>`_,
 or any resource pool that uses components of the `GENI Software Architecture <http://groups.geni.net/geni/raw-attachment/wiki/GeniArchitectTeam/GENI%20Software%20Architecture%20v1.0.pdf>`_.
 
