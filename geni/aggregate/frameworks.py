@@ -14,47 +14,48 @@ from .core import FrameworkRegistry
 from .. import tempfile
 from ..minigcf import chapi2, pgch1
 
-class KeyDecryptionError(Exception): pass
+class KeyDecryptionError(Exception):
+    pass
 
 class ClearinghouseError(Exception):
-    def __init__ (self, text, data = None):
-        super(ClearinghouseError, self).__init__()
+    def __init__(self, text, data = None):
+        super().__init__()
         self.text = text
         self.data = data
 
-    def __str__ (self):
+    def __str__(self):
         return self.text
 
 class Project:
-    def __init__ (self, urn = None, uid = None, expired = None, role = None):
+    def __init__(self, urn = None, uid = None, expired = None, role = None):
         self.expired = expired
         self.urn = urn
         self.uid = uid
         self.role = role
 
-    def __str__ (self):
+    def __str__(self):
         if self.expired:
             return "[%s, %s, %s, EXPIRED]" % (self.urn, self.uid, self.role)
         return "[%s, %s, %s]" % (self.urn, self.uid, self.role)
 
-    def __repr__ (self):
+    def __repr__(self):
         return "<%s, %s>" % (self.urn, self.role)
 
 
 class CHAPI2Project(Project):
-    def __init__ (self, pinfo):
+    def __init__(self, pinfo):
         if not "PROJECT_UID" in pinfo:
             pinfo["PROJECT_UID"] = None
 
         if "EXPIRED" in pinfo:
-            super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
-                                                    pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
+            super().__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
+                             pinfo["EXPIRED"], pinfo["PROJECT_ROLE"])
         else:
-            super(CHAPI2Project, self).__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
-                                                    pinfo["PROJECT_EXPIRED"])
+            super().__init__(pinfo["PROJECT_URN"], pinfo["PROJECT_UID"],
+                             pinfo["PROJECT_EXPIRED"])
 
 class Member:
-    def __init__ (self):
+    def __init__(self):
         self.urn = None
         self.uid = None
         self.email = None
@@ -65,10 +66,10 @@ class Member:
         self.roles = {}
 
     @property
-    def shortname (self):
+    def shortname(self):
         return self.urn.split("+")[-1]
 
-    def _set_from_project (self, project_info):
+    def _set_from_project(self, project_info):
         self.urn = project_info["PROJECT_MEMBER"]
         self.roles[project_info["PROJECT_URN"]] = project_info["PROJECT_ROLE"]
 
@@ -122,6 +123,7 @@ class Framework:
         def __init__ (self, path):
             super(Framework.KeyPathError, self).__init__()
             self.path = path
+
         def __str__ (self):
             return "Path %s does not contain a key" % (self.path)
 
@@ -189,17 +191,17 @@ class Framework:
         self._key = dpath
 
     @property
-    def cert (self):
+    def cert(self):
         if self._cert is None:
             raise Framework.UnconfiguredCertificateError()
         return self._cert
 
     @cert.setter
-    def cert (self, val):
+    def cert(self, val):
         self._cert = val
 
     @property
-    def userurn (self):
+    def userurn(self):
         if not self._userurn:
             from cryptography import x509
             from cryptography.hazmat.backends import default_backend
@@ -218,32 +220,30 @@ class ProtoGENI(Framework):
     MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/sa"
 
     def __init__ (self, name = "pg"):
-        super(ProtoGENI, self).__init__("emulab")
+        super().__init__("emulab")
         self._type = "pgch"
         self._ch = "https://www.emulab.net:12369/protogeni/xmlrpc/ch"
         self._sa = None
         self._ma = None
 
     @property
-    def project (self):
-        return super(ProtoGENI, self).project
+    def project(self):
+        return super().project
 
     @project.setter
-    def project (self, val):
-        super(ProtoGENI, self.__class__).project.fset(self, val) # This is hinky
+    def project(self, val):
+        super().project.fset(self, val) # This is hinky
         self._sa = ProtoGENI.SA % (val)
         self._ma = ProtoGENI.MA % (val)
 
-    def loadComponents (self, context):
-
+    def loadComponents(self, context):
         res = pgch1.ListComponents(self._ch, False, self.cert, self.key, context.ucred_pg)
         if res["code"] == 0:
             return res["value"]
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def getUserCredentials (self, owner_urn): # pylint: disable=unused-argument
-        from ..minigcf import pgch1
+    def getUserCredentials(self, owner_urn): # pylint: disable=unused-argument
         res = pgch1.GetCredential(self._sa, False, self.cert, self.key)
         if res["code"] == 0:
             return res["value"]
@@ -253,58 +253,57 @@ class ProtoGENI(Framework):
 
 class CHAPI1(Framework):
     def __init__ (self, name = "chapi"):
-        super(CHAPI1, self).__init__(name)
+        super().__init__(name)
         self._type = "chapi"
 
 
 class CHAPI2(Framework):
     def __init__ (self, name = "chapi"):
-        super(CHAPI2, self).__init__(name)
+        super().__init__(name)
         self._type = "chapi"
 
-    def projectNameToURN (self, name):
+    def projectNameToURN(self, name):
         ### TODO: Exception
         return None
 
-    def sliceNameToURN (self, slice_name, project = None):
+    def sliceNameToURN(self, slice_name, project = None):
         ### TODO: Exception
         return None
 
-    def loadAggregates (self):
+    def loadAggregates(self):
         res = chapi2.lookup_service_info(self._ch, False, self.cert, self.key, [], "AGGREGATE_MANAGER")
         if res["code"] == 0:
             return res["value"]
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def createProject (self, context, name, exp, desc):
-
+    def createProject(self, context, name, exp, desc):
         res = chapi2.create_project(self._sa, False, self.cert, self.key, [context.ucred_api3], name, exp, desc)
-        if res["code"] == 0:
-            return res["value"]
-        else:
+
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
 
-    def listProjectMembers (self, context, project_urn = None):
+        return res["value"]
+
+    def listProjectMembers(self, context, project_urn = None):
         if not project_urn:
             project_urn = self.projecturn
 
-        from ..minigcf import chapi2
         res = chapi2.lookup_project_members(self._sa, False, self.cert, self.key, [context.ucred_api3], project_urn)
-        if res["code"] == 0:
-            members = []
-            for mobj in res["value"]:
-                mobj["PROJECT_URN"] = project_urn
-                members.append(MemberRegistry.addProjectInfo(mobj))
-            return members
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
 
-    def addProjectMembers (self, context, members, role = None, project = None):
-        from ..minigcf import chapi2
+        members = []
+        for mobj in res["value"]:
+            mobj["PROJECT_URN"] = project_urn
+            members.append(MemberRegistry.addProjectInfo(mobj))
+        return members
 
-        if not role: role = chapi2.PROJECT_ROLE.MEMBER
-        if not project: project = context.project
+    def addProjectMembers(self, context, members, role = None, project = None):
+        if not role:
+            role = chapi2.PROJECT_ROLE.MEMBER
+        if not project:
+            project = context.project
         project_urn = self.projectNameToURN(project)
 
         res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
@@ -328,8 +327,6 @@ class CHAPI2(Framework):
             raise ClearinghouseError(res["output"], res)
 
     def listProjects (self, context, own = True, expired = False):
-        from ..minigcf import chapi2
-
         if not own:
             res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                      expired = expired)
@@ -408,14 +405,14 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def getUserCredentials (self, owner_urn):
+    def getUserCredentials(self, owner_urn):
         res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], owner_urn)
         if res["code"] == 0:
             return res["value"][0]["geni_value"]
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def getSliceCredentials (self, context, slicename):
+    def getSliceCredentials(self, context, slicename):
         slice_urn = self.sliceNameToURN(slicename)
 
         logger = logging.getLogger()
@@ -427,7 +424,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def createSlice (self, context, slicename, project_urn = None, exp = None, desc = None):
+    def createSlice(self, context, slicename, project_urn = None, exp = None, desc = None):
         if project_urn is None:
             project_urn = self.projectNameToURN(context.project)
 
@@ -440,7 +437,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def renewSlice (self, context, slicename, exp):
+    def renewSlice(self, context, slicename, exp):
         fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
         slice_urn = self.sliceNameToURN(slicename)
         slice_info = context.getSliceInfo(slicename)
@@ -453,7 +450,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def lookupSSHKeys (self, context, user_urn):
+    def lookupSSHKeys(self, context, user_urn):
         res = chapi2.lookup_key_info(self._ma, False, self.cert, self.key, [context.ucred_api3], user_urn)
         if res["code"] == 0:
             key_list = [x["KEY_PUBLIC"] for x in res["value"].values()]
@@ -468,8 +465,8 @@ class CHAPI2(Framework):
 
 
 class Portal(CHAPI2):
-    def __init__ (self):
-        super(Portal, self).__init__("gpo-ch2")
+    def __init__(self):
+        super().__init__("gpo-ch2")
         self._authority = "ch.geni.net"
         self._ch = "https://ch.geni.net:8444/CH"
         self._ma = "https://ch.geni.net:443/MA"
@@ -478,27 +475,26 @@ class Portal(CHAPI2):
         self._project_info = {}
 
     @property
-    def projecturn (self):
+    def projecturn(self):
         return self.projectNameToURN(self.project)
 
-    def projectInfo (self, context):
+    def projectInfo(self, context):
         purn = self.projecturn
-        if not (purn in self._project_info):
-            from ..minigcf import chapi2
+        if purn not in self._project_info:
             projects = chapi2.lookup_projects(self._sa, self._root_bundle, self.cert, self.key,
                                                                                 [context.ucred_api3], purn)
             self._project_info[purn] = CHAPI2Project(projects["value"][purn])
         return self._project_info[purn]
 
-    def projectNameToURN (self, name):
+    def projectNameToURN(self, name):
         return "urn:publicid:IDN+ch.geni.net+project+%s" % (name)
 
-    def sliceNameToURN (self, name, project = None):
+    def sliceNameToURN(self, name, project = None):
         if not project:
             project = self.project
         return "urn:publicid:IDN+ch.geni.net:%s+slice+%s" % (project, name)
 
-    def _getMemberUID (self, context):
+    def _getMemberUID(self, context):
         from ..minigcf import chapi2
         if not self._memberuid:
             infodict = chapi2.lookup_member_info(self._ma, self._root_bundle, self.cert, self.key,
@@ -507,7 +503,7 @@ class Portal(CHAPI2):
             self._memberuid = minfo["MEMBER_UID"]
         return self._memberuid
 
-    def getPendingProjectRequests (self, context):
+    def getPendingProjectRequests(self, context):
         from ..minigcf import chapi2
         res = chapi2.get_pending_requests(self._sa, self._root_bundle, self.cert, self.key,
                                                                             [context.ucred_api3], self._getMemberUID(context),
@@ -517,7 +513,7 @@ class Portal(CHAPI2):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def resolveRequests (self, context, req_ids, status, desc):
+    def resolveRequests(self, context, req_ids, status, desc):
         from ..minigcf import chapi2
         for rid in req_ids:
             res = chapi2.resolve_request(self._sa, self._root_bundle, self.cert, self.key,
@@ -534,7 +530,7 @@ class EmulabCH2(CHAPI2):
 #    MA = "https://www.emulab.net:12369/protogeni/xmlrpc/project/%s/geni-ma"
 
     def __init__ (self):
-        super(EmulabCH2, self).__init__("emulab-ch2")
+        super().__init__("emulab-ch2")
         self._authority = ""
         self._ch = EmulabCH2.SA
         self._sa = EmulabCH2.SA
@@ -554,7 +550,7 @@ class EmulabCH2(CHAPI2):
 
     @property
     def project (self):
-        return super(EmulabCH2, self).project
+        return super().project
 
     @project.setter
     def project (self, val):

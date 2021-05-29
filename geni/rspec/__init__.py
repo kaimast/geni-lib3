@@ -1,46 +1,41 @@
-# Copyright (c) 2013  Barnstormer Softworks, Ltd.
+# Copyright (c) 2013    Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 from lxml import etree as ET
 import geni.namespaces as GNS
 
-class RSpec (object):
-  def __init__ (self, rtype):
-    self.NSMAP = {}
-    self._nsnames = set()
-    self._loclist = []
-    self.addNamespace(GNS.XSNS)
-    self.type = rtype
+class RSpec:
+    def __init__ (self, rtype):
+        self._ns_map = {}
+        self._nsnames = set()
+        self._loclist = []
+        self.add_namespace(GNS.XSNS)
+        self.type = rtype
 
-  def addNamespace (self, ns, prefix = ""):
-    if ns.name in self._nsnames:
-      return
+    def add_namespace(self, nspace, prefix = ""):
+        if nspace.name in self._nsnames:
+            return
 
-    self._nsnames.add(ns.name)
+        self._nsnames.add(nspace.name)
 
-    if prefix != "":
-      self.NSMAP[prefix] = ns.name
-    else:
-      self.NSMAP[ns.prefix] = ns.name
+        if prefix != "":
+            self._ns_map[prefix] = nspace.name
+        else:
+            self._ns_map[nspace.prefix] = nspace.name
 
-    if ns.location is not None:
-      self._loclist.append(ns.name)
-      self._loclist.append(ns.location)
+        if nspace.location is not None:
+            self._loclist.append(nspace.name)
+            self._loclist.append(nspace.location)
 
-  def toXMLString (self, pretty_print = False, ucode=False):
-    rspec = self.getDOM()
-    if ucode:
-      return ET.tostring(rspec, pretty_print = pretty_print, encoding="unicode")
-    else:
-      return ET.tostring(rspec, pretty_print = pretty_print)
+    def to_xml_string (self, pretty_print = False):
+        rspec = self.get_dom()
+        return ET.tostring(rspec, pretty_print = pretty_print, encoding="utf-8")
 
-  def getDOM (self):
-    rspec = ET.Element("rspec", nsmap = self.NSMAP)
-    rspec.attrib["{%s}schemaLocation" % (GNS.XSNS.name)] = " ".join(self._loclist)
-    rspec.attrib["type"] = self.type
-    return rspec
+    def get_dom(self):
+        rspec = ET.Element("rspec", nsmap = self._ns_map)
+        rspec.attrib["{%s}schemaLocation" % (GNS.XSNS.name)] = " ".join(self._loclist)
+        rspec.attrib["type"] = self.type
+        return rspec

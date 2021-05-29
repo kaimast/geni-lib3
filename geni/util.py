@@ -20,12 +20,12 @@ import six
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 
-def _getdefault (obj, attr, default):
+def _getdefault(obj, attr, default):
     if hasattr(obj, attr):
         return obj[attr]
     return default
 
-def checkavailrawpc (context, am):
+def checkavailrawpc(context, am):
     """Returns a list of node objects representing available raw PCs at the
 given aggregate."""
 
@@ -38,21 +38,39 @@ given aggregate."""
     return avail
 
 
-def _corelogininfo (manifest):
+def get_login_info(manifest):
     from .rspec.vtsmanifest import Manifest as VTSM
     from .rspec.pgmanifest import Manifest as PGM
 
-    linfo = []
+    linfo = {}
     if isinstance(manifest, PGM):
         for node in manifest.nodes:
-            linfo.extend([(node.client_id, x.username, x.hostname, x.port) for x in node.logins])
+            logins = []
+
+            for login in node.logins:
+                logins.append({
+                    "username": login.username,
+                    "hostname": login.hostname,
+                    "port": login.port
+                })
+
+            linfo[node.client_id] = logins
     elif isinstance(manifest, VTSM):
         for container in manifest.containers:
-            linfo.extend([(container.client_id, x.username, x.hostname, x.port) for x in container.logins])
+            logins = []
+
+            for login in container.logins:
+                logins.append({
+                    "username": login.username,
+                    "hostname": login.hostname,
+                    "port": login.port
+                })
+
+            linfo[container.client_id] = logins
     return linfo
 
 
-def printlogininfo (context = None, am = None, slice = None, manifest = None):
+def print_login_info(context = None, am = None, slice = None, manifest = None):
     """Prints out host login info in the format:
 ::
     [client_id][username] hostname:port
@@ -64,9 +82,10 @@ requested from the given aggregate."""
     if not manifest:
         manifest = am.listresources(context, slice)
 
-    info = _corelogininfo(manifest)
-    for line in info:
-        print("[%s][%s] %s: %d" % (line[0], line[1], line[2], line[3]))
+    infos = get_login_info(manifest)
+    for (client_id, logins) in infos.items():
+        for info in logins:
+            print("[%s][%s] %s: %d" % (client_id, info["username"], info["hostname"], info["port"]))
 
 
 # You can't put very much information in a queue before you hang your OS
@@ -123,14 +142,14 @@ slowest site returns (or times out)."""
     return d
 
 
-def _mp_get_advertisement (context, site, q):
+def _mp_get_advertisement(context, site, q):
     try:
         ad = site.listresources(context)
         q.put((site.name, ad))
     except Exception:
         q.put((site.name, None))
 
-def getAdvertisements (context, ams):
+def getAdvertisements(context, ams):
     """Returns a dictionary of the form:
 ::
     { site_object : advertisement_object, ...}
@@ -207,7 +226,7 @@ def _buildaddot(ad, drop_nodes = None):
     return "\n".join(dot_data)
 
 
-def builddot (manifests):
+def builddot(manifests):
     """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
     # pylint: disable=too-many-branches
 

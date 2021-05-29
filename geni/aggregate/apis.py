@@ -170,9 +170,11 @@ class AMAPIv2:
         cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
         res = AM2.deletesliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
-        if res["code"]["geni_code"] == 0:
-            return res["value"]
-        raise DeleteSliverError(res["output"], res)
+        if res["code"]["geni_code"] != 0:
+            raise DeleteSliverError(res["output"], res)
+
+        context.deleteSlice(sname)
+        return res["value"]
 
     @staticmethod
     def getversion (context, url):

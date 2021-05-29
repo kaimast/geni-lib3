@@ -12,6 +12,9 @@ import lxml.etree as ET
 
 from ..aggregate.frameworks import ClearinghouseError
 
+LOG = logging.getLogger("geni.aggregate.context")
+RENEW_WINDOW = 3
+
 class SlicecredProxy:
     def __init__ (self, context):
         self._context = context
@@ -32,7 +35,7 @@ class SlicecredProxy:
 class SliceCredInfo:
     class CredentialExpiredError(Exception):
         def __init__(self, name, expires):
-            super(SliceCredInfo.CredentialExpiredError, self).__init__()
+            super().__init__()
             self.expires = expires
             self.sname = name
         def __str__ (self):
@@ -59,6 +62,11 @@ class SliceCredInfo:
         else:
             self._parse_info()
 
+    def delete(self):
+        if os.path.exists(self.path):
+            LOG.info("Removing slice file at '%s'", self.path)
+            os.remove(self.path)
+
     def _download_credentials(self, create):
         cred = None
 
@@ -67,13 +75,11 @@ class SliceCredInfo:
             try:
                 cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
             except ClearinghouseError as _:
-                self.context.cf.createSlice(self.context, self.slicename)[0]["geni_value"]
+                LOG.info("Requesting to create slice '%s'", self.slicename)
+                self.context.cf.createSlice(self.context, self.slicename)
 
         if not cred:
             cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
-
-        logger = logging.getLogger()
-        logger.debug("Slice credentials are: %s", cred)
 
         with open(self._path, "wb+") as outfile:
             outfile.write(bytes(cred, 'utf-8'))
@@ -103,11 +109,9 @@ class SliceCredInfo:
 
     @property
     def path (self):
-        checktime = datetime.datetime.now() + datetime.timedelta(days=3)
+        checktime = datetime.datetime.now() + datetime.timedelta(hours=RENEW_WINDOW)
         if self.expires < checktime:
-            # We expire in the next 6 days
-            logger = logging.getLogger()
-            logger.info("Re-downloading credentials (expired)")
+            LOG.info("Re-downloading credentials (will expire in less than %i hours)", RENEW_WINDOW)
             self._download_credentials(False)
 
             if self.expires < datetime.datetime.now():
@@ -117,7 +121,7 @@ class SliceCredInfo:
     @property
     def cred_api3 (self):
         scd = {"geni_type" : "geni_sfa", "geni_version" : 3}
-        scd["geni_value"] = open(self.path, "r", encoding="latin-1").read()
+        scd["geni_value"] = open(self.path, "r", encoding="utf-8").read()
         return scd
 
 
@@ -154,11 +158,12 @@ class Context:
     def userurn(self):
         return self._cf.userurn
 
-    def _getSliceCred(self, sname):
+    def _get_slice_cred(self, sname):
         info = self.getSliceInfo(sname)
         return info.path
 
-    def _getCredInfo(self, path):
+    @staticmethod
+    def _get_cred_info(path):
         r = ET.parse(path)
         expstr = r.find("credential/expires").text
         if expstr[-1] == 'Z':
@@ -181,19 +186,19 @@ class Context:
     def _chargs (self):
         ucinfo = self._ucred_info
         ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
-        ucd["geni_value"] = open(ucinfo[0], "r", encoding="latin-1").read()
+        ucd["geni_value"] = open(ucinfo[0], "r", encoding="utf-8").read()
         return (False, self.cf.cert, self.cf.key, [ucd])
 
     @property
     def ucred_api3 (self):
         ucinfo = self._ucred_info
         ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
-        ucd["geni_value"] = open(ucinfo[0], "r", encoding="latin-1").read()
+        ucd["geni_value"] = open(ucinfo[0], "r", encoding="utf-8").read()
         return ucd
 
     @property
     def ucred_pg (self):
-        return open(self._ucred_info[0], "r", encoding="latin-1").read()
+        return open(self._ucred_info[0], "r", encoding="utf-8").read()
 
     @property
     def project (self):
@@ -208,11 +213,11 @@ class Context:
         return self.cf.projecturn
 
     @property
-    def cf (self):
+    def cf(self):
         return self._cf
 
     @cf.setter
-    def cf (self, value):
+    def cf(self, value):
         # TODO: Calllback into framework here?    Maybe addressed with ISSUE-2
         # Maybe declare writing the _cf more than once as Unreasonable(tm)?
         self._cf = value
@@ -251,7 +256,7 @@ class Context:
                 with open(ucpath, "wb+") as outfile:
                     outfile.write(bytes(cred, 'utf-8'))
 
-            (expires, urn, typ, version) = self._getCredInfo(ucpath)
+            (expires, urn, typ, version) = Context._get_cred_info(ucpath)
             self._usercred_info = (ucpath, expires, urn, typ, version)
 
         if self._usercred_info[1] < datetime.datetime.now():
@@ -260,7 +265,7 @@ class Context:
             with open(ucpath, "wb+") as outfile:
                 outfile.write(bytes(cred, 'utf-8'))
 
-            (expires, urn, typ, version) = self._getCredInfo(ucpath)
+            (expires, urn, typ, version) = Context._get_cred_info(ucpath)
             self._usercred_info = (ucpath, expires, urn, typ, version)
 
         return self._usercred_info
@@ -287,7 +292,7 @@ class Context:
 
         return self._ucred_info[0]
 
-    def addUser (self, user):
+    def addUser(self, user):
         self._users.add(user)
         # The first time we call this, it's from context loading, we hope
         # So, the first user is us, and not wacky other people
@@ -296,18 +301,28 @@ class Context:
             self.uname = user.name
 
     @property
-    def slicecreds (self):
+    def slicecreds(self):
         return SlicecredProxy(self)
 
-    def getSliceInfo (self, sname, project = None, create = False):
+    def getSliceInfo(self, sname, project = None, create = False):
         if not project:
             project = self.project
 
-        logger = logging.getLogger()
-        logger.debug("Getting info for slice '%s' in project '%s'" % (sname, project))
+        LOG.debug("Getting info for slice '%s' in project '%s'", sname, project)
 
-        if not ("%s-%s" % (project, sname) in self._slicecreds):
+        if not "%s-%s" % (project, sname) in self._slicecreds:
             scinfo = SliceCredInfo(self, sname, create=create)
             self._slicecreds["%s-%s" % (project, sname)] = scinfo
 
         return self._slicecreds["%s-%s" % (project, sname)]
+
+    def deleteSlice(self, sname, project = None):
+        if not project:
+            project = self.project
+
+        if "%s-%s" % (project, sname) in self._slicecreds:
+            LOG.info("Deleting slice '%s' in project '%s'", project, sname)
+            scinfo = self._slicecreds["%s-%s" % (project, sname)]
+            scinfo.delete()
+        else:
+            raise RuntimeError("No such slice!")

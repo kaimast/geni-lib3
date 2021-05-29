@@ -16,14 +16,14 @@ class PGCompute(AM):
 
         self.urlv3 = "%s3.0" % (url[:-3])
         self._apiv3 = APIRegistry.get("amapiv3")
-        super(PGCompute, self).__init__(name, url, "amapiv2", "pg", cmid)
+        super().__init__(name, url, "amapiv2", "pg", cmid)
 
-    def geniRestart (self, context, sname, urns):
+    def geniRestart(self, context, sname, urns):
         if not isinstance(urns, list):
             urns = [urns]
         return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
 
-    def geniStart (self, context, sname):
+    def geniStart(self, context, sname):
         return self._apiv3.poa(context, self.urlv3, sname, "geni_start")
 
     def geniUpdateUsers (self, context, sname, user_info_list):

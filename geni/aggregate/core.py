@@ -4,13 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from io import open
 import os
 import os.path
 import logging
 import six
 
-class _Registry(object):
+from .spec import AMSpec, AMTYPE, fixCert
+
+LOG = logging.getLogger("geni.aggregate.core")
+
+class _Registry:
     def __init__ (self):
         self._data = {}
 
@@ -21,8 +24,6 @@ class _Registry(object):
         return self._data[name]
 
 def convertCH2AggregateSpecs(ch2info, path = None):
-    from .spec import AMSpec, AMTYPE
-
     typemap = {
         "ui_instageni_am" : AMTYPE.IG,
         "ui_exogeni_am" : AMTYPE.EG,
@@ -44,11 +45,10 @@ def convertCH2AggregateSpecs(ch2info, path = None):
 
     return speclist
 
-def loadFromRegistry (context):
+def loadFromRegistry(context):
+    # needs to be imported here to avoid cyclic dependency
     from . import frameworks
-    from . import spec
     from .. import urn
-    from .spec import AMSpec, AMTYPE, fixCert
 
     ammap = {}
     cf = context.cf
@@ -110,7 +110,7 @@ class AM:
             return "RSpec object provided as path string, but path not found: %s" % (self.path)
 
 
-    def __init__ (self, name, url, api, amtype, cmid=None):
+    def __init__(self, name, url, api, amtype, cmid=None):
         self.url = url
         self.name = name
         self.cert_data = None
@@ -157,10 +157,10 @@ class AM:
         rspec_data = self.api.listresources(context, self.url, sname, {"geni_available" : available})
         if sname is None:
             return self.amtype.parseAdvertisement(rspec_data)
-        else:
-            return self.amtype.parseManifest(rspec_data)
 
-    def sliverstatus (self, context, sname):
+        return self.amtype.parseManifest(rspec_data)
+
+    def sliverstatus(self, context, sname):
         """GENI AM APIv2 method to get the status of a current sliver at the given aggregate.
 
         Args:
@@ -172,10 +172,9 @@ class AM:
                 Mapping of key/value pairs for status information the aggregate supports.
         """
 
-        status = self.api.sliverstatus(context, self.url, sname)
-        return status
+        return self.api.sliverstatus(context, self.url, sname)
 
-    def renewsliver (self, context, sname, date):
+    def renewsliver(self, context, sname, date):
         """GENI AM APIv2 method to renew a sliver until the given datetime.
 
         Args:
@@ -189,8 +188,7 @@ class AM:
             error in such cases, or success with a sooner future date.
         """
 
-        res = self.api.renewsliver(context, self.url, sname, date)
-        return res
+        return self.api.renewsliver(context, self.url, sname, date)
 
     def deletesliver (self, context, sname):
         """GENI AM APIv2 method to delete a resource reservation at this aggregate.
@@ -201,7 +199,7 @@ class AM:
         """
         self.api.deletesliver(context, self.url, sname)
 
-    def createsliver (self, context, sname, rspec):
+    def createsliver(self, context, sname, rspec):
         """GENI AM APIv2 method to reserve resources at this aggregate.
 
         Args:
@@ -213,12 +211,11 @@ class AM:
             rspec = os.path.normpath(os.path.expanduser(rspec))
             if not os.path.exists(rspec):
                 raise AM.InvalidRSpecPathError(rspec)
-            rspec_data = open(rspec, "r", encoding="latin-1").read()
+            rspec_data = open(rspec, "r", encoding="utf-8").read()
         else:
-            rspec_data = rspec.toXMLString(ucode=True)
+            rspec_data = rspec.to_xml_string(pretty_print=True)
 
-        logger = logging.getLogger()
-        logger.debug("Creating slice with RSpec: \n%s", rspec_data)
+        LOG.debug("Creating slice with RSpec: \n%s", bytes.decode(rspec_data, 'utf-8'))
 
         res = self.api.createsliver(context, self.url, sname, rspec_data)
         return self.amtype.parseManifest(res)
