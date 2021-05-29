@@ -213,9 +213,8 @@ class AM:
                 raise AM.InvalidRSpecPathError(rspec)
             rspec_data = open(rspec, "r", encoding="utf-8").read()
         else:
-            rspec_data = rspec.to_xml_string(pretty_print=True)
-
-        LOG.debug("Creating slice with RSpec: \n%s", bytes.decode(rspec_data, 'utf-8'))
+            LOG.debug("Creating slice with RSpec: \n%s", rspec.to_xml_string(pretty_print=True))
+            rspec_data = rspec.to_xml_string(pretty_print=False)
 
         res = self.api.createsliver(context, self.url, sname, rspec_data)
         return self.amtype.parseManifest(res)

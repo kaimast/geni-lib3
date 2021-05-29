@@ -113,7 +113,7 @@ class Request(geni.rspec.RSpec):
         for elem in self._raw_elements:
             rspec.append(elem)
 
-        return ET.tostring(rspec, pretty_print = pretty_print, encoding="utf-8")
+        return ET.tostring(rspec, pretty_print=pretty_print).decode()
 
 
 class Resource:
@@ -144,9 +144,8 @@ class Resource:
 class NodeType:
     XEN = "emulab-xen"
     DOCKER = "emulab-docker"
-    RAW = "raw"
+    RAW_PC = "raw-pc"
     VM = "emulab-xen"
-
 
 class Command:
     def __init__(self, cmd, data):
@@ -296,7 +295,7 @@ class Link(Resource):
                 if isinstance(member,Interface):
                     self.add_interface(member)
                 else:
-                    self.add_interface(member.addInterface())
+                    self.add_interface(member.add_interface())
 
         self.type = ltype
         self.shared_vlan = None
@@ -346,7 +345,7 @@ class Link(Resource):
         self.interfaces.append(intf)
 
     def add_node(self, node):
-        interface = node.addInterface()
+        interface = node.add_interface()
         self.interfaces.append(interface)
         return interface
 
@@ -700,7 +699,7 @@ Request.EXTENSIONS.append(("Node", Node))
 
 class RawPC(Node):
     def __init__(self, name, component_id = None):
-        super().__init__(name, NodeType.RAW, component_id = component_id, exclusive = True)
+        super().__init__(name, NodeType.RAW_PC, component_id=component_id, exclusive=True)
 
 Request.EXTENSIONS.append(("RawPC", RawPC))
 

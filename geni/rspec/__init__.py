@@ -32,10 +32,10 @@ class RSpec:
 
     def to_xml_string (self, pretty_print = False):
         rspec = self.get_dom()
-        return ET.tostring(rspec, pretty_print = pretty_print, encoding="utf-8")
+        return ET.tostring(rspec, pretty_print=pretty_print).decode()
 
     def get_dom(self):
-        rspec = ET.Element("rspec", nsmap = self._ns_map)
+        rspec = ET.Element("rspec", nsmap=self._ns_map)
         rspec.attrib["{%s}schemaLocation" % (GNS.XSNS.name)] = " ".join(self._loclist)
         rspec.attrib["type"] = self.type
         return rspec

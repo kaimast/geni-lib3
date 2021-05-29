@@ -8,14 +8,12 @@
 Common set of RSpec extensions supported by many Emulab-based aggregates
 """
 
-from __future__ import absolute_import
-
 from ..pg import Request, Namespaces, Link, Node, Service, Command, RawPC
 from ..pg import NodeType
 import geni.namespaces as GNS
 from lxml import etree as ET
 
-class setCollocateFactor(object):
+class setCollocateFactor:
     """Added to a top-level Request object, this extension limits the number
     of VMs from one experiment that Emulab will collocate on each physical
     host.
@@ -35,7 +33,7 @@ class setCollocateFactor(object):
 
 Request.EXTENSIONS.append(("setCollocateFactor", setCollocateFactor))
 
-class setPackingStrategy(object):
+class setPackingStrategy:
     """Added to a top-level Request object, this extension controls the
     strategy used for distributing VMs across physical hosts
     """
@@ -51,17 +49,17 @@ class setPackingStrategy(object):
         return root
 
 Request.EXTENSIONS.append(("setPackingStrategy", setPackingStrategy))
-    
-class setRoutingStyle(object):
+
+class setRoutingStyle:
     """Added to a top-level Request object, this extension controls the
     routing that is automatically configured on the experiment (data-plane)
     side of the network.
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self, style):
         self.style = style
-    
+
     def _write(self, root):
         el = ET.SubElement(root,
                            "{%s}routing_style" % (Namespaces.EMULAB.name))
@@ -70,18 +68,18 @@ class setRoutingStyle(object):
 
 Request.EXTENSIONS.append(("setRoutingStyle", setRoutingStyle))
 
-class setDelayImage(object):
+class setDelayImage:
     """Added to a top-level Request object, this extension sets the disk image
     that will be used for all delay nodes configured for the experiment.
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self, urn):
         """urn: URN of any image - to perform the intnded function, the 
         image must be capable of setting up bridging and/or traffic shaping.
         """
         self.urn = urn
-    
+
     def _write(self, root):
         el = ET.SubElement(root,
                            "{%s}delay_image" % (Namespaces.EMULAB.name))
@@ -90,17 +88,17 @@ class setDelayImage(object):
 
 Request.EXTENSIONS.append(("setDelayImage", setDelayImage))
 
-class setForceShaping(object):
+class setForceShaping:
     """Added to a Link or LAN object, this extension forces Emulab link
     shaping to be enabled, even if it is not strictly necessary. This
     allows the link properties to be changed dynamically via the Emulab event
     system.
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -116,10 +114,10 @@ class setNoBandwidthShaping(object):
     is ignored if the link must be shaped for other reason (delay, loss).
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -130,17 +128,17 @@ class setNoBandwidthShaping(object):
 
 Link.EXTENSIONS.append(("setNoBandwidthShaping", setNoBandwidthShaping))
 
-class setNoInterSwitchLinks(object):
+class setNoInterSwitchLinks:
     """Added to a Link or LAN object, this extension forces the Emulab mapper
     to disallow mapping a link in the request topology to an inter-switch
     link.  This allows users to require that specific nodes in their
     topology be attached to the same switch(es).
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -150,15 +148,15 @@ class setNoInterSwitchLinks(object):
 
 Link.EXTENSIONS.append(("setNoInterSwitchLinks", setNoInterSwitchLinks))
 
-class setJumboFrames(object):
+class setJumboFrames:
     """Added to a Link or LAN object, this extension enables jumbo frames
     on the link (9000 byte MTU). Not all clusters support this option.
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -168,16 +166,16 @@ class setJumboFrames(object):
 
 Link.EXTENSIONS.append(("setJumboFrames", setJumboFrames))
 
-class createSharedVlan(object):
+class createSharedVlan:
     """Added to a Link or LAN object, turns the new vlan into a shared
     vlan that can be shared between independent experiments. 
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self, name):
         self._enabled = True
         self._name = name
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -588,15 +586,15 @@ class ExperimentFirewall(Node):
 Request.EXTENSIONS.append(("ExperimentFirewall", ExperimentFirewall))
 
 class L1Link(Link):
-  def __init__ (self, name = None):
-    super(L1Link, self).__init__(name, "layer1")
+    def __init__ (self, name = None):
+        super().__init__(name, "layer1")
 
 Request.EXTENSIONS.append(("L1Link", L1Link))
 
 class Switch(Node):
-  def __init__ (self, name, component_id = None):
-    super(Switch, self).__init__(name, NodeType.RAW,
+    def __init__ (self, name, component_id = None):
+        super().__init__(name, NodeType.RAW,
                                  component_id = component_id, exclusive = True)
-    self.setUseTypeDefaultImage()
+        self.setUseTypeDefaultImage()
 
 Request.EXTENSIONS.append(("Switch", Switch))

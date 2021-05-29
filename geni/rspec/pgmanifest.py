@@ -47,7 +47,7 @@ class ManifestLink(Link):
 
     @property
     def text (self):
-        return ET.tostring(self._root, pretty_print=True, encoding="utf-8")
+        return ET.tostring(self._elem, pretty_print=True).decode()
 
 
 class ManifestSvcLogin:
@@ -162,7 +162,7 @@ class ManifestNode:
 
     @property
     def text (self):
-        return ET.tostring(self._root, pretty_print=True, encoding="utf-8")
+        return ET.tostring(self._root, pretty_print=True).decode()
 
 
 class ManifestParameter:
@@ -258,7 +258,7 @@ class Manifest:
 
     @property
     def text (self):
-        return ET.tostring(self._root, pretty_print=True, encoding="utf-8")
+        return ET.tostring(self._root, pretty_print=True).decode()
 
     def _repr_html_ (self):
         return """
