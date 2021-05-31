@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# pylint: disable=too-many-instance-attributes,fixme
+
 import datetime
 import os
 import os.path
@@ -16,16 +18,16 @@ LOG = logging.getLogger("geni.aggregate.context")
 RENEW_WINDOW = 3
 
 class SlicecredProxy:
-    def __init__ (self, context):
+    def __init__(self, context):
         self._context = context
 
-    def __getitem__ (self, name):
+    def __getitem__(self, name):
         return self._context._getSliceCred(name)
 
-    def iteritems (self):
+    def iteritems(self):
         return iter(self._context._slicecred_paths.items())
 
-    def iterkeys (self):
+    def iterkeys(self):
         return iter(self._context._slicecred_paths.keys())
 
     def __iter__ (self):
@@ -73,13 +75,13 @@ class SliceCredInfo:
         # Lazily create (in case it already exists)
         if create:
             try:
-                cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
+                cred = self.context.cf.get_slice_credentials(self.context, self.slicename)
             except ClearinghouseError as _:
                 LOG.info("Requesting to create slice '%s'", self.slicename)
-                self.context.cf.createSlice(self.context, self.slicename)
+                self.context.cf.create_slice(self.context, self.slicename)
 
         if not cred:
-            cred = self.context.cf.getSliceCredentials(self.context, self.slicename)
+            cred = self.context.cf.get_slice_credentials(self.context, self.slicename)
 
         with open(self._path, "wb+") as outfile:
             outfile.write(bytes(cred, 'utf-8'))
@@ -108,7 +110,7 @@ class SliceCredInfo:
             self.version = 1
 
     @property
-    def path (self):
+    def path(self):
         checktime = datetime.datetime.now() + datetime.timedelta(hours=RENEW_WINDOW)
         if self.expires < checktime:
             LOG.info("Re-downloading credentials (will expire in less than %i hours)", RENEW_WINDOW)
@@ -119,7 +121,7 @@ class SliceCredInfo:
         return self._path
 
     @property
-    def cred_api3 (self):
+    def cred_api3(self):
         scd = {"geni_type" : "geni_sfa", "geni_version" : 3}
         scd["geni_value"] = open(self.path, "r", encoding="utf-8").read()
         return scd
@@ -135,6 +137,9 @@ class Context:
         def __str__ (self):
             return "User Credential expired on %s" % (self.expires)
 
+    class NoSuchSliceError(Exception):
+        pass
+
     def __init__ (self):
         self._data_dir = None
         self._nick_cache_path = None
@@ -145,6 +150,10 @@ class Context:
         self.debug = False
         self.uname = None
         self.path = None
+
+    @property
+    def users(self):
+        return self._users
 
 #    def save (self):
 #        import geni._coreutil as GCU
@@ -159,7 +168,7 @@ class Context:
         return self._cf.userurn
 
     def _get_slice_cred(self, sname):
-        info = self.getSliceInfo(sname)
+        info = self.get_slice_info(sname)
         return info.path
 
     @staticmethod
@@ -190,7 +199,7 @@ class Context:
         return (False, self.cf.cert, self.cf.key, [ucd])
 
     @property
-    def ucred_api3 (self):
+    def ucred_api3(self):
         ucinfo = self._ucred_info
         ucd = {"geni_type" : ucinfo[3], "geni_version" : ucinfo[4]}
         ucd["geni_value"] = open(ucinfo[0], "r", encoding="utf-8").read()
@@ -205,7 +214,7 @@ class Context:
         return self.cf.project
 
     @project.setter
-    def project (self, val):
+    def project(self, val):
         self.cf.project = val
 
     @property
@@ -224,14 +233,14 @@ class Context:
         self._usercred_info = None
 
     @property
-    def nickCache (self):
+    def nick_cache(self):
         if self._nick_cache_path is None:
             cachepath = os.path.normpath("%s/nickcache.json" % (self.datadir))
             self._nick_cache_path = cachepath
         return self._nick_cache_path
 
     @property
-    def datadir (self):
+    def datadir(self):
         if self._data_dir is None:
             if not os.path.exists(Context.DEFAULT_DIR):
                 os.makedirs(Context.DEFAULT_DIR)
@@ -239,7 +248,7 @@ class Context:
         return self._data_dir
 
     @datadir.setter
-    def datadir (self, val):
+    def datadir(self, val):
         nval = os.path.expanduser(os.path.normpath(val))
         if not os.path.exists(nval):
             os.makedirs(nval)
@@ -247,7 +256,7 @@ class Context:
 
     ### TODO: User credentials need to belong to Users, or fix up this profile nonsense
     @property
-    def _ucred_info (self):
+    def _ucred_info(self):
         if (self._usercred_info is None) or (self._usercred_info[1] < datetime.datetime.now()):
             ucpath = "%s/%s-%s-usercred.xml" % (self.datadir, self.cf.name, self.uname)
             if not os.path.exists(ucpath):
@@ -271,7 +280,7 @@ class Context:
         return self._usercred_info
 
     @property
-    def usercred_path (self):
+    def usercred_path(self):
         # If you only need a user cred, something that works in the next 5 minutes is fine.    If you
         # are doing something more long term then you need a slice credential anyhow, whose
         # expiration will stop you as it should not outlast the user credential (and if it does,
@@ -292,7 +301,7 @@ class Context:
 
         return self._ucred_info[0]
 
-    def addUser(self, user):
+    def add_user(self, user):
         self._users.add(user)
         # The first time we call this, it's from context loading, we hope
         # So, the first user is us, and not wacky other people
@@ -304,7 +313,7 @@ class Context:
     def slicecreds(self):
         return SlicecredProxy(self)
 
-    def getSliceInfo(self, sname, project = None, create = False):
+    def get_slice_info(self, sname, project = None, create = False):
         if not project:
             project = self.project
 
@@ -316,7 +325,7 @@ class Context:
 
         return self._slicecreds["%s-%s" % (project, sname)]
 
-    def deleteSlice(self, sname, project = None):
+    def delete_slice(self, sname, project=None, force=False):
         if not project:
             project = self.project
 
@@ -324,5 +333,7 @@ class Context:
             LOG.info("Deleting slice '%s' in project '%s'", project, sname)
             scinfo = self._slicecreds["%s-%s" % (project, sname)]
             scinfo.delete()
+        elif force:
+            LOG.warning("No slice file found locally. Might have already been deleted.")
         else:
-            raise RuntimeError("No such slice!")
+            raise self.NoSuchSliceError()

@@ -10,7 +10,7 @@ import sys
 from .core import AM, APIRegistry
 
 class PGCompute(AM):
-    def __init__ (self, name, host, cmid = None, url = None):
+    def __init__ (self, name, host, cmid=None, url=None):
         if url is None:
             url = "https://%s:12369/protogeni/xmlrpc/am/2.0" % (host)
 
@@ -18,23 +18,23 @@ class PGCompute(AM):
         self._apiv3 = APIRegistry.get("amapiv3")
         super().__init__(name, url, "amapiv2", "pg", cmid)
 
-    def geniRestart(self, context, sname, urns):
+    def geni_restart(self, context, sname, urns):
         if not isinstance(urns, list):
             urns = [urns]
         return self._apiv3.poa(context, self.urlv3, sname, "geni_restart", urns)
 
-    def geniStart(self, context, sname):
+    def geni_start(self, context, sname):
         return self._apiv3.poa(context, self.urlv3, sname, "geni_start")
 
-    def geniUpdateUsers (self, context, sname, user_info_list):
+    def geni_update_users(self, context, sname, user_info_list):
         # user_info_list:
         # [ { "urn" : <str>, "keys" : [ <str>, ...] }, ... ]
         return self._apiv3.poa(context, self.urlv3, sname, "geni_update_users", options = {"geni_users" : user_info_list})
 
-    def geniCancelUpdateUsers (self, context, sname):
+    def geni_cancel_update_users(self, context, sname):
         return self._apiv3.poa(context, self.urlv3, sname, "geni_updating_users_cancel")
 
-    def getConsoleURL (self, context, sname, urn):
+    def get_console_url(self, context, sname, urn):
         return self._apiv3.poa(context, self.urlv3, sname, "geni_console_url", urns = [urn])
 
 

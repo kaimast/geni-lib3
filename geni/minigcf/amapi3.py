@@ -7,16 +7,22 @@
 # Streamlined implementation of xmlrpc calls to AM API v3-compliant aggregates
 # Only uses python requests module, without a ton of extra SSL dependencies
 
+# pylint: disable=too-many-arguments
+
 from six.moves import xmlrpc_client as xmlrpclib
 
 from .util import _rpcpost
 
-# pylint: disable=unsubscriptable-object
-def getversion(url, root_bundle, cert, key, options = {}):
+def get_version(url, root_bundle, cert, key, options=None):
+    if options is None:
+        options={}
+
     req_data = xmlrpclib.dumps(options, methodname="GetVersion")
     return _rpcpost(url, req_data, (cert, key), root_bundle)
 
-def poa(url, root_bundle, cert, key, creds, urns, action, options = {}):
+def poa(url, root_bundle, cert, key, creds, urns, action, options=None):
+    if options is None:
+        options = {}
     if not isinstance(urns, list):
         urns = [urns]
 
@@ -29,11 +35,17 @@ def poa(url, root_bundle, cert, key, creds, urns, action, options = {}):
                                  methodname="PerformOperationalAction")
     return _rpcpost(url, req_data, (cert, key), root_bundle)
 
-def paa (url, root_bundle, cert, key, action, options = {}):
+def paa (url, root_bundle, cert, key, action, options=None):
+    if options is None:
+        options = {}
+
     req_data = xmlrpclib.dumps((action, options), methodname="PerformAggregateAction")
     return _rpcpost(url, req_data, (cert, key), root_bundle)
 
-def allocate(url, root_bundle, cert, key, creds, slice_urn, rspec, options = {}):
+def allocate(url, root_bundle, cert, key, creds, slice_urn, rspec, options=None):
+    if options is None:
+        options = {}
+
     cred_list = []
     for cred in creds:
         cred_list.append({"geni_value" : open(cred.path, "rb").read(),
@@ -42,7 +54,9 @@ def allocate(url, root_bundle, cert, key, creds, slice_urn, rspec, options = {})
     req_data = xmlrpclib.dumps((slice_urn, cred_list, rspec, options), methodname="Allocate")
     return _rpcpost(url, req_data, (cert, key), root_bundle)
 
-def provision(url, root_bundle, cert, key, creds, urns, options = {}):
+def provision(url, root_bundle, cert, key, creds, urns, options=None):
+    if options is None:
+        options = {}
     if not isinstance(urns, list):
         urns = [urns]
 
@@ -54,7 +68,10 @@ def provision(url, root_bundle, cert, key, creds, urns, options = {}):
     req_data = xmlrpclib.dumps((urns, cred_list, options), methodname="Provision")
     return _rpcpost(url, req_data, (cert, key), root_bundle)
 
-def delete(url, root_bundle, cert, key, creds, urns, options = {}):
+def delete(url, root_bundle, cert, key, creds, urns, options=None):
+    if options is None:
+        options = {}
+
     if not isinstance(urns, list):
         urns = [urns]
 

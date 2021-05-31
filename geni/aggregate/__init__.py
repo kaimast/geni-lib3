@@ -8,4 +8,4 @@ from . import apis
 from . import frameworks
 from . import amtypes
 
-from .core import APIRegistry, AMTypeRegistry, FrameworkRegistry, loadFromRegistry
+from .core import APIRegistry, AMTypeRegistry, FrameworkRegistry, load_from_registry

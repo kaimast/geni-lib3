@@ -8,6 +8,7 @@ import abc
 import six
 
 from .core import AMTypeRegistry
+from ..rspec import pgad, pgmanifest, vtsmanifest, vtsad
 
 class AMType:
     __metaclass__ = abc.ABCMeta
@@ -16,11 +17,11 @@ class AMType:
         self.name = name
 
     @abc.abstractmethod
-    def parseAdvertisement (self, data):
+    def parse_advertisement (self, data):
         return
 
     @abc.abstractmethod
-    def parseManifest (self, data):
+    def parse_manifest (self, data):
         return
 
 
@@ -28,29 +29,23 @@ class ExoGENI(AMType):
     def __init__ (self, name="exogeni"):
         super().__init__(name)
 
-    def parseAdvertisement (self, data):
-        from ..rspec import pgad
-        ad = pgad.Advertisement(xml=data["value"])
-        return ad
+    def parse_advertisement (self, data):
+        return pgad.Advertisement(xml=data["value"])
 
-    def parseManifest (self, data):
-        from ..rspec import pgmanifest
-        manifest = pgmanifest.Manifest(xml = data["value"])
-        return manifest
+    def parse_manifest (self, data):
+        return pgmanifest.Manifest(xml = data["value"])
 
 
 class ProtoGENI(AMType):
     def __init__ (self, name="pg"):
         super().__init__(name)
 
-    def parseAdvertisement (self, data):
-        from ..rspec import pgad
-        ad = pgad.Advertisement(xml=data["value"])
-        ad.error_url = data["code"]["protogeni_error_url"]
-        return ad
+    def parse_advertisement(self, data):
+        adv = pgad.Advertisement(xml=data["value"])
+        adv.error_url = data["code"]["protogeni_error_url"]
+        return adv
 
-    def parseManifest (self, data):
-        from ..rspec import pgmanifest
+    def parse_manifest(self, data):
         if isinstance(data, (six.string_types)):
             manifest = pgmanifest.Manifest(xml = data)
         else:
@@ -59,75 +54,32 @@ class ProtoGENI(AMType):
         return manifest
 
 
-class FOAM(AMType):
-    def __init__ (self, name="foam"):
-        super().__init__(name)
-
-    def parseAdvertisement (self, data):
-        from ..rspec import ofad
-        ad = ofad.Advertisement(xml=data["value"])
-        return ad
-
-    def parseManifest (self, data):
-        from ..rspec import ofmanifest
-        manifest = ofmanifest.Manifest(xml = data["value"])
-        return manifest
-
-
 class OpenGENI(AMType):
     def __init__ (self, name="opengeni"):
         super().__init__(name)
 
-    def parseAdvertisement (self, data):
-        from ..rspec import pgad
-        ad = pgad.Advertisement(xml=data["value"])
-        return ad
+    def parse_advertisement(self, data):
+        return pgad.Advertisement(xml=data["value"])
 
-    def parseManifest (self, data):
-        from ..rspec import pgmanifest
-        manifest = pgmanifest.Manifest(xml = data["value"])
-        return manifest
+    def parse_manifest(self, data):
+        return pgmanifest.Manifest(xml = data["value"])
 
 
 class VTS(AMType):
     def __init__ (self, name="vts"):
         super().__init__(name)
 
-    def parseAdvertisement (self, data):
-        from ..rspec import vtsad
-        ad = vtsad.Advertisement(xml=data["value"])
-        return ad
+    def parse_advertisement(self, data):
+        return vtsad.Advertisement(xml=data["value"])
 
-    def parseManifest (self, data):
-        from ..rspec import vtsmanifest
+    def parse_manifest (self, data):
         if isinstance(data, (six.string_types)):
             manifest = vtsmanifest.Manifest(xml = data)
         else:
             manifest = vtsmanifest.Manifest(xml = data["value"])
         return manifest
 
-
-class OESS(AMType):
-    def __init__ (self, name="oess"):
-        super().__init__(name)
-
-    def parseAdvertisement (self, data):
-        from ..rspec import oessad
-        ad = oessad.Advertisement(xml=data["value"])
-        return ad
-
-    def parseManifest (self, data):
-        from ..rspec import oessmanifest
-        if isinstance(data, (six.string_types)):
-            manifest = oessmanifest.Manifest(xml = data)
-        else:
-            manifest = oessmanifest.Manifest(xml = data["value"])
-        return manifest
-
-
-AMTypeRegistry.register("foam", FOAM())
 AMTypeRegistry.register("opengeni", OpenGENI())
 AMTypeRegistry.register("pg", ProtoGENI())
 AMTypeRegistry.register("exogeni", ExoGENI())
 AMTypeRegistry.register("vts", VTS())
-AMTypeRegistry.register("oess", OESS())

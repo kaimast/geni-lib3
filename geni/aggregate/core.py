@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# pylint: disable=too-many-arguments,too-many-instance-attributes,too-many-branches
+
 import os
 import os.path
 import logging
@@ -23,7 +25,7 @@ class _Registry:
     def get (self, name):
         return self._data[name]
 
-def convertCH2AggregateSpecs(ch2info, path = None):
+def convertCH2AggregateSpecs(ch2info):
     typemap = {
         "ui_instageni_am" : AMTYPE.IG,
         "ui_exogeni_am" : AMTYPE.EG,
@@ -45,8 +47,9 @@ def convertCH2AggregateSpecs(ch2info, path = None):
 
     return speclist
 
-def loadFromRegistry(context):
+def load_from_registry(context):
     # needs to be imported here to avoid cyclic dependency
+    # pylint: disable=import-outside-toplevel
     from . import frameworks
     from .. import urn
 
@@ -68,8 +71,8 @@ def loadFromRegistry(context):
     if isinstance(cf, frameworks.ProtoGENI):
         components = cf.loadComponents(context)
         for info in components:
-            u = urn.GENI(info["urn"])
-            if u.name not in ["cm", "am"]:
+            urn = urn.GENI(info["urn"])
+            if urn.name not in ["cm", "am"]:
                 continue
             ams = AMSpec()
             ams.cmid = info["urn"]
@@ -122,24 +125,24 @@ class AM:
         self._amspec = None
 
     @property
-    def component_manager_id (self):
+    def component_manager_id(self):
         if self._cmid:
             return self._cmid
         raise AM.UnspecifiedComponentManagerError()
 
     @property
-    def api (self):
+    def api(self):
         if not self._api:
             self._api = APIRegistry.get(self._apistr)
         return self._api
 
     @property
-    def amtype (self):
+    def amtype(self):
         if not self._type:
             self._type = AMTypeRegistry.get(self._typestr)
         return self._type
 
-    def listresources (self, context, sname = None, available = False):
+    def list_resources(self, context, sname = None, available = False):
         """GENI AM APIv2 method to get available resources from an aggregate, or resources allocated to
         a specific sliver.
 
@@ -154,13 +157,14 @@ class AM:
                 `listresources` will return the advertisement rspec for the given aggregate.
         """
 
-        rspec_data = self.api.listresources(context, self.url, sname, {"geni_available" : available})
+        rspec_data = self.api.list_resources(context, self.url, sname,
+                {"geni_available" : available})
         if sname is None:
-            return self.amtype.parseAdvertisement(rspec_data)
+            return self.amtype.parse_advertisement(rspec_data)
 
-        return self.amtype.parseManifest(rspec_data)
+        return self.amtype.parse_manifest(rspec_data)
 
-    def sliverstatus(self, context, sname):
+    def sliver_status(self, context, sname):
         """GENI AM APIv2 method to get the status of a current sliver at the given aggregate.
 
         Args:
@@ -172,9 +176,9 @@ class AM:
                 Mapping of key/value pairs for status information the aggregate supports.
         """
 
-        return self.api.sliverstatus(context, self.url, sname)
+        return self.api.sliver_status(context, self.url, sname)
 
-    def renewsliver(self, context, sname, date):
+    def renew_sliver(self, context, sname, date):
         """GENI AM APIv2 method to renew a sliver until the given datetime.
 
         Args:
@@ -188,18 +192,18 @@ class AM:
             error in such cases, or success with a sooner future date.
         """
 
-        return self.api.renewsliver(context, self.url, sname, date)
+        return self.api.renew_sliver(context, self.url, sname, date)
 
-    def deletesliver (self, context, sname):
+    def delete_sliver(self, context, sname):
         """GENI AM APIv2 method to delete a resource reservation at this aggregate.
 
         Args:
             context: geni-lib context
             sname (str): Slice name
         """
-        self.api.deletesliver(context, self.url, sname)
+        return self.api.delete_sliver(context, self.url, sname)
 
-    def createsliver(self, context, sname, rspec):
+    def create_sliver(self, context, sname, rspec):
         """GENI AM APIv2 method to reserve resources at this aggregate.
 
         Args:
@@ -216,10 +220,10 @@ class AM:
             LOG.debug("Creating slice with RSpec: \n%s", rspec.to_xml_string(pretty_print=True))
             rspec_data = rspec.to_xml_string(pretty_print=False)
 
-        res = self.api.createsliver(context, self.url, sname, rspec_data)
-        return self.amtype.parseManifest(res)
+        res = self.api.create_sliver(context, self.url, sname, rspec_data)
+        return self.amtype.parse_manifest(res)
 
-    def getversion (self, context):
+    def get_version(self, context):
         """GENI AM API method to get the version information for this aggregate.
 
         Args:
@@ -229,7 +233,7 @@ class AM:
             dict: Dictionary of key/value pairs with version information from this aggregate.
         """
 
-        return self.api.getversion(context, self.url)
+        return self.api.get_version(context, self.url)
 
 
 APIRegistry = _Registry()

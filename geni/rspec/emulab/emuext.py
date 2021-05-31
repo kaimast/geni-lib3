@@ -19,12 +19,12 @@ class setCollocateFactor:
     host.
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self, mfactor):
         """mfactor is an integer, giving the maximum number of VMs to multiplex
         on each physical host."""
         self.mfactor = mfactor
-    
+
     def _write(self, root):
         el = ET.SubElement(root,
                            "{%s}collocate_factor" % (Namespaces.EMULAB.name))
@@ -41,7 +41,7 @@ class setPackingStrategy:
 
     def __init__(self, strategy):
         self.strategy = strategy
-    
+
     def _write(self, root):
         el = ET.SubElement(root,
                            "{%s}packing_strategy" % (Namespaces.EMULAB.name))
@@ -108,7 +108,7 @@ class setForceShaping:
 
 Link.EXTENSIONS.append(("setForceShaping", setForceShaping))
 
-class setNoBandwidthShaping(object):
+class setNoBandwidthShaping:
     """Added to a Link or LAN object, this extension forces Emulab link
     shaping to be disabled for bandwidth, even if it is necessary. This
     is ignored if the link must be shaped for other reason (delay, loss).
@@ -185,7 +185,7 @@ class createSharedVlan:
 
 Link.EXTENSIONS.append(("createSharedVlan", createSharedVlan))
 
-class setProperties(object):
+class setProperties:
     """Added to a Link or LAN object, this extension tells Emulab based
     clusters to set the symmetrical properties of the entire link/lan to
     the desired characteristics (bandwidth, latency, plr). This produces
@@ -193,17 +193,17 @@ class setProperties(object):
     pair, especially on a very large lan. Bandwidth is in Kbps, latency in
     milliseconds, plr a floating point number between 0 and 1. Use keyword
     based arguments, all arguments are optional:
-    
+
         link.setProperties(bandwidth=100000, latency=10, plr=0.5)
-    
+
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self, bandwidth=None, latency=None, plr=None):
         self._bandwidth = bandwidth
         self._latency   = latency
         self._plr       = plr
-    
+
     def _write(self, root):
         if (self._bandwidth == None and self._latency == None and
             self._plr == None):
@@ -219,17 +219,17 @@ class setProperties(object):
 
 Link.EXTENSIONS.append(("setProperties", setProperties))
 
-class setUseTypeDefaultImage(object):
+class setUseTypeDefaultImage:
     """Added to a node that does not specify a disk image, this extension
     forces Emulab to use the hardware type default image instead of the
     standard geni default image. Useful with special hardware that should
     run a special image.
     """
     __ONCEONLY__ = True
-    
+
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -240,16 +240,16 @@ class setUseTypeDefaultImage(object):
 
 Node.EXTENSIONS.append(("setUseTypeDefaultImage", setUseTypeDefaultImage))
 
-class setFailureAction(object):
+class setFailureAction:
     """Added to a node this extension will tell Emulab based aggregates to
     ignore errors booting this node when starting an experiment. This allows
     the experiment to proceed so that the user has time to debug."""
     __ONCEONLY__ = True
-    
+
     def __init__(self, action):
         self.action = action
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == False:
             return root
@@ -290,7 +290,7 @@ class ProgramAgent(Service):
             exc.attrib["onexpstart"] = "true"
         return exc
 
-class InstantiateOn(object):
+class InstantiateOn:
     """Added to a node to specify that it a Xen VM should be bound to
     (instantiated on) another node in the topology.  Argument is the
     node instance or the client id of another node in the topology.
@@ -301,9 +301,9 @@ class InstantiateOn(object):
             self.parent = parent
             def __str__ (self):
                 return "%s is not a Raw PC" % (self.parent.name)
-    
+
     __ONCEONLY__ = True
-    
+
     def __init__(self, parent):
         if isinstance(parent, Node):
             # Xen VMs have to be bound to a raw PC.
@@ -315,7 +315,7 @@ class InstantiateOn(object):
             # is not trying to order nodes, so the vhost might not be
             # first. 
             self._parent = parent
-            
+
     def _write(self, root):
         if self._parent == None:
             return root
@@ -333,125 +333,125 @@ Node.EXTENSIONS.append(("InstantiateOn", InstantiateOn))
 # Unfortunately, there is no way to get a handle on the parent object
 # of an extension, so we need to get that explicitly.
 #
-class BridgedLink(object):
-  """A bridged link is syntactic sugar used to create two links
-separated by an Emulab delay (bridge) node. The BridgedLink class will
-create the following topology:
+class BridgedLink:
+    """A bridged link is syntactic sugar used to create two links
+    separated by an Emulab delay (bridge) node. The BridgedLink class will
+    create the following topology:
 
-	      left-link          right-link
-	node1 =========== bridge ============ node2
+              left-link          right-link
+        node1 =========== bridge ============ node2
 
-The bridge is a special node type (sliver_type="delay") that tells the
-CM to insert an Emulab delay node instead of a plain (router) node. A
-delay node is a transparent Ethernet bridge between the left and right
-segments above, but on which the traffic can be shaped wrt. bandwidth,
-latency, and loss. For example:
+    The bridge is a special node type (sliver_type="delay") that tells the
+    CM to insert an Emulab delay node instead of a plain (router) node. A
+    delay node is a transparent Ethernet bridge between the left and right
+    segments above, but on which the traffic can be shaped wrt. bandwidth,
+    latency, and loss. For example:
 
-        # Create the bridged link between the two nodes.
-        link = request.BridgedLink("link")
-        # Add two interfaces
-        link.addInterface(iface1)
-        link.addInterface(iface2)
-        # Give the link (bridge) some shaping parameters.
-        link.bandwidth = 10000
-        link.latency   = 15
-        link.plr       = 0.01"""
+    # Create the bridged link between the two nodes.
+    link = request.BridgedLink("link")
+    # Add two interfaces
+    link.addInterface(iface1)
+    link.addInterface(iface2)
+    # Give the link (bridge) some shaping parameters.
+    link.bandwidth = 10000
+    link.latency   = 15
+    link.plr       = 0.01"""
 
-  # This tells the Request class to set the _parent member after creating the
-  # object
-  __WANTPARENT__ = True;
-  
-  def __init__ (self, name = None):
-    if name is None:
-      self.name = Link.newLinkID()
-    else:
-      self.name = name
+    # This tells the Request class to set the _parent member after creating the
+    # object
+    __WANTPARENT__ = True
 
-    self.bridge_name = name + "_bridge"
-    self.left_name   = name + "_left"
-    self.right_name  = name + "_right"
-    self.left_iface  = None
-    self.right_iface = None
+    def __init__ (self, name = None):
+        if name is None:
+            self.name = Link.newLinkID()
+        else:
+            self.name = name
 
-    self._bandwidth  = Link.DEFAULT_BW
-    self._latency    = Link.DEFAULT_LAT
-    self._plr        = Link.DEFAULT_PLR
+        self.bridge_name = name + "_bridge"
+        self.left_name   = name + "_left"
+        self.right_name  = name + "_right"
+        self.left_iface  = None
+        self.right_iface = None
 
-    # This needs to get set with the setter; this helps us remember that we
-    # have not been attached to a parent
-    self.request = None
+        self._bandwidth  = Link.DEFAULT_BW
+        self._latency    = Link.DEFAULT_LAT
+        self._plr        = Link.DEFAULT_PLR
 
-    # These will be set later when we know the parent
-    self.bridge = None
-    self.left_link = None
-    self.right_link = None
+        # This needs to get set with the setter; this helps us remember that we
+        # have not been attached to a parent
+        self.request = None
 
-  @property
-  def _parent(self):
-    return self.request
+        # These will be set later when we know the parent
+        self.bridge = None
+        self.left_link = None
+        self.right_link = None
 
-  @_parent.setter
-  def _parent(self, request):
-    self.request     = request
-    self.bridge      = request.Bridge(self.bridge_name)
-    self.left_link   = request.Link(self.left_name)
-    self.left_link.addInterface(self.bridge.iface0);
-    self.right_link  = request.Link(self.right_name)
-    self.right_link.addInterface(self.bridge.iface1);
+    @property
+    def _parent(self):
+        return self.request
 
-  def addInterface(self, interface):
-      if self.left_iface == None:
-          self.left_link.addInterface(interface)
-          self.left_iface = interface
-      else:
-          self.right_link.addInterface(interface)
-          self.right_iface = interface
+    @_parent.setter
+    def _parent(self, request):
+        self.request     = request
+        self.bridge      = request.Bridge(self.bridge_name)
+        self.left_link   = request.Link(self.left_name)
+        self.left_link.addInterface(self.bridge.iface0)
+        self.right_link  = request.Link(self.right_name)
+        self.right_link.addInterface(self.bridge.iface1)
 
-  @property
-  def bandwidth (self):
-    return self._bandwidth
+    def addInterface(self, interface):
+        if self.left_iface == None:
+              self.left_link.addInterface(interface)
+              self.left_iface = interface
+        else:
+              self.right_link.addInterface(interface)
+              self.right_iface = interface
 
-  @bandwidth.setter
-  def bandwidth (self, val):
-    self.bridge.pipe0.bandwidth = val;
-    self.bridge.pipe1.bandwidth = val;
-    self._bandwidth = val
+    @property
+    def bandwidth (self):
+        return self._bandwidth
 
-  @property
-  def latency (self):
-    return self._latency
+    @bandwidth.setter
+    def bandwidth (self, val):
+        self.bridge.pipe0.bandwidth = val
+        self.bridge.pipe1.bandwidth = val
+        self._bandwidth = val
 
-  @latency.setter
-  def latency (self, val):
-    self.bridge.pipe0.latency = val;
-    self.bridge.pipe1.latency = val;
-    self._latency = val
+    @property
+    def latency (self):
+        return self._latency
 
-  @property
-  def plr (self):
-    return self._plr
+    @latency.setter
+    def latency (self, val):
+        self.bridge.pipe0.latency = val;
+        self.bridge.pipe1.latency = val;
+        self._latency = val
 
-  @plr.setter
-  def plr (self, val):
-    self.bridge.pipe0.lossrate = val;
-    self.bridge.pipe1.lossrate = val;
-    self._plr = val
+    @property
+    def plr (self):
+        return self._plr
 
-  def _write(self, root):
-      return root
+    @plr.setter
+    def plr (self, val):
+        self.bridge.pipe0.lossrate = val
+        self.bridge.pipe1.lossrate = val
+        self._plr = val
+
+    def _write(self, root):
+        return root
 
 Request.EXTENSIONS.append(("BridgedLink", BridgedLink))
 
 class ShapedLink(BridgedLink):
-  """A ShapedLink is a synonym for BridgedLink"""
+    """A ShapedLink is a synonym for BridgedLink"""
 
-  def __init__ (self, name = None):
-    super(ShapedLink, self).__init__(name=name)
+    def __init__ (self, name = None):
+        super().__init__(name=name)
 
 Request.EXTENSIONS.append(("ShapedLink", ShapedLink))
 
 
-class installRootKeys(object):
+class installRootKeys:
     """Added to a node this extension will tell Emulab based aggregates to
     to install private and/or public ssh keys for root so that root can ssh
     between nodes in your experiment without having to provide a password.
@@ -465,29 +465,29 @@ class installRootKeys(object):
             # Install just the public key on node2
             node2.installRootKeys(False, True)
     """
-    
+
     def __init__(self, private = True, public = True):
         self._include = True
         self._private = private
         self._public  = public
-    
+
     def _write(self, root):
         if self._include == False:
             return root
         el = ET.SubElement(root, "{%s}rootkey" % (Namespaces.EMULAB.name))
         if self._private:
-            el.attrib["private"] = "true";
+            el.attrib["private"] = "true"
         else:
-            el.attrib["private"] = "false";
+            el.attrib["private"] = "false"
         if self._public:
-            el.attrib["public"] = "true";
+            el.attrib["public"] = "true"
         else:
-            el.attrib["public"] = "false";
+            el.attrib["public"] = "false"
         return root
 
 Node.EXTENSIONS.append(("installRootKeys", installRootKeys))
 
-class disableRootKeys(object):
+class disableRootKeys:
     """Added to a request this extension will tell Emulab based aggregates to
     to not install private and/or public ssh keys for root.
     """
@@ -495,7 +495,7 @@ class disableRootKeys(object):
 
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == True:
             el = ET.SubElement(root,
@@ -504,7 +504,7 @@ class disableRootKeys(object):
 
 Request.EXTENSIONS.append(("disableRootKeys", disableRootKeys))
 
-class skipVlans(object):
+class skipVlans:
     """Added to a request this extension will tell Emulab based aggregates to
     to not setup or tear down vlans. You should not use this!
     """
@@ -512,7 +512,7 @@ class skipVlans(object):
 
     def __init__(self):
         self._enabled = True
-    
+
     def _write(self, root):
         if self._enabled == True:
             el = ET.SubElement(root, "{%s}skipvlans" % (Namespaces.EMULAB.name))
@@ -520,7 +520,7 @@ class skipVlans(object):
 
 Request.EXTENSIONS.append(("skipVlans", skipVlans))
 
-class Attribute(object):
+class Attribute:
     """Added to a node, this Emulab extension becomes a node_attribute.
     """
     def __init__ (self, key, value):
@@ -536,7 +536,7 @@ class Attribute(object):
 
 Node.EXTENSIONS.append(("Attribute", Attribute))
 
-class wirelessSite(object):
+class wirelessSite:
     """A simple extension to mark a node as being part of a given wireless aggregate.
     """
     def __init__(self, id, type, urn):
@@ -560,7 +560,7 @@ class ExperimentFirewall(Node):
     """
     __ONCEONLY__ = True
 
-    class Style(object):
+    class Style:
         OPEN     = "open"
         CLOSED   = "closed"
         BASIC    = "basic"
@@ -593,8 +593,8 @@ Request.EXTENSIONS.append(("L1Link", L1Link))
 
 class Switch(Node):
     def __init__ (self, name, component_id = None):
-        super().__init__(name, NodeType.RAW,
-                                 component_id = component_id, exclusive = True)
+        super().__init__(name, NodeType.RAW_PC.value,
+                    component_id = component_id, exclusive = True)
         self.setUseTypeDefaultImage()
 
 Request.EXTENSIONS.append(("Switch", Switch))

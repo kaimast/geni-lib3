@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# pylint: disable=too-many-arguments,fixme
+
 import datetime
 import json
 import multiprocessing as MP
@@ -39,6 +41,7 @@ given aggregate."""
 
 
 def get_login_info(manifest):
+    #pylint: disable=import-outside-toplevel
     from .rspec.vtsmanifest import Manifest as VTSM
     from .rspec.pgmanifest import Manifest as PGM
 
@@ -70,7 +73,7 @@ def get_login_info(manifest):
     return linfo
 
 
-def print_login_info(context = None, am = None, slice = None, manifest = None):
+def print_login_info(context = None, am = None, sname = None, manifest = None):
     """Prints out host login info in the format:
 ::
     [client_id][username] hostname:port
@@ -80,7 +83,7 @@ otherwise you must supply a context, slice, and am and a manifest will be
 requested from the given aggregate."""
 
     if not manifest:
-        manifest = am.listresources(context, slice)
+        manifest = am.listresources(context, sname)
 
     infos = get_login_info(manifest)
     for (client_id, logins) in infos.items():
@@ -149,7 +152,7 @@ def _mp_get_advertisement(context, site, q):
     except Exception:
         q.put((site.name, None))
 
-def getAdvertisements(context, ams):
+def get_advertisements(context, ams):
     """Returns a dictionary of the form:
 ::
     { site_object : advertisement_object, ...}
@@ -179,10 +182,10 @@ returns (or times out).
     return d
 
 
-def deleteSliverExists(am, context, slice):
+def delete_sliver_exists(am, context, sname):
     """Attempts to delete all slivers for the given slice at the given AM, suppressing all returned errors."""
     try:
-        am.deletesliver(context, slice)
+        am.deletesliver(context, sname)
     except DeleteSliverError:
         pass
 
@@ -228,8 +231,7 @@ def _buildaddot(ad, drop_nodes = None):
 
 def builddot(manifests):
     """Constructs a dotfile of the topology described in the passed in manifest list and returns it as a string."""
-    # pylint: disable=too-many-branches
-
+    # pylint: disable=too-many-branches,import-outside-toplevel
     from .rspec import vtsmanifest as VTSM
     from .rspec.pgmanifest import Manifest as PGM
 
@@ -330,7 +332,7 @@ class APIEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def loadAggregates (path = None):
+def loa_aggregates(path = None):
     from .aggregate.spec import AMSpec
     from . import _coreutil as GCU
 
@@ -350,16 +352,16 @@ def loadAggregates (path = None):
 
     return ammap
 
-def updateAggregates (context, ammap):
-    from .aggregate.core import loadFromRegistry
+def update_aggregates(context, ammap):
+    from .aggregate.core import load_from_registry
 
-    new_map = loadFromRegistry(context)
-    for k,v in new_map.items():
-        if k not in ammap:
-            ammap[k] = v
-    saveAggregates(ammap)
+    new_map = load_from_registry(context)
+    for key, val in new_map.items():
+        if key not in ammap:
+            ammap[key] = val
+    save_aggregates(ammap)
 
-def saveAggregates (ammap, path = None):
+def save_aggregates(ammap, path = None):
     from . import _coreutil as GCU
 
     if not path:
@@ -371,7 +373,7 @@ def saveAggregates (ammap, path = None):
         f.write(data)
 
 
-def loadContext(path = None, key_passphrase = None):
+def load_context(path = None, key_passphrase = None):
     import geni._coreutil as GCU
     from geni.aggregate import FrameworkRegistry
     from geni.aggregate.context import Context
@@ -403,10 +405,10 @@ def loadContext(path = None, key_passphrase = None):
         user = User()
         user.name = obj["user-name"]
         user.urn = obj["user-urn"]
-        user.addKey(obj["user-pubkeypath"])
+        user.add_key(obj["user-pubkeypath"])
 
         context = Context()
-        context.addUser(user)
+        context.add_user(user)
         context.cf = cf
         context.project = obj["project"]
         context.path = path
@@ -432,8 +434,8 @@ def loadContext(path = None, key_passphrase = None):
             user.urn = _getdefault(uobj, "urn", None)
             klist = uobj["keys"]
             for keypath in klist:
-                user.addKey(keypath)
-            context.addUser(user)
+                user.add_key(keypath)
+            context.add_user(user)
 
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
@@ -563,7 +565,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
 
 
-def _buildContext (framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
+def _buildContext(framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
     import geni._coreutil as GCU
 
     # Create the .bssw directories if they don't exist

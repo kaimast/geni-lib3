@@ -4,9 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# pylint: disable=too-many-instance-attributes,c-extension-no-member
+
 import itertools
 import sys
 import functools
+from enum import Enum
 
 from lxml import etree as ET
 import six
@@ -61,8 +64,8 @@ class Request(geni.rspec.RSpec):
         setattr(self, name, wrap)
 
     def add_resource(self, rsrc):
-        for ns in rsrc.namespaces:
-            self.add_namespace(ns)
+        for nspace in rsrc.namespaces:
+            self.add_namespace(nspace)
         self._resources.append(rsrc)
 
     @property
@@ -121,8 +124,8 @@ class Resource:
         self.namespaces = []
         self._ext_children = []
 
-    def add_namespace(self, ns):
-        self.namespaces.append(ns)
+    def add_namespace(self, nspace):
+        self.namespaces.append(nspace)
 
     def _wrapext(self, name, klass):
         @functools.wraps(klass.__init__)
@@ -141,7 +144,7 @@ class Resource:
         return element
 
 
-class NodeType:
+class NodeType(Enum):
     XEN = "emulab-xen"
     DOCKER = "emulab-docker"
     RAW_PC = "raw-pc"
@@ -149,8 +152,12 @@ class NodeType:
 
 class Command:
     def __init__(self, cmd, data):
-        self.cmd = cmd
+        self._cmd = cmd
         self.data = data
+
+    @property
+    def cmd(self):
+        return self._cmd
 
     def resolve(self):
         return self.cmd % self.data
@@ -176,9 +183,13 @@ class Install(Service):
 
 class Execute(Service):
     def __init__(self, shell, command):
-        super(Execute, self).__init__()
+        super().__init__()
         self.shell = shell
-        self.command = command
+        self._command = command
+
+    @property
+    def command(self):
+        return self._command
 
     def _write(self, element):
         exc = ET.SubElement(element, "{%s}execute" % (GNS.REQUEST.name))
@@ -572,7 +583,7 @@ class Node(Resource):
     """
     EXTENSIONS = []
 
-    def __init__ (self, name, ntype, component_id = None, exclusive = None):
+    def __init__(self, name, ntype, component_id = None, exclusive = None):
         super().__init__()
         self.client_id = name
         self.exclusive = exclusive
@@ -613,7 +624,7 @@ class Node(Resource):
     def name (self):
         return self.client_id
 
-    def _write (self, root):
+    def _write(self, root):
         # pylint: disable=too-many-branches
         nd = ET.SubElement(root, "{%s}node" % (GNS.REQUEST.name))
         nd.attrib["client_id"] = self.client_id
@@ -699,7 +710,7 @@ Request.EXTENSIONS.append(("Node", Node))
 
 class RawPC(Node):
     def __init__(self, name, component_id = None):
-        super().__init__(name, NodeType.RAW_PC, component_id=component_id, exclusive=True)
+        super().__init__(name, NodeType.RAW_PC.value, component_id=component_id, exclusive=True)
 
 Request.EXTENSIONS.append(("RawPC", RawPC))
 

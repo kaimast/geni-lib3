@@ -4,8 +4,11 @@
 #    License, v. 2.0. If a copy of the MPL was not distributed with this
 #    file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# pylint: disable=too-many-arguments,fixme
+
 import logging
 
+from .frameworks import ClearinghouseError
 from .core import APIRegistry
 from .exceptions import AMError
 from . import pgutil as ProtoGENI
@@ -24,10 +27,12 @@ class SliverStatusError(AMError): pass
 class POAError(AMError): pass
 # pylint: enable=multiple-statements
 
+LOG = logging.getLogger("geni.aggregate.apis")
+
 class AMAPIv3:
     @staticmethod
-    def poa(context, url, sname, action, urns = None, options = None):
-        sinfo = context.getSliceInfo(sname)
+    def poa(context, url, sname, action, urns=None, options=None):
+        sinfo = context.get_slice_info(sname)
         if not urns:
             urns = [sinfo.urn]
 
@@ -50,9 +55,10 @@ class AMAPIv3:
         raise POAError(res["output"], res)
 
     @staticmethod
-    def allocate(context, url, sname, rspec, options = None):
-        if not options: options = {}
-        sinfo = context.getSliceInfo(sname)
+    def allocate(context, url, sname, rspec, options=None):
+        if options is None:
+            options = {}
+        sinfo = context.get_slice_info(sname)
 
         res = AM3.allocate(url, False, context.cf.cert, context.cf.key, [sinfo], sinfo.urn, rspec, options)
         if res["code"]["geni_code"] == 0:
@@ -63,12 +69,13 @@ class AMAPIv3:
         raise AllocateError(res["output"], res)
 
     @staticmethod
-    def provision(context, url, sname, urns = None, options = None):
-        if not options: options = {}
-        if urns is not None:
-            if not isinstance(urns, list): urns = [urns]
+    def provision(context, url, sname, urns = None, options=None):
+        if options is None:
+            options = {}
+        if urns is not None and not isinstance(urns, list):
+            urns = [urns]
 
-        sinfo = context.getSliceInfo(sname)
+        sinfo = context.get_slice_info(sname)
         if not urns:
             urns = [sinfo.urn]
 
@@ -81,11 +88,13 @@ class AMAPIv3:
         raise ProvisionError(res["output"], res)
 
     @staticmethod
-    def delete(context, url, sname, urns, options = None):
-        if not options: options = {}
-        if not isinstance(urns, list): urns = [urns]
+    def delete(context, url, sname, urns, options=None):
+        if options is None:
+            options = {}
+        if not isinstance(urns, list):
+            urns = [urns]
 
-        sinfo = context.getSliceInfo(sname)
+        sinfo = context.get_slice_info(sname)
 
         res = AM3.delete(url, False, context.cf.cert, context.cf.key, [sinfo], urns, options)
         if res["code"]["geni_code"] == 0:
@@ -98,20 +107,21 @@ class AMAPIv3:
 
 class AMAPIv2:
     @staticmethod
-    def listresources(context, url, sname, options = None):
-        if not options: options = {}
-
+    def list_resources(context, url, sname, options=None):
+        if options is None:
+            options = {}
         creds = []
 
         surn = None
         if sname:
-            sinfo = context.getSliceInfo(sname)
+            sinfo = context.get_slice_info(sname)
             surn = sinfo.urn
             creds.append(open(sinfo.path, "r", encoding="utf-8").read())
 
         creds.append(open(context.usercred_path, "r", encoding="utf-8").read())
 
-        res = AM2.listresources(url, False, context.cf.cert, context.cf.key, creds, options, surn)
+        res = AM2.list_resources(url, False, context.cf.cert, context.cf.key,
+                creds, options, surn)
         if res["code"]["geni_code"] == 0:
             return res
         if "am_type" in res["code"]:
@@ -121,19 +131,18 @@ class AMAPIv2:
         raise ListResourcesError(res["output"], res)
 
     @staticmethod
-    def createsliver(context, url, sname, rspec):
-        sinfo = context.getSliceInfo(sname, create=True)
+    def create_sliver(context, url, sname, rspec):
+        sinfo = context.get_slice_info(sname, create=True)
         cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
-        logger = logging.getLogger()
-        logger.debug("Creating slice with info %s", str(sinfo))
+        LOG.debug("Creating slice with info %s", str(sinfo))
 
         udata = []
-        for user in context._users:
-            data = {"urn" : user.urn, "keys" : [open(x, "r", encoding="utf-8").read() for x in user._keys]}
+        for user in context.users:
+            data = {"urn" : user.urn, "keys" : [open(x, "r", encoding="utf-8").read() for x in user.keys]}
             udata.append(data)
 
-        res = AM2.createsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
+        res = AM2.create_sliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, rspec, udata)
         if res["code"]["geni_code"] == 0:
             return res
         if "am_type" in res["code"]:
@@ -142,11 +151,12 @@ class AMAPIv2:
         raise CreateSliverError(res["output"], res)
 
     @staticmethod
-    def sliverstatus(context, url, sname):
-        sinfo = context.getSliceInfo(sname)
+    def sliver_status(context, url, sname):
+        sinfo = context.get_slice_info(sname)
         cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
-        res = AM2.sliverstatus(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
+        res = AM2.sliver_status(url, False, context.cf.cert, context.cf.key,
+                [cred_data], sinfo.urn)
         if res["code"]["geni_code"] == 0:
             return res["value"]
         if "am_type" in res["code"]:
@@ -155,30 +165,41 @@ class AMAPIv2:
         raise SliverStatusError(res["output"], res)
 
     @staticmethod
-    def renewsliver(context, url, sname, date):
-        sinfo = context.getSliceInfo(sname)
+    def renew_sliver(context, url, sname, date):
+        sinfo = context.get_slice_info(sname)
         cred_data = open(sinfo.path, "r", encoding="utf-8").read()
 
-        res = AM2.renewsliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn, date)
+        res = AM2.renew_sliver(url, False, context.cf.cert, context.cf.key,
+                [cred_data], sinfo.urn, date)
         if res["code"]["geni_code"] == 0:
             return res["value"]
         raise RenewSliverError(res["output"], res)
 
     @staticmethod
-    def deletesliver (context, url, sname):
-        sinfo = context.getSliceInfo(sname)
-        cred_data = open(sinfo.path, "r", encoding="utf-8").read()
+    def delete_sliver(context, url, sname):
+        try:
+            sinfo = context.get_slice_info(sname)
+            path = sinfo.path
+        except ClearinghouseError as _:
+            LOG.warning("Failed to get slice. Might have already expired.")
 
-        res = AM2.deletesliver(url, False, context.cf.cert, context.cf.key, [cred_data], sinfo.urn)
+            # Slice is already gone. Delete local files, if any.
+            context.delete_slice(sname, force=True)
+            return 0 #TODO no sure what the return code here is for
+
+        cred_data = open(path, "r", encoding="utf-8").read()
+
+        res = AM2.delete_sliver(url, False, context.cf.cert, context.cf.key,
+                [cred_data], sinfo.urn)
         if res["code"]["geni_code"] != 0:
             raise DeleteSliverError(res["output"], res)
 
-        context.deleteSlice(sname)
+        context.delete_slice(sname)
         return res["value"]
 
     @staticmethod
-    def getversion (context, url):
-        res = AM2.getversion(url, False, context.cf.cert, context.cf.key)
+    def get_version(context, url):
+        res = AM2.get_version(url, False, context.cf.cert, context.cf.key)
         if res["code"]["geni_code"] == 0:
             return res["value"]
         raise GetVersionError(res["output"], res)

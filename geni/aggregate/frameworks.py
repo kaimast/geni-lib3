@@ -313,7 +313,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def removeProjectMembers (self, context, members, project = None):
+    def removeProjectMembers(self, context, members, project = None):
         if not project:
             project = context.project
 
@@ -326,7 +326,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def listProjects (self, context, own = True, expired = False):
+    def listProjects(self, context, own = True, expired = False):
         if not own:
             res = chapi2.lookup_projects(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                      expired = expired)
@@ -346,7 +346,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def listAggregates (self, context):
+    def listAggregates(self, context):
         res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key)
 
         if res["code"] == 0:
@@ -354,7 +354,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def listSlices (self, context):
+    def listSlices(self, context):
         res = chapi2.lookup_slices_for_project(self._sa, False, self.cert, self.key,
                                                                                      [context.ucred_api3], context.project_urn)
         if res["code"] == 0:
@@ -412,7 +412,7 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def getSliceCredentials(self, context, slicename):
+    def get_slice_credentials(self, context, slicename):
         slice_urn = self.sliceNameToURN(slicename)
 
         logger = logging.getLogger()
@@ -424,12 +424,11 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def createSlice(self, context, slicename, project_urn = None, exp = None, desc = None):
+    def create_slice(self, context, slicename, project_urn = None, exp = None, desc = None):
         if project_urn is None:
             project_urn = self.projectNameToURN(context.project)
 
         logger = logging.getLogger()
-        logger.debug("Calling createSlice")
 
         res = chapi2.create_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slicename, project_urn, exp, desc)
         if res["code"] == 0:
@@ -437,10 +436,10 @@ class CHAPI2(Framework):
         else:
             raise ClearinghouseError(res["output"], res)
 
-    def renewSlice(self, context, slicename, exp):
+    def renew_slice(self, context, slicename, exp):
         fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
         slice_urn = self.sliceNameToURN(slicename)
-        slice_info = context.getSliceInfo(slicename)
+        slice_info = context.get_slice_info(slicename)
 
         res = chapi2.update_slice(self._sa, False, self.cert, self.key,
                                                             [slice_info.cred_api3, context.ucred_api3],
