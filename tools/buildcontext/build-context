@@ -6,48 +6,51 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import argparse
-import json
 import os
 import os.path
 import sys
 
 # Right now this just returns the user URN, but may be extended to get any info we need out of the cert
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 
 import geni.util
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--type", dest="type", help="Framework type for this credential")
-    parser.add_argument("--cert", dest="cert_path", help="Path to x509 certificate")
+    parser.add_argument("--cert", dest="cert_path", required=True, help="Path to x509 certificate")
     parser.add_argument("--key", dest="key_path",
         help="Path to certificate private key, if not in the same file as the certificate", default = None)
-    parser.add_argument("--pubkey", dest="pubkey_path", help = "Path to SSH public key")
-    parser.add_argument("--project", dest="project", help = "Name of the default project to set in this context")
+    parser.add_argument("--pubkey", dest="pubkey_path", required=True, help="Path to SSH public key")
+    parser.add_argument("--project", dest="project", required=True, help="Name of the default project to set in this context")
     parser.add_argument("--out-path", dest="out_path", default=None, help="Filename to save context to")
     return parser.parse_args()
 
-def parseCert(certpath):
-    cert = x509.load_pem_x509_certificate(open(certpath, "rb").read(), default_backend())
+def parse_cert(certpath):
+    with open(certpath, "rb") as cert_file:
+        cert = x509.load_pem_x509_certificate(cert_file.read())
 
     san = cert.extensions.get_extension_for_oid(x509.OID_SUBJECT_ALTERNATIVE_NAME)
     uris = san.value.get_values_for_type(x509.UniformResourceIdentifier)
     for uri in uris:
         if uri.startswith("urn:publicid"):
             return uri
+    raise RuntimeError("No URI")
 
 def main():
     opts = parse_args()
 
-    if not os.path.exists(opts.cert_path):
-        print("Supplied certificate path %s does not exist" % (opts.cert_path))
-    if opts.key_path:
-        if not os.path.exists(opts.key_path):
-            print("Supplied private key path %s does not exist" % (opts.key_path))
-    if not os.path.exists(opts.pubkey_path):
-        print("Supplied SSH public key path %s does not exist" % (opts.pubkey_path))
+    if not os.path.exists(os.path.expanduser(opts.cert_path)):
+        print(f"Supplied certificate path {opts.cert_path} does not exist")
+        sys.exit(-1)
 
+    if opts.key_path and not os.path.exists(os.path.expanduser(opts.key_path)):
+        print(f"Supplied private key path {opts.key_path}  does not exist")
+        sys.exit(-1)
+
+    if not os.path.exists(os.path.expanduser(opts.pubkey_path)):
+        print(f"Supplied SSH public key path {opts.pubkey_path} does not exist")
+        sys.exit(-1)
 
     if opts.type in ["cloudlab", "emulab"]:
         framework = "emulab-ch2"
@@ -56,7 +59,7 @@ def main():
     else:
         framework = opts.type
 
-    user_urn = parseCert(opts.cert_path)
+    user_urn = parse_cert(os.path.expanduser(opts.cert_path))
     username = user_urn.split("+")[-1]
     key_path = opts.cert_path
 
@@ -65,12 +68,12 @@ def main():
 
     print("Building context:")
     print("-----------------")
-    print("Framework: %s" % (framework))
-    print("User URN: %s" % (user_urn))
-    print("Username: %s" % (username))
+    print(f"Framework: {framework}")
+    print(f"User URN: {user_urn}")
+    print(f"Username: {username}")
 
-    geni.util._build_context(framework, opts.cert_path, key_path, username, user_urn, opts.pubkey_path,
-                                                    opts.project, opts.out_path)
+    geni.util._build_context(framework, opts.cert_path, key_path, username,
+            user_urn, opts.pubkey_path, opts.project, opts.out_path)
 
 
 if __name__ == '__main__':
