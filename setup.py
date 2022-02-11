@@ -8,7 +8,6 @@ from setuptools import setup, find_packages
 
 import os
 import os.path
-import platform
 
 requires = ["cryptography",
             "ipaddress",
@@ -18,9 +17,9 @@ requires = ["cryptography",
 
 # If you are on linux, and don't have ca-certs, we can do an awful thing and it will still work
 if os.name == "posix" and os.uname()[0] == "Linux":
-  if not os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
+    if not os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
+        import ssl
+        ssl._create_default_https_context = ssl._create_unverified_context
 
 pkgs = find_packages()
 pkgs.append('')

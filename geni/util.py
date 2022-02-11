@@ -17,10 +17,14 @@ import tempfile
 import time
 import traceback as tb
 import zipfile
-
+import logging
 import six
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
+import geni._coreutil as GCU
+from .aggregate.spec import AMSpec
+
+LOG = logging.getLogger('geni.util')
 
 def _getdefault(obj, attr, default):
     if hasattr(obj, attr):
@@ -324,18 +328,15 @@ def builddot(manifests):
 
 
 class APIEncoder(json.JSONEncoder):
-    def default (self, obj): # pylint: disable=E0202
+    def default(self, obj): # pylint: disable=E0202
         if hasattr(obj, "__json__"):
             return obj.__json__()
-        elif isinstance(obj, set):
+        if isinstance(obj, set):
             return list(obj)
         return json.JSONEncoder.default(self, obj)
 
 
 def loa_aggregates(path = None):
-    from .aggregate.spec import AMSpec
-    from . import _coreutil as GCU
-
     if not path:
         path = GCU.getDefaultAggregatePath()
 
@@ -362,8 +363,6 @@ def update_aggregates(context, ammap):
     save_aggregates(ammap)
 
 def save_aggregates(ammap, path = None):
-    from . import _coreutil as GCU
-
     if not path:
         path = GCU.getDefaultAggregatePath()
 
@@ -374,7 +373,6 @@ def save_aggregates(ammap, path = None):
 
 
 def load_context(path = None, key_passphrase = None):
-    import geni._coreutil as GCU
     from geni.aggregate import FrameworkRegistry
     from geni.aggregate.context import Context
     from geni.aggregate.user import User
@@ -393,14 +391,14 @@ def load_context(path = None, key_passphrase = None):
         key_passphrase = getpass.getpass("Private key passphrase: ")
 
     if version == 1:
-        cf = FrameworkRegistry.get(obj["framework"])()
-        cf.cert = obj["cert-path"]
+        cfile = FrameworkRegistry.get(obj["framework"])()
+        cfile.cert = obj["cert-path"]
         if key_passphrase:
             if six.PY3:
                 key_passphrase = bytes(key_passphrase, "utf-8")
-            cf.setKey(obj["key-path"], key_passphrase)
+            cfile.setKey(obj["key-path"], key_passphrase)
         else:
-            cf.key = obj["key-path"]
+            cfile.key = obj["key-path"]
 
         user = User()
         user.name = obj["user-name"]
@@ -409,7 +407,7 @@ def load_context(path = None, key_passphrase = None):
 
         context = Context()
         context.add_user(user)
-        context.cf = cf
+        context.cf = cfile
         context.project = obj["project"]
         context.path = path
 
@@ -417,13 +415,13 @@ def load_context(path = None, key_passphrase = None):
         context = Context()
 
         fobj = obj["framework-info"]
-        cf = FrameworkRegistry.get(fobj["type"])()
-        cf.cert = fobj["cert-path"]
+        cfile = FrameworkRegistry.get(fobj["type"])()
+        cfile.cert = fobj["cert-path"]
         if key_passphrase:
-            cf.setKey(fobj["key-path"], key_passphrase)
+            cfile.setKey(fobj["key-path"], key_passphrase)
         else:
-            cf.key = fobj["key-path"]
-        context.cf = cf
+            cfile.key = fobj["key-path"]
+        context.cf = cfile
         context.project = fobj["project"]
         context.path = path
 
@@ -445,9 +443,7 @@ def load_context(path = None, key_passphrase = None):
     return context
 
 
-def hasDataContext ():
-    import geni._coreutil as GCU
-
+def hasDataContext():
     path = GCU.getDefaultContextPath()
     return os.path.exists(path)
 
@@ -459,7 +455,7 @@ class MissingPublicKeyError(Exception):
 
 class PathNotFoundError(Exception):
     def __init__ (self, path):
-        super(PathNotFoundError, self).__init__()
+        super().__init__()
         self._path = path
 
     def __str__ (self):
@@ -473,20 +469,18 @@ def _find_ssh_keygen ():
 
 MAKE_KEYPAIR = (-1, 1)
 
-def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = None):
-    import geni._coreutil as GCU
-
+def buildContextFromBundle(bundle_path, pubkey_path = None, cert_pkey_path = None):
     HOME = os.path.expanduser("~")
 
     # Create the .bssw directories if they don't exist
     DEF_DIR = GCU.getDefaultDir()
 
-    zf = zipfile.ZipFile(os.path.expanduser(bundle_path))
+    zfile = zipfile.ZipFile(os.path.expanduser(bundle_path))
 
     zip_pubkey_path = None
     if pubkey_path is None or pubkey_path == MAKE_KEYPAIR:
         # search for pubkey-like file in zip
-        for fname in zf.namelist():
+        for fname in zfile.namelist():
             if fname.startswith("ssh/public/") and fname.endswith(".pub"):
                 zip_pubkey_path = fname
                 break
@@ -498,12 +492,12 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     urn = None
     project = None
 
-    oc = zf.open("omni_config")
-    for l in oc.readlines():
-        if l.startswith("urn"):
-            urn = l.split("=")[1].strip()
-        elif l.startswith("default_project"):
-            project = l.split("=")[1].strip()
+    oc = zfile.open("omni_config")
+    for line in oc.readlines():
+        if line.startswith("urn"):
+            urn = line.split("=")[1].strip()
+        elif line.startswith("default_project"):
+            project = line.split("=")[1].strip()
 
     uname = urn.rsplit("+")[-1]
 
@@ -519,18 +513,18 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     if not pkpath or pkpath == MAKE_KEYPAIR:
         found_private = False
 
-        if "ssh/private/id_geni_ssh_rsa" in zf.namelist():
+        if "ssh/private/id_geni_ssh_rsa" in zfile.namelist():
             found_private = True
             if not os.path.exists("%s/.ssh/id_geni_ssh_rsa" % (HOME)):
                 # If your umask isn't already 0, we can't safely create this file with the right permissions
-                with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tf:
-                    tf.write(zf.open("ssh/private/id_geni_ssh_rsa").read())
+                with os.fdopen(os.open("%s/.ssh/id_geni_ssh_rsa" % (HOME), os.O_WRONLY | os.O_CREAT, 0o600), "w") as tfile:
+                    tfile.write(zfile.open("ssh/private/id_geni_ssh_rsa").read())
 
         if zip_pubkey_path:
             pkpath = "%s/.ssh/%s" % (HOME, zip_pubkey_path[len('ssh/public/'):])
             if not os.path.exists(pkpath):
-                with open(pkpath, "w+") as tf:
-                    tf.write(zf.open(zip_pubkey_path).read())
+                with open(pkpath, "w+") as tfile:
+                    tfile.write(zfile.open(zip_pubkey_path).read())
 
         # If we don't find a proper keypair, we'll make you one if you asked for it
         # This preserves your old pubkey if it existed in case you want to use that later
@@ -544,7 +538,7 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
             raise PathNotFoundError(pkpath)
 
     # We write the pem into 'private' space
-    zf.extract("geni_cert.pem", DEF_DIR)
+    zfile.extract("geni_cert.pem", DEF_DIR)
 
     if cert_pkey_path is None:
         ckpath = "%s/geni_cert.pem" % (DEF_DIR)
@@ -565,23 +559,26 @@ def buildContextFromBundle (bundle_path, pubkey_path = None, cert_pkey_path = No
     json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
 
 
-def _buildContext(framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
-    import geni._coreutil as GCU
-
+def _build_context(framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
     # Create the .bssw directories if they don't exist
-    DEF_DIR = GCU.getDefaultDir()
+    default_dir = GCU.getDefaultDir()
 
-    new_cert_path = "%s/%s" % (DEF_DIR, os.path.basename(cert_path))
-    shutil.copyfile(cert_path, new_cert_path)
+    new_cert_path = "%s/%s" % (default_dir, os.path.basename(cert_path))
+
+    try:
+        shutil.copyfile(cert_path, new_cert_path)
+        LOG.info("Installed certificate file at '%s'", new_cert_path)
+    except shutil.SameFileError:
+        pass # File already was where it was supposed to go
 
     if key_path != cert_path:
-        new_key_path = "%s/%s" % (DEF_DIR, os.path.basename(key_path))
+        new_key_path = "%s/%s" % (default_dir, os.path.basename(key_path))
         shutil.copyfile(key_path, new_key_path)
     else:
         new_key_path = new_cert_path
 
     if not path:
-        path = "%s/context.json" % (DEF_DIR)
+        path = "%s/context.json" % default_dir
 
     cdata = {}
     cdata["framework"] = framework

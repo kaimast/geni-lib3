@@ -14,6 +14,8 @@ from .core import FrameworkRegistry
 from .. import tempfile
 from ..minigcf import chapi2, pgch1
 
+LOG = logging.getLogger("geni.aggregate.frameworks")
+
 class KeyDecryptionError(Exception):
     pass
 
@@ -272,10 +274,10 @@ class CHAPI2(Framework):
 
     def loadAggregates(self):
         res = chapi2.lookup_service_info(self._ch, False, self.cert, self.key, [], "AGGREGATE_MANAGER")
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def createProject(self, context, name, exp, desc):
         res = chapi2.create_project(self._sa, False, self.cert, self.key, [context.ucred_api3], name, exp, desc)
@@ -308,10 +310,10 @@ class CHAPI2(Framework):
 
         res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                                      project_urn, add = [(x.urn, role) for x in members])
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def removeProjectMembers(self, context, members, project = None):
         if not project:
@@ -321,10 +323,10 @@ class CHAPI2(Framework):
 
         res = chapi2.modify_project_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                                      project_urn, remove = [x.urn for x in members])
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def listProjects(self, context, own = True, expired = False):
         if not own:
@@ -334,43 +336,43 @@ class CHAPI2(Framework):
             res = chapi2.lookup_projects_for_member(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                                             context.userurn, expired = expired)
 
-        if res["code"] == 0:
-            projects = []
-            if isinstance(res["value"], dict):
-                for info in res["value"].values():
-                    projects.append(CHAPI2Project(info))
-            else:
-                for info in res["value"]:
-                    projects.append(CHAPI2Project(info))
-            return projects
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        projects = []
+        if isinstance(res["value"], dict):
+            for info in res["value"].values():
+                projects.append(CHAPI2Project(info))
+        else:
+            for info in res["value"]:
+                projects.append(CHAPI2Project(info))
+        return projects
 
     def listAggregates(self, context):
         res = chapi2.lookup_aggregates(self._ch, False, self.cert, self.key)
 
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def listSlices(self, context):
         res = chapi2.lookup_slices_for_project(self._sa, False, self.cert, self.key,
                                                                                      [context.ucred_api3], context.project_urn)
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def listSliceMembers (self, context, slicename):
         slice_urn = self.sliceNameToURN(slicename)
 
         res = chapi2.lookup_slice_members(self._sa, False, self.cert, self.key,
                                                                             [context.ucred_api3], slice_urn)
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def addSliceMembers (self, context, slicename, members, role = None):
         if not role:
@@ -384,10 +386,10 @@ class CHAPI2(Framework):
         res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                                  slice_urn, add = [(x.urn, role) for x in members])
 
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def removeSliceMembers (self, context, slicename, members):
         from ..minigcf import chapi2
@@ -400,29 +402,28 @@ class CHAPI2(Framework):
         res = chapi2.modify_slice_membership(self._sa, False, self.cert, self.key, [context.ucred_api3],
                                                                                  slice_urn, remove = [x.urn for x in members])
 
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def getUserCredentials(self, owner_urn):
         res = chapi2.get_credentials(self._ma, False, self.cert, self.key, [], owner_urn)
-        if res["code"] == 0:
-            return res["value"][0]["geni_value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"][0]["geni_value"]
 
     def get_slice_credentials(self, context, slicename):
         slice_urn = self.sliceNameToURN(slicename)
 
-        logger = logging.getLogger()
-        logger.debug("Using certificate at '%s'" % self.cert)
+        LOG.debug("Using certificate at '%s'", self.cert)
 
         res = chapi2.get_credentials(self._sa, False, self.cert, self.key, [context.ucred_api3], slice_urn)
-        if res["code"] == 0:
-            return res["value"][0]["geni_value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"][0]["geni_value"]
 
     def create_slice(self, context, slicename, project_urn = None, exp = None, desc = None):
         if project_urn is None:
@@ -431,10 +432,10 @@ class CHAPI2(Framework):
         logger = logging.getLogger()
 
         res = chapi2.create_slice(self._sa, False, self.cert, self.key, [context.ucred_api3], slicename, project_urn, exp, desc)
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def renew_slice(self, context, slicename, exp):
         fields = {"SLICE_EXPIRATION" : exp.strftime(chapi2.DATE_FMT)}
@@ -444,10 +445,10 @@ class CHAPI2(Framework):
         res = chapi2.update_slice(self._sa, False, self.cert, self.key,
                                                             [slice_info.cred_api3, context.ucred_api3],
                                                             slice_urn, fields)
-        if res["code"] == 0:
-            return res["value"]
-        else:
+        if res["code"] != 0:
             raise ClearinghouseError(res["output"], res)
+
+        return res["value"]
 
     def lookupSSHKeys(self, context, user_urn):
         res = chapi2.lookup_key_info(self._ma, False, self.cert, self.key, [context.ucred_api3], user_urn)
