@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018    Barnstormer Softworks, Ltd.
+# Copyright (c) 2014-2018  Barnstormer Softworks, Ltd.
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@ import traceback as tb
 import zipfile
 import logging
 import six
+import getpass
 
 from .aggregate.apis import ListResourcesError, DeleteSliverError
 import geni._coreutil as GCU
@@ -103,10 +104,10 @@ def _mp_get_manifest (context, site, slc, q):
         # Don't use geni.tempfile here - we don't want them deleted when the child process ends
         # TODO: tempfiles should get deleted when the parent process picks them back up
         mf = site.listresources(context, slc)
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        tf.write(mf.text)
-        path = tf.name
-        tf.close()
+        with tempfile.NamedTemporaryFile(delete=False) as file:
+            file.write(mf.text)
+            path = file.name
+
         q.put((site.name, slc, path))
     except ListResourcesError:
         q.put((site.name, slc, None))
@@ -127,24 +128,25 @@ slowest site returns (or times out)."""
     for am in ams:
         sitemap[am.name] = am
 
-    q = MP.Queue()
+    queue = MP.Queue()
     for site in ams:
         for slc in slices:
-            p = MP.Process(target=_mp_get_manifest, args=(context, site, slc, q))
-            p.start()
+            proc = MP.Process(target=_mp_get_manifest, args=(context, site, slc, queue))
+            proc.start()
 
     while MP.active_children():
         time.sleep(0.5)
 
     d = {}
-    while not q.empty():
-        (site,slc,mpath) = q.get()
+    while not queue.empty():
+        (site, slc, mpath) = queue.get()
 
         if mpath:
-            am = sitemap[site]
-            data = open(mpath).read()
-            mf = am.amtype.parseManifest(data)
-            d.setdefault(slc, {})[sitemap[site]] = mf
+            with open(mpath) as file:
+                am = sitemap[site]
+                data = file.read()
+                mf = am.amtype.parseManifest(data)
+                d.setdefault(slc, {})[sitemap[site]] = mf
 
     return d
 
@@ -170,17 +172,17 @@ returns (or times out).
     used by this function."""
 
 
-    q = MP.Queue()
+    queue = MP.Queue()
     for site in ams:
-        p = MP.Process(target=_mp_get_advertisement, args=(context, site, q))
-        p.start()
+        proc = MP.Process(target=_mp_get_advertisement, args=(context, site, queue))
+        proc.start()
 
     while MP.active_children():
         time.sleep(0.5)
 
     d = {}
-    while not q.empty():
-        (site,ad) = q.get()
+    while not queue.empty():
+        (site,ad) = queue.get()
         d[site] = ad
 
     return d
@@ -382,16 +384,20 @@ def load_context(path = None, key_passphrase = None):
     else:
         path = os.path.expanduser(path)
 
-    obj = json.load(open(path, "r"))
+    with open(path, "r") as file:
+        obj = json.load(file)
 
     version = _getdefault(obj, "version", 1)
 
     if key_passphrase is True:
-        import getpass
         key_passphrase = getpass.getpass("Private key passphrase: ")
 
     if version == 1:
-        cfile = FrameworkRegistry.get(obj["framework"])()
+        if "framework" in obj:
+            cfile = FrameworkRegistry.get(obj["framework"])()
+        else:
+            raise RuntimeError("json file is missing field `framework`")
+
         cfile.cert = obj["cert-path"]
         if key_passphrase:
             if six.PY3:

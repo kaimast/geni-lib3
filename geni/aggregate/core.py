@@ -16,13 +16,16 @@ from .spec import AMSpec, AMTYPE, fixCert
 LOG = logging.getLogger("geni.aggregate.core")
 
 class _Registry:
-    def __init__ (self):
+    def __init__(self):
         self._data = {}
 
-    def register (self, name, obj):
+    def register(self, name, obj):
         self._data[name] = obj
 
-    def get (self, name):
+    def get(self, name):
+        if name not in self._data:
+            raise RuntimeError(f"Entry {name} not in registry. Options are: {self._data.keys()}")
+
         return self._data[name]
 
 def convertCH2AggregateSpecs(ch2info):

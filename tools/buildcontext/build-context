@@ -17,7 +17,7 @@ import geni.util
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--type", dest="type", help="Framework type for this credential")
+    parser.add_argument("--type", dest="type", help="Framework type for this credential", required=True)
     parser.add_argument("--cert", dest="cert_path", required=True, help="Path to x509 certificate")
     parser.add_argument("--key", dest="key_path",
         help="Path to certificate private key, if not in the same file as the certificate", default = None)

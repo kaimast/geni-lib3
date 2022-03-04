@@ -87,18 +87,15 @@ class Request(geni.rspec.RSpec):
         """Write the current request contents as an XML file that represents an rspec
         in the GENIv3 format."""
 
-        if path is None:
-            out = sys.stdout
-        else:
-            out = open(path, "w+")
-
         buf = self.to_xml_string(pretty_print=True)
-        out.write(buf)
 
-        if path is not None:
-            out.close()
+        if path is None:
+            sys.stdout.write(buf)
+        else:
+            with open(path, "w+", encoding='utf-8') as outfile:
+                outfile.write(buf)
 
-    def to_xml_string(self, pretty_print = False):
+    def to_xml_string(self, pretty_print=False):
         """Return the current request contents as an XML string that represents an rspec
         in the GENIv3 format."""
 
