@@ -46,6 +46,8 @@ given aggregate."""
 
 
 def get_login_info(manifest):
+    ''' Returns the login information (username and address) for all machines in the specified manifest '''
+
     #pylint: disable=import-outside-toplevel
     from .rspec.vtsmanifest import Manifest as VTSM
     from .rspec.pgmanifest import Manifest as PGM
@@ -93,13 +95,13 @@ requested from the given aggregate."""
     infos = get_login_info(manifest)
     for (client_id, logins) in infos.items():
         for info in logins:
-            print("[%s][%s] %s: %d" % (client_id, info["username"], info["hostname"], info["port"]))
+            print(f'[{client_id}][{info["username"]}] {info["hostname"]}:{info["port"]}')
 
 
 # You can't put very much information in a queue before you hang your OS
 # trying to write to the pipe, so we only write the paths and then load
 # them again on the backside
-def _mp_get_manifest (context, site, slc, q):
+def _mp_get_manifest(context, site, slc, queue):
     try:
         # Don't use geni.tempfile here - we don't want them deleted when the child process ends
         # TODO: tempfiles should get deleted when the parent process picks them back up
@@ -108,14 +110,14 @@ def _mp_get_manifest (context, site, slc, q):
             file.write(mf.text)
             path = file.name
 
-        q.put((site.name, slc, path))
+        queue.put((site.name, slc, path))
     except ListResourcesError:
-        q.put((site.name, slc, None))
+        queue.put((site.name, slc, None))
     except Exception:
         tb.print_exc()
-        q.put((site.name, slc, None))
+        queue.put((site.name, slc, None))
 
-def getManifests (context, ams, slices):
+def getManifests(context, ams, slices):
     """Returns a two-level dictionary of the form:
 ::
     {slice_name : { site_object : manifest_object, ... }, ...}
@@ -151,12 +153,12 @@ slowest site returns (or times out)."""
     return d
 
 
-def _mp_get_advertisement(context, site, q):
+def _mp_get_advertisement(context, site, queue):
     try:
         ad = site.listresources(context)
-        q.put((site.name, ad))
+        queue.put((site.name, ad))
     except Exception:
-        q.put((site.name, None))
+        queue.put((site.name, None))
 
 def get_advertisements(context, ams):
     """Returns a dictionary of the form:
@@ -213,9 +215,9 @@ def _buildaddot(ad, drop_nodes = None):
             continue
 
         if node.available:
-            dda("\"%s\"" % (node.name))
+            dda(f'"{node.name}"')
         else:
-            dda("\"%s\" [style=dashed]" % (node.name))
+            dda(f'"{node.name}" [style=dashed]')
 
     for link in ad.links:
         if not len(link.interface_refs) == 2:
@@ -228,7 +230,7 @@ def _buildaddot(ad, drop_nodes = None):
         if name_1 in drop_nodes or name_2 in drop_nodes:
             continue
 
-        dda("\"%s\" -- \"%s\"" % (name_1, name_2))
+        dda(f'"{name_1}" -- "{name_2}"')
 
     dda("}")
 
@@ -547,7 +549,7 @@ def buildContextFromBundle(bundle_path, pubkey_path = None, cert_pkey_path = Non
     zfile.extract("geni_cert.pem", DEF_DIR)
 
     if cert_pkey_path is None:
-        ckpath = "%s/geni_cert.pem" % (DEF_DIR)
+        ckpath = f"{DEF_DIR}/geni_cert.pem"
     else:
         # Use user-provided key path instead of key inside .pem
         ckpath = os.path.expanduser(cert_pkey_path)
@@ -556,14 +558,15 @@ def buildContextFromBundle(bundle_path, pubkey_path = None, cert_pkey_path = Non
 
     cdata = {}
     cdata["framework"] = "portal"
-    cdata["cert-path"] = "%s/geni_cert.pem" % (DEF_DIR)
+    cdata["cert-path"] = f"{DEF_DIR}/geni_cert.pem"
     cdata["key-path"] = ckpath
     cdata["user-name"] = uname
     cdata["user-urn"] = urn
     cdata["user-pubkeypath"] = pkpath
     cdata["project"] = project
-    json.dump(cdata, open("%s/context.json" % (DEF_DIR), "w+"))
 
+    with open(f"{DEF_DIR}/context.json", "w+", encoding='utf-8') as jfile:
+        json.dump(cdata, jfile)
 
 def _build_context(framework, cert_path, key_path, username, user_urn, pubkey_path, project, path=None):
     # Create the .bssw directories if they don't exist
@@ -584,7 +587,7 @@ def _build_context(framework, cert_path, key_path, username, user_urn, pubkey_pa
         new_key_path = new_cert_path
 
     if not path:
-        path = "%s/context.json" % default_dir
+        path = f"{default_dir}/context.json"
 
     cdata = {}
     cdata["framework"] = framework
@@ -594,4 +597,6 @@ def _build_context(framework, cert_path, key_path, username, user_urn, pubkey_pa
     cdata["user-urn"] = user_urn
     cdata["user-pubkeypath"] = pubkey_path
     cdata["project"] = project
-    json.dump(cdata, open(path, "w+"))
+
+    with open(path, "w+", encoding="utf-8") as jfile:
+        json.dump(cdata, jfile)
